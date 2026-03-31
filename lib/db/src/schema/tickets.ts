@@ -25,10 +25,17 @@ export const ticketsTable = pgTable("tickets", {
   resolvedAt: timestamp("resolved_at", { withTimezone: true }),
   nextEscalationAt: timestamp("next_escalation_at", { withTimezone: true }),
   slaTargetMinutes: integer("sla_target_minutes"),
+  // AI fields
   aiSummary: text("ai_summary"),
   aiNormalizedStatus: text("ai_normalized_status"),
   aiCustomerUpdate: text("ai_customer_update"),
   aiLastGeneratedAt: timestamp("ai_last_generated_at", { withTimezone: true }),
+  // Per-operation timestamps (traceability)
+  aiSummarizedAt: timestamp("ai_summarized_at", { withTimezone: true }),
+  aiNormalizedAt: timestamp("ai_normalized_at", { withTimezone: true }),
+  aiCustomerUpdateAt: timestamp("ai_customer_update_at", { withTimezone: true }),
+  // AI confidence score (0-100) from the most recent AI operation
+  aiConfidence: integer("ai_confidence"),
   createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
   updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow().$onUpdate(() => new Date()),
 });

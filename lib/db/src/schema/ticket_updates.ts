@@ -10,6 +10,8 @@ export const ticketUpdatesTable = pgTable("ticket_updates", {
   updateType: text("update_type", { enum: ["internal_note", "vendor_update", "customer_update", "system_event", "ai_generated"] }).notNull(),
   rawText: text("raw_text").notNull(),
   normalizedStatus: text("normalized_status"),
+  // Source text used when AI generated this entry (only set for ai_generated type)
+  aiSourceText: text("ai_source_text"),
   visibility: text("visibility", { enum: ["internal", "customer"] }).notNull().default("internal"),
   createdByUserId: uuid("created_by_user_id").references(() => usersTable.id, { onDelete: "set null" }),
   createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),

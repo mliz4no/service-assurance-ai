@@ -47,8 +47,8 @@ export default function TicketNew() {
     resolver: zodResolver(formSchema),
     defaultValues: {
       customerId: "",
-      siteId: "",
-      serviceId: "",
+      siteId: "__none__",
+      serviceId: "__none__",
       title: "",
       description: "",
       source: "manual",
@@ -56,7 +56,7 @@ export default function TicketNew() {
       status: "new",
       outageType: "unknown",
       vendorTicketId: "",
-      assignedToUserId: "",
+      assignedToUserId: "__none__",
     },
   });
 
@@ -69,16 +69,21 @@ export default function TicketNew() {
 
   const { data: services } = useGetServices({ 
     customerId: selectedCustomerId,
-    siteId: selectedSiteId || undefined
+    siteId: (selectedSiteId && selectedSiteId !== "__none__") ? selectedSiteId : undefined
   }, {
     query: { enabled: !!selectedCustomerId }
   });
 
+  function toNullable(val?: string): string | null {
+    if (!val || val === "__none__") return null;
+    return val;
+  }
+
   function onSubmit(values: z.infer<typeof formSchema>) {
     createMutation.mutate({ data: {
       customerId: values.customerId,
-      siteId: values.siteId || null,
-      serviceId: values.serviceId || null,
+      siteId: toNullable(values.siteId),
+      serviceId: toNullable(values.serviceId),
       title: values.title,
       description: values.description || null,
       source: values.source,
@@ -86,7 +91,7 @@ export default function TicketNew() {
       status: values.status,
       outageType: values.outageType,
       vendorTicketId: values.vendorTicketId || null,
-      assignedToUserId: values.assignedToUserId || null,
+      assignedToUserId: toNullable(values.assignedToUserId),
     } }, {
       onSuccess: (ticket) => {
         toast({ title: "Ticket created successfully" });
@@ -144,7 +149,7 @@ export default function TicketNew() {
                       <Select onValueChange={field.onChange} value={field.value} disabled={!selectedCustomerId}>
                         <FormControl><SelectTrigger><SelectValue placeholder="Select a site (optional)" /></SelectTrigger></FormControl>
                         <SelectContent>
-                          <SelectItem value="">None</SelectItem>
+                          <SelectItem value="__none__">None</SelectItem>
                           {sites?.map(s => (
                             <SelectItem key={s.id} value={s.id}>{s.siteName}</SelectItem>
                           ))}
@@ -160,7 +165,7 @@ export default function TicketNew() {
                       <Select onValueChange={field.onChange} value={field.value} disabled={!selectedCustomerId}>
                         <FormControl><SelectTrigger><SelectValue placeholder="Select a service (optional)" /></SelectTrigger></FormControl>
                         <SelectContent>
-                          <SelectItem value="">None</SelectItem>
+                          <SelectItem value="__none__">None</SelectItem>
                           {services?.map(s => (
                             <SelectItem key={s.id} value={s.id}>{s.vendorName} - {s.serviceType} {s.circuitId ? `(${s.circuitId})` : ""}</SelectItem>
                           ))}
@@ -230,7 +235,7 @@ export default function TicketNew() {
                         <Select onValueChange={field.onChange} value={field.value}>
                           <FormControl><SelectTrigger><SelectValue placeholder="Unassigned" /></SelectTrigger></FormControl>
                           <SelectContent>
-                            <SelectItem value="">Unassigned</SelectItem>
+                            <SelectItem value="__none__">Unassigned</SelectItem>
                             {users?.filter(u => u.role !== 'customer').map(u => (
                               <SelectItem key={u.id} value={u.id}>{u.name}</SelectItem>
                             ))}

@@ -83,7 +83,7 @@ export default function Login() {
                     <FormItem>
                       <FormLabel>Email</FormLabel>
                       <FormControl>
-                        <Input placeholder="admin@example.com" {...field} />
+                        <Input placeholder="admin@example.com" autoComplete="email" data-testid="login-email" {...field} />
                       </FormControl>
                       <FormMessage />
                     </FormItem>
@@ -98,18 +98,18 @@ export default function Login() {
                         <FormLabel>Password</FormLabel>
                       </div>
                       <FormControl>
-                        <Input type="password" placeholder="••••••••" {...field} />
+                        <Input type="password" placeholder="••••••••" autoComplete="current-password" data-testid="login-password" {...field} />
                       </FormControl>
                       <FormMessage />
                     </FormItem>
                   )}
                 />
                 {errorMsg && (
-                  <div className="text-sm font-medium text-destructive bg-destructive/10 p-3 rounded-md">
+                  <div className="text-sm font-medium text-destructive bg-destructive/10 p-3 rounded-md" data-testid="login-error">
                     {errorMsg}
                   </div>
                 )}
-                <Button type="submit" className="w-full font-medium" disabled={loginMutation.isPending}>
+                <Button type="submit" className="w-full font-medium" disabled={loginMutation.isPending} data-testid="login-submit">
                   {loginMutation.isPending ? "Signing in..." : "Sign In"}
                 </Button>
               </form>

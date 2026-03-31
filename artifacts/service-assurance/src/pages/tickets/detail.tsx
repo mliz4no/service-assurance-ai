@@ -468,14 +468,28 @@ export default function TicketDetail() {
         {!isCustomer && (
           <Card className="border-indigo-200 bg-indigo-50/40 shadow-sm mb-5">
             <CardHeader className="pb-0 pt-4 px-5">
-              <div className="flex items-center gap-2">
-                <Sparkles className="w-4 h-4 text-indigo-600" />
+              <div className="flex items-center gap-2 flex-wrap">
+                <Sparkles className="w-4 h-4 text-indigo-600 shrink-0" />
                 <CardTitle className="text-sm font-semibold text-indigo-900">
                   AI Insights
                 </CardTitle>
+                {ticket.aiConfidence !== null && ticket.aiConfidence !== undefined && (
+                  <span
+                    className={cn(
+                      "text-xs font-bold px-1.5 py-0.5 rounded",
+                      ticket.aiConfidence >= 80
+                        ? "bg-green-100 text-green-800"
+                        : ticket.aiConfidence >= 50
+                        ? "bg-yellow-100 text-yellow-800"
+                        : "bg-red-100 text-red-800"
+                    )}
+                  >
+                    {ticket.aiConfidence}% confidence
+                  </span>
+                )}
                 {ticket.aiLastGeneratedAt && (
                   <span className="text-xs text-indigo-500 ml-auto">
-                    Last generated {timeAgo(ticket.aiLastGeneratedAt)}
+                    Last run {timeAgo(ticket.aiLastGeneratedAt)}
                   </span>
                 )}
               </div>
@@ -486,9 +500,16 @@ export default function TicketDetail() {
                 {/* Executive Summary */}
                 <div className="space-y-2">
                   <div className="flex items-center justify-between">
-                    <p className="text-xs font-semibold text-indigo-800 uppercase tracking-wide">
-                      Executive Summary
-                    </p>
+                    <div>
+                      <p className="text-xs font-semibold text-indigo-800 uppercase tracking-wide">
+                        Executive Summary
+                      </p>
+                      {(ticket as any).aiSummarizedAt && (
+                        <p className="text-[10px] text-indigo-400 mt-0.5">
+                          Generated {timeAgo((ticket as any).aiSummarizedAt)}
+                        </p>
+                      )}
+                    </div>
                     <Button
                       size="sm"
                       variant="ghost"
@@ -520,9 +541,16 @@ export default function TicketDetail() {
                 {/* Normalized Vendor Status */}
                 <div className="space-y-2">
                   <div className="flex items-center justify-between">
-                    <p className="text-xs font-semibold text-indigo-800 uppercase tracking-wide">
-                      Normalized Status
-                    </p>
+                    <div>
+                      <p className="text-xs font-semibold text-indigo-800 uppercase tracking-wide">
+                        Normalized Status
+                      </p>
+                      {(ticket as any).aiNormalizedAt && (
+                        <p className="text-[10px] text-indigo-400 mt-0.5">
+                          Generated {timeAgo((ticket as any).aiNormalizedAt)}
+                        </p>
+                      )}
+                    </div>
                     <Button
                       size="sm"
                       variant="ghost"
@@ -556,9 +584,16 @@ export default function TicketDetail() {
                 {/* Customer Update Draft */}
                 <div className="space-y-2">
                   <div className="flex items-center justify-between">
-                    <p className="text-xs font-semibold text-indigo-800 uppercase tracking-wide">
-                      Customer Update Draft
-                    </p>
+                    <div>
+                      <p className="text-xs font-semibold text-indigo-800 uppercase tracking-wide">
+                        Customer Update Draft
+                      </p>
+                      {(ticket as any).aiCustomerUpdateAt && (
+                        <p className="text-[10px] text-indigo-400 mt-0.5">
+                          Generated {timeAgo((ticket as any).aiCustomerUpdateAt)}
+                        </p>
+                      )}
+                    </div>
                     <div className="flex gap-1">
                       {ticket.aiCustomerUpdate && (
                         <Button

@@ -2,9 +2,10 @@ import { useParams, useLocation } from "wouter";
 import { AppLayout } from "@/components/layout/app-layout";
 import { useGetService } from "@workspace/api-client-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Activity, Globe2, Building2, MapPin, DollarSign, Phone } from "lucide-react";
+import { Activity, Globe2, Building2, MapPin, DollarSign, Phone, Ticket } from "lucide-react";
 import { Link } from "wouter";
 import { StatusBadge } from "@/components/status-badge";
+import { SeverityBadge } from "@/components/severity-badge";
 
 export default function ServiceDetail() {
   const params = useParams();
@@ -93,6 +94,46 @@ export default function ServiceDetail() {
             </CardContent>
           </Card>
         </div>
+
+        {/* Linked Tickets */}
+        <Card className="border-border/50 shadow-sm">
+          <CardHeader className="pb-3 border-b border-border/50">
+            <div className="flex items-center gap-2">
+              <Ticket className="w-5 h-5 text-muted-foreground" />
+              <CardTitle className="text-base font-semibold">Tickets for this circuit</CardTitle>
+            </div>
+          </CardHeader>
+          <CardContent className="p-0">
+            {!(service as any).tickets?.length ? (
+              <div className="p-6 text-center text-sm text-muted-foreground">No tickets linked to this circuit.</div>
+            ) : (
+              <div className="divide-y divide-border/50">
+                {((service as any).tickets as Array<any>).map((t: any) => {
+                  const isBreached = t.nextEscalationAt && new Date(t.nextEscalationAt) < new Date();
+                  return (
+                    <div key={t.id} className="p-4 flex items-center justify-between hover:bg-muted/30">
+                      <div>
+                        <Link href={`/tickets/${t.id}`} className="font-medium text-primary hover:underline">
+                          {t.ticketNumber} — {t.title}
+                        </Link>
+                        <div className="flex items-center gap-2 mt-1">
+                          <span className="text-xs text-muted-foreground">{new Date(t.openedAt).toLocaleDateString()}</span>
+                          {isBreached && (
+                            <span className="text-xs font-semibold text-red-600 bg-red-50 border border-red-200 px-1.5 py-0.5 rounded">SLA BREACH</span>
+                          )}
+                        </div>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <SeverityBadge severity={t.severity} />
+                        <StatusBadge status={t.status} />
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            )}
+          </CardContent>
+        </Card>
       </div>
     </AppLayout>
   );

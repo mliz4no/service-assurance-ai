@@ -7,18 +7,21 @@ import { summarizeTicket, normalizeStatus, generateCustomerUpdate } from "../lib
 const router: IRouter = Router();
 
 async function getNextTicketNumber(): Promise<string> {
-  const [latest] = await db
+  const allNumbers = await db
     .select({ ticketNumber: ticketsTable.ticketNumber })
-    .from(ticketsTable)
-    .orderBy(desc(ticketsTable.createdAt))
-    .limit(1);
+    .from(ticketsTable);
 
-  if (!latest) return "SA-1001";
+  if (allNumbers.length === 0) return "SA-1001";
 
-  const match = latest.ticketNumber.match(/SA-(\d+)/);
-  if (!match) return "SA-1001";
-  const next = parseInt(match[1], 10) + 1;
-  return `SA-${next}`;
+  let max = 1000;
+  for (const row of allNumbers) {
+    const match = row.ticketNumber.match(/SA-(\d+)/);
+    if (match) {
+      const n = parseInt(match[1], 10);
+      if (n > max) max = n;
+    }
+  }
+  return `SA-${max + 1}`;
 }
 
 async function enrichTickets(tickets: typeof ticketsTable.$inferSelect[]) {
@@ -309,29 +312,51 @@ router.post("/tickets/:id/ai/summarize", requireAuth, async (req, res): Promise<
     return;
   }
 
-  const updates = await db.select().from(ticketUpdatesTable).where(eq(ticketUpdatesTable.ticketId, id)).orderBy(asc(ticketUpdatesTable.createdAt));
+  const updates = await db
+    .select()
+    .from(ticketUpdatesTable)
+    .where(eq(ticketUpdatesTable.ticketId, id))
+    .orderBy(asc(ticketUpdatesTable.createdAt));
 
-  const summary = await summarizeTicket({
+  const service = ticket.serviceId
+    ? (await db.select().from(servicesTable).where(eq(servicesTable.id, ticket.serviceId)).limit(1))[0]
+    : null;
+
+  const now = new Date();
+  const result = await summarizeTicket({
     title: ticket.title,
+    severity: ticket.severity,
+    status: ticket.status,
+    outageType: ticket.outageType,
     description: ticket.description,
+    vendorTicketId: ticket.vendorTicketId,
+    circuitId: service?.circuitId ?? null,
+    vendorName: service?.vendorName ?? null,
     updates,
   });
 
   const [updated] = await db
     .update(ticketsTable)
-    .set({ aiSummary: summary, aiLastGeneratedAt: new Date(), updatedAt: new Date() })
+    .set({
+      aiSummary: result.summary,
+      aiConfidence: result.confidence,
+      aiSummarizedAt: now,
+      aiLastGeneratedAt: now,
+      updatedAt: now,
+    })
     .where(eq(ticketsTable.id, id))
     .returning();
 
   await db.insert(ticketUpdatesTable).values({
     ticketId: id,
     updateType: "ai_generated",
-    rawText: `AI Summary generated: ${summary}`,
+    rawText: result.summary,
+    aiSourceText: result.sourceText,
     visibility: "internal",
     createdByUserId: req.user?.id ?? null,
   });
 
-  res.json({ summary, ticket: updated });
+  res.json({ summary: result.summary, confidence: result.confidence, keyDetails: result.keyDetails, ticket: updated });
 });
 
 router.post("/tickets/:id/ai/normalize-latest-update", requireAuth, async (req, res): Promise<void> => {
@@ -347,23 +372,60 @@ router.post("/tickets/:id/ai/normalize-latest-update", requireAuth, async (req, 
     return;
   }
 
-  const [latestUpdate] = await db
+  // Prefer the latest vendor update, then any non-system update, then description
+  const [latestVendorUpdate] = await db
     .select()
     .from(ticketUpdatesTable)
     .where(and(eq(ticketUpdatesTable.ticketId, id), eq(ticketUpdatesTable.updateType, "vendor_update")))
     .orderBy(desc(ticketUpdatesTable.createdAt))
     .limit(1);
 
-  const textToNormalize = latestUpdate?.rawText ?? ticket.description ?? ticket.title;
-  const normalizedStatus = await normalizeStatus(textToNormalize);
+  const [latestAnyUpdate] = await db
+    .select()
+    .from(ticketUpdatesTable)
+    .where(and(
+      eq(ticketUpdatesTable.ticketId, id),
+      eq(ticketUpdatesTable.updateType, "internal_note")
+    ))
+    .orderBy(desc(ticketUpdatesTable.createdAt))
+    .limit(1);
+
+  const textToNormalize =
+    latestVendorUpdate?.rawText ??
+    latestAnyUpdate?.rawText ??
+    ticket.description ??
+    ticket.title;
+
+  const now = new Date();
+  const result = await normalizeStatus({
+    text: textToNormalize,
+    ticketSeverity: ticket.severity,
+    ticketStatus: ticket.status,
+  });
 
   const [updated] = await db
     .update(ticketsTable)
-    .set({ aiNormalizedStatus: normalizedStatus, aiLastGeneratedAt: new Date(), updatedAt: new Date() })
+    .set({
+      aiNormalizedStatus: result.status,
+      aiConfidence: result.confidence,
+      aiNormalizedAt: now,
+      aiLastGeneratedAt: now,
+      updatedAt: now,
+    })
     .where(eq(ticketsTable.id, id))
     .returning();
 
-  res.json({ normalizedStatus, ticket: updated });
+  await db.insert(ticketUpdatesTable).values({
+    ticketId: id,
+    updateType: "ai_generated",
+    rawText: `Normalized status: ${result.status}${result.reasoning ? ` — ${result.reasoning}` : ""}`,
+    aiSourceText: result.sourceText,
+    normalizedStatus: result.status,
+    visibility: "internal",
+    createdByUserId: req.user?.id ?? null,
+  });
+
+  res.json({ normalizedStatus: result.status, confidence: result.confidence, reasoning: result.reasoning, ticket: updated });
 });
 
 router.post("/tickets/:id/ai/generate-customer-update", requireAuth, async (req, res): Promise<void> => {
@@ -379,10 +441,17 @@ router.post("/tickets/:id/ai/generate-customer-update", requireAuth, async (req,
     return;
   }
 
-  const updates = await db.select().from(ticketUpdatesTable).where(eq(ticketUpdatesTable.ticketId, id)).orderBy(desc(ticketUpdatesTable.createdAt)).limit(10);
+  const updates = await db
+    .select()
+    .from(ticketUpdatesTable)
+    .where(eq(ticketUpdatesTable.ticketId, id))
+    .orderBy(desc(ticketUpdatesTable.createdAt))
+    .limit(12);
 
-  const customerUpdate = await generateCustomerUpdate({
+  const now = new Date();
+  const result = await generateCustomerUpdate({
     title: ticket.title,
+    severity: ticket.severity,
     currentStatus: ticket.status,
     aiNormalizedStatus: ticket.aiNormalizedStatus,
     updates,
@@ -390,11 +459,26 @@ router.post("/tickets/:id/ai/generate-customer-update", requireAuth, async (req,
 
   const [updated] = await db
     .update(ticketsTable)
-    .set({ aiCustomerUpdate: customerUpdate, aiLastGeneratedAt: new Date(), updatedAt: new Date() })
+    .set({
+      aiCustomerUpdate: result.update,
+      aiConfidence: result.confidence,
+      aiCustomerUpdateAt: now,
+      aiLastGeneratedAt: now,
+      updatedAt: now,
+    })
     .where(eq(ticketsTable.id, id))
     .returning();
 
-  res.json({ customerUpdate, ticket: updated });
+  await db.insert(ticketUpdatesTable).values({
+    ticketId: id,
+    updateType: "ai_generated",
+    rawText: `Customer update drafted${result.containsETA ? " (contains ETA)" : ""}: ${result.update}`,
+    aiSourceText: result.sourceText,
+    visibility: "internal",
+    createdByUserId: req.user?.id ?? null,
+  });
+
+  res.json({ customerUpdate: result.update, confidence: result.confidence, containsETA: result.containsETA, ticket: updated });
 });
 
 export default router;

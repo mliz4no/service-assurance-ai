@@ -1,5 +1,5 @@
 import { Router, type IRouter } from "express";
-import { db, servicesTable, customersTable, sitesTable } from "@workspace/db";
+import { db, servicesTable, customersTable, sitesTable, ticketsTable } from "@workspace/db";
 import { eq, and, ilike, or } from "drizzle-orm";
 import { requireAuth } from "../middlewares/auth";
 
@@ -115,9 +115,24 @@ router.get("/services/:id", requireAuth, async (req, res): Promise<void> => {
   }
 
   const [customer] = await db.select().from(customersTable).where(eq(customersTable.id, service.customerId));
-  const [site] = await db.select().from(sitesTable).where(eq(sitesTable.id, service.siteId));
+  const [site] = service.siteId
+    ? await db.select().from(sitesTable).where(eq(sitesTable.id, service.siteId))
+    : [null];
+  const tickets = await db
+    .select({
+      id: ticketsTable.id,
+      ticketNumber: ticketsTable.ticketNumber,
+      title: ticketsTable.title,
+      status: ticketsTable.status,
+      severity: ticketsTable.severity,
+      openedAt: ticketsTable.openedAt,
+      nextEscalationAt: ticketsTable.nextEscalationAt,
+    })
+    .from(ticketsTable)
+    .where(eq(ticketsTable.serviceId, id))
+    .orderBy(ticketsTable.openedAt);
 
-  res.json({ ...service, customer, site });
+  res.json({ ...service, customer, site, tickets });
 });
 
 router.put("/services/:id", requireAuth, async (req, res): Promise<void> => {

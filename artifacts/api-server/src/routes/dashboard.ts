@@ -149,35 +149,13 @@ router.post("/admin/ai-test", requireAuth, async (req, res): Promise<void> => {
     return;
   }
 
-  const normalizedStatus = await normalizeStatus(text);
-  const fakeTicket = {
-    id: "test",
-    ticketNumber: "SA-TEST",
-    customerId: "test",
-    siteId: null,
-    serviceId: null,
-    title: "AI Test",
-    description: text,
-    source: "manual",
-    severity: "medium",
-    status: normalizedStatus,
-    outageType: "unknown",
-    vendorTicketId: null,
-    assignedToUserId: null,
-    openedAt: new Date(),
-    lastUpdatedAt: new Date(),
-    resolvedAt: null,
-    nextEscalationAt: null,
-    slaTargetMinutes: null,
-    aiSummary: null,
-    aiNormalizedStatus: normalizedStatus,
-    aiCustomerUpdate: null,
-    aiLastGeneratedAt: new Date(),
-    createdAt: new Date(),
-    updatedAt: new Date(),
-  };
+  const result = await normalizeStatus({ text, ticketSeverity: "medium", ticketStatus: "new" });
 
-  res.json({ normalizedStatus, ticket: fakeTicket });
+  res.json({
+    normalizedStatus: result.status,
+    confidence: result.confidence,
+    reasoning: result.reasoning,
+  });
 });
 
 export default router;

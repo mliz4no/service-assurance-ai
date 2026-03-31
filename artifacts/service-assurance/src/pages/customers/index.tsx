@@ -44,7 +44,7 @@ export default function CustomersList() {
             </Select>
           </div>
           <Link href="/customers/new">
-            <Button>
+            <Button data-testid="new-customer-btn">
               <Plus className="w-4 h-4 mr-2" />
               New Customer
             </Button>
@@ -76,7 +76,7 @@ export default function CustomersList() {
                 </TableRow>
               ) : (
                 customers.map((c) => (
-                  <TableRow key={c.id} className="hover:bg-muted/20">
+                  <TableRow key={c.id} className="hover:bg-muted/20" data-testid="customer-row">
                     <TableCell className="font-medium">
                       <Link href={`/customers/${c.id}`} className="text-primary hover:underline">{c.name}</Link>
                     </TableCell>

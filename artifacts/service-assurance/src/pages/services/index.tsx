@@ -47,7 +47,7 @@ export default function ServicesList() {
             </Select>
           </div>
           <Link href="/services/new">
-            <Button>
+            <Button data-testid="new-service-btn">
               <Plus className="w-4 h-4 mr-2" />
               New Service
             </Button>

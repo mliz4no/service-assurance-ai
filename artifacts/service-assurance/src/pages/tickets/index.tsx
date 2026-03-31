@@ -64,7 +64,7 @@ export default function TicketsList() {
             </Select>
           </div>
           <Link href="/tickets/new">
-            <Button>
+            <Button data-testid="new-ticket-btn">
               <Plus className="w-4 h-4 mr-2" />
               New Ticket
             </Button>
@@ -101,7 +101,7 @@ export default function TicketsList() {
                 tickets.map((t) => {
                   const isBreached = t.nextEscalationAt && new Date(t.nextEscalationAt) < new Date();
                   return (
-                    <TableRow key={t.id} className="hover:bg-muted/20">
+                    <TableRow key={t.id} className="hover:bg-muted/20" data-testid="ticket-row">
                       <TableCell className="font-medium">
                         <Link href={`/tickets/${t.id}`} className="text-primary hover:underline">{t.ticketNumber}</Link>
                       </TableCell>
