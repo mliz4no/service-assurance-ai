@@ -5,7 +5,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { useLogin, useGetCurrentUser } from "@workspace/api-client-react";
 import { useAuth } from "@/lib/auth";
-import { saveToken } from "@/main";
+import { saveToken } from "@/lib/token";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";

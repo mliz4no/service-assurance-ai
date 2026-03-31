@@ -1,5 +1,5 @@
 import { useAuth } from "@/lib/auth";
-import { clearToken } from "@/main";
+import { clearToken } from "@/lib/token";
 import { Link, useLocation } from "wouter";
 import { 
   Building2, 
