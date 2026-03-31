@@ -1,0 +1,366 @@
+Refactor and expand my existing app into an AI-powered telecom service assurance platform with controller integrations for Cisco Meraki and Fortinet.
+
+Important instructions:
+- Do NOT rebuild from scratch unless absolutely necessary.
+- Reuse the existing app structure where possible.
+- Preserve existing working modules for customers, sites, services, tickets, ticket updates, users, dashboard, and SLA policies.
+- Extend the data model, backend, and UI to support controller-based service assurance.
+- Keep the app as a clean full-stack TypeScript application using React, Node, PostgreSQL, and Prisma.
+- Keep the app runnable in Replit.
+
+Core goal:
+This app must ingest health/event data from controller platforms, map that telemetry to customers/sites/services, correlate issues to incidents/tickets, and use AI to generate operational summaries and customer-safe updates.
+
+Vendors to support first:
+1. Cisco Meraki
+2. Fortinet
+
+Scope for this phase:
+- Build connector framework
+- Build Meraki connector first
+- Build Fortinet connector scaffolding second
+- Add polling/sync logic
+- Add device/link/event models
+- Add incident correlation logic
+- Add AI analysis of controller events
+- Add UI pages for controllers, devices, links, and event monitor
+
+Do not add:
+- SNMP polling
+- billing
+- provisioning
+- full NOC monitoring
+- packet capture
+- config push automation
+
+-----------------------------------
+1. EXTEND THE DATA MODEL
+-----------------------------------
+
+Add these new Prisma models and relationships:
+
+Controller
+- id
+- name
+- vendor (meraki, fortinet)
+- type (sdwan, firewall_manager, network_manager)
+- baseUrl
+- authType
+- apiKeyEncryptedOrPlaceholder
+- organizationIdOrTenant (optional)
+- pollingEnabled
+- pollingIntervalSeconds
+- lastPolledAt (optional)
+- lastPollStatus (optional)
+- lastPollMessage (optional)
+- createdAt
+- updatedAt
+
+ManagedDevice
+- id
+- controllerId
+- customerId
+- siteId
+- hostname
+- deviceType (firewall, sdwan_edge, appliance, switch, gateway)
+- vendor
+- serialNumber
+- controllerDeviceId
+- model (optional)
+- mgmtIp (optional)
+- status (online, offline, degraded, unknown)
+- haState (optional)
+- lastSeenAt (optional)
+- metadataJson
+- createdAt
+- updatedAt
+
+NetworkLink
+- id
+- managedDeviceId
+- serviceId (optional)
+- customerId
+- siteId
+- linkName
+- linkType (internet, mpls, lte, broadband, wan_uplink, vpn_tunnel, sdwan_transport)
+- providerName (optional)
+- circuitId (optional)
+- role (primary, backup, unknown)
+- status (up, down, degraded, unknown)
+- latencyMs (optional)
+- jitterMs (optional)
+- packetLossPct (optional)
+- lastPolledAt (optional)
+- metadataJson
+- createdAt
+- updatedAt
+
+DeviceEvent
+- id
+- controllerId
+- managedDeviceId (optional)
+- customerId (optional)
+- siteId (optional)
+- serviceId (optional)
+- rawEventId
+- eventSource
+- severity
+- eventType
+- title
+- description
+- normalizedStatus (optional)
+- aiSummary (optional)
+- aiProbableImpact (optional)
+- aiCustomerUpdate (optional)
+- confidenceScore (optional)
+- rawPayloadJson
+- occurredAt
+- createdAt
+
+ControllerSyncLog
+- id
+- controllerId
+- syncType
+- startedAt
+- completedAt (optional)
+- status (running, success, failed)
+- message (optional)
+- recordsProcessed (optional)
+- createdAt
+
+IncidentCorrelation
+- id
+- ticketId
+- deviceEventId
+- correlationType (trigger, related, recovery)
+- createdAt
+
+Update existing Service model so it can optionally link to:
+- primaryManagedDeviceId (optional)
+- support one-to-many relationship to NetworkLink
+
+Update Ticket model so it supports:
+- incidentSource (manual, email, controller)
+- impactedDeviceId (optional)
+- impactedLinkId (optional)
+- failoverActive (optional boolean)
+- aiProbableImpact (optional)
+- aiConfidenceScore (optional)
+
+Keep all existing working relationships intact.
+
+-----------------------------------
+2. BUILD A CONNECTOR FRAMEWORK
+-----------------------------------
+
+Create a clean connector architecture under a folder like:
+server/connectors/
+
+Add:
+- a base interface for connectors
+- Meraki connector implementation
+- Fortinet connector scaffold implementation
+- mock data helpers for local/demo mode
+
+Connector interface should support methods like:
+- testConnection()
+- syncDevices()
+- syncLinks()
+- syncEvents()
+- fullSync()
+
+Meraki connector:
+- implement a real structure using API key auth
+- include placeholder functions and clear comments showing where real Meraki API calls go
+- if possible, wire realistic sample API response mapping even if using mocked data initially
+- support organization/network/device style mapping
+
+Fortinet connector:
+- scaffold only for now if needed
+- structure it so real API calls can be added later
+- include placeholders for FortiGate / FortiManager style integration
+- support device status, interface/link status, HA state, and events in the data model
+
+Important:
+- Use normalized internal objects so all vendor data is translated into a common format before saving.
+
+-----------------------------------
+3. ADD CONTROLLER POLLING / SYNC LOGIC
+-----------------------------------
+
+Add admin-triggered sync capability.
+
+Requirements:
+- “Poll Controllers Now” button in admin/controllers UI
+- backend endpoint to sync all enabled controllers
+- backend endpoint to sync one controller by id
+- create ControllerSyncLog records
+- upsert devices, links, and events
+- update controller last poll status/message/timestamp
+
+Add logic to detect state transitions:
+- device online -> offline
+- link up -> degraded/down
+- backup/failover active if primary is down and backup remains up
+
+-----------------------------------
+4. ADD INCIDENT / TICKET CORRELATION LOGIC
+-----------------------------------
+
+When new controller events or telemetry changes arrive:
+- try to find an existing open ticket for the same customer/site/service/device/link
+- if found, attach IncidentCorrelation and avoid duplicate ticket creation
+- if not found, create a new ticket or suggested incident ticket
+
+Incident rules:
+- if a device goes offline, likely create ticket
+- if a primary transport goes down but backup remains active, create degraded incident and set failoverActive = true
+- if both primary and backup are down, create outage incident
+- if firewall HA failover event occurs, create high severity incident but not necessarily outage
+- if event is informational only, do not auto-create critical incident
+
+Use a reasonable rule-based engine for MVP.
+
+-----------------------------------
+5. ADD AI ANALYSIS FOR CONTROLLER EVENTS
+-----------------------------------
+
+Use the existing OpenAI integration structure if already present.
+If not present, add it cleanly.
+
+Environment variable:
+- OPENAI_API_KEY
+
+Add AI helper functions for:
+1. summarizeControllerEvent()
+2. classifyNormalizedStatus()
+3. generateCustomerSafeUpdate()
+4. inferProbableImpact()
+
+AI inputs may include:
+- event title
+- description
+- vendor
+- device type
+- device status
+- link status
+- failover state
+- recent related updates
+
+AI output rules:
+- do not invent root cause
+- do not invent ETA
+- mention failover only if source data supports it
+- be telecom-operations aware
+- produce concise operational output
+- produce short customer-safe updates
+
+Store AI outputs in database.
+Store timestamps and source text used for generation.
+Allow re-run from UI.
+
+-----------------------------------
+6. ADD NEW UI PAGES
+-----------------------------------
+
+Add these pages to the existing app and sidebar:
+
+1. Controllers page
+- list controllers
+- show vendor, type, polling enabled, last poll status, last poll time
+- button to sync now
+- button to test connection
+- add/edit controller form
+
+2. Controller detail page
+- controller info
+- recent sync logs
+- device counts
+- link counts
+- event counts
+- recent events
+
+3. Managed Devices page
+- search/filter by vendor, customer, site, status
+- show hostname, vendor, device type, status, site, customer, last seen
+
+4. Managed Device detail page
+- core device info
+- recent events
+- linked links
+- linked tickets
+- AI summary panel if relevant
+
+5. Network Links page
+- show link health
+- filters by status, role, customer, site, vendor
+- show latency, jitter, packet loss if present
+- show primary/backup relationship clearly
+
+6. Event Monitor page
+- list DeviceEvents
+- filter by controller, vendor, severity, status, customer, site
+- ability to open linked ticket or create ticket if none exists
+
+7. Improve Ticket detail page
+- show incident source
+- impacted device/link
+- show linked controller events
+- show failover active badge
+- show AI operational summary
+- show AI probable impact
+- show AI customer update
+- button to re-run AI analysis
+
+-----------------------------------
+7. ADD REALISTIC DEV SEED DATA
+-----------------------------------
+
+Seed realistic telecom examples:
+- 2 controllers: one Meraki, one Fortinet
+- customers with branch sites
+- devices mapped to sites
+- links mapped as primary and backup
+- realistic examples:
+  - primary DIA down with LTE backup active
+  - Meraki appliance offline
+  - firewall HA failover event
+  - VPN tunnel degraded
+- tickets created from controller incidents
+- sync log examples
+
+-----------------------------------
+8. ADMIN / SETTINGS
+-----------------------------------
+
+Add a Controllers admin section:
+- manage controllers
+- view sync logs
+- run manual sync
+- test AI parsing with sample event text
+- show config health for required env vars
+
+-----------------------------------
+9. IMPORTANT IMPLEMENTATION RULES
+-----------------------------------
+
+- Preserve existing working code where possible
+- Refactor cleanly if needed, but do not delete useful modules
+- Add comments in files where real Meraki and Fortinet API logic should go
+- If real API calls cannot be fully implemented in Replit right now, use realistic mock responses but keep the code structured for real integration
+- Use Prisma relationships cleanly
+- Keep TypeScript types strong
+- Add loading/error states in UI
+- Make the product feel like a credible enterprise operations SaaS
+
+-----------------------------------
+10. AFTER YOU FINISH
+-----------------------------------
+
+After updating the project:
+1. Show me the updated project structure
+2. Explain what files contain the connector framework
+3. Identify exactly where I would add real Meraki API calls
+4. Identify exactly where I would add real Fortinet API calls
+5. Explain how incident correlation works
+6. Suggest the next best improvement after this phase

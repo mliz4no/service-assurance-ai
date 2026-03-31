@@ -1,4 +1,4 @@
-import { pgTable, text, timestamp, uuid, integer } from "drizzle-orm/pg-core";
+import { pgTable, text, timestamp, uuid, integer, boolean } from "drizzle-orm/pg-core";
 import { createInsertSchema } from "drizzle-zod";
 import { z } from "zod/v4";
 import { customersTable } from "./customers";
@@ -14,7 +14,7 @@ export const ticketsTable = pgTable("tickets", {
   serviceId: uuid("service_id").references(() => servicesTable.id, { onDelete: "set null" }),
   title: text("title").notNull(),
   description: text("description"),
-  source: text("source", { enum: ["manual", "email", "api"] }).notNull().default("manual"),
+  source: text("source", { enum: ["manual", "email", "api", "controller"] }).notNull().default("manual"),
   severity: text("severity", { enum: ["low", "medium", "high", "critical"] }).notNull(),
   status: text("status", { enum: ["new", "investigating", "vendor_engaged", "dispatch_scheduled", "monitoring", "resolved", "closed"] }).notNull().default("new"),
   outageType: text("outage_type", { enum: ["outage", "impairment", "informational", "unknown"] }).notNull().default("unknown"),
@@ -36,6 +36,12 @@ export const ticketsTable = pgTable("tickets", {
   aiCustomerUpdateAt: timestamp("ai_customer_update_at", { withTimezone: true }),
   // AI confidence score (0-100) from the most recent AI operation
   aiConfidence: integer("ai_confidence"),
+  aiProbableImpact: text("ai_probable_impact"),
+  // Controller-sourced incident fields
+  incidentSource: text("incident_source", { enum: ["manual", "email", "controller"] }).default("manual"),
+  impactedDeviceId: uuid("impacted_device_id"),
+  impactedLinkId: uuid("impacted_link_id"),
+  failoverActive: boolean("failover_active").default(false),
   createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
   updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow().$onUpdate(() => new Date()),
 });

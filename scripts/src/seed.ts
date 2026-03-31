@@ -7,8 +7,15 @@ import {
   ticketsTable,
   ticketUpdatesTable,
   slaPoliciesTable,
+  controllersTable,
+  managedDevicesTable,
+  networkLinksTable,
+  deviceEventsTable,
+  controllerSyncLogsTable,
+  incidentCorrelationsTable,
 } from "@workspace/db";
 import crypto from "crypto";
+import { eq } from "drizzle-orm";
 
 function hashPassword(password: string): string {
   const salt = crypto.randomBytes(16).toString("hex");
@@ -18,6 +25,12 @@ function hashPassword(password: string): string {
 
 // Clear all data in reverse dependency order
 async function clearAll() {
+  await db.delete(incidentCorrelationsTable);
+  await db.delete(deviceEventsTable);
+  await db.delete(controllerSyncLogsTable);
+  await db.delete(networkLinksTable);
+  await db.delete(managedDevicesTable);
+  await db.delete(controllersTable);
   await db.delete(ticketUpdatesTable);
   await db.delete(ticketsTable);
   await db.delete(servicesTable);
@@ -992,6 +1005,434 @@ async function seed() {
       createdAt: t(-h(5.25)),
     },
   ]);
+
+  // ─── Controllers ─────────────────────────────────────────────────────
+  console.log("Creating controllers...");
+  const ctrlNow = new Date();
+  const [merakiCtrl, fortinetCtrl] = await db
+    .insert(controllersTable)
+    .values([
+      {
+        name: "Cisco Meraki Dashboard — Nexatek Org",
+        vendor: "meraki",
+        type: "network_manager",
+        baseUrl: "https://api.meraki.com/api/v1",
+        authType: "api_key",
+        apiKeyEncryptedOrPlaceholder: "placeholder",
+        organizationIdOrTenant: "NXT-ORG-12345",
+        pollingEnabled: true,
+        pollingIntervalSeconds: 300,
+        lastPolledAt: new Date(ctrlNow.getTime() - 5 * 60 * 1000),
+        lastPollStatus: "success",
+        lastPollMessage: "Synced 3 devices, 5 links, 3 events",
+      },
+      {
+        name: "FortiManager — ConvergeX + Pinnacle",
+        vendor: "fortinet",
+        type: "firewall_manager",
+        baseUrl: "https://fortimanager.internal.cvx.io/jsonrpc",
+        authType: "api_key",
+        apiKeyEncryptedOrPlaceholder: "placeholder",
+        organizationIdOrTenant: "CVX-TENANT-01",
+        pollingEnabled: true,
+        pollingIntervalSeconds: 600,
+        lastPolledAt: new Date(ctrlNow.getTime() - 12 * 60 * 1000),
+        lastPollStatus: "success",
+        lastPollMessage: "Synced 3 devices, 3 links, 2 events",
+      },
+    ])
+    .returning();
+
+  // ─── Sync Logs ────────────────────────────────────────────────────────
+  await db.insert(controllerSyncLogsTable).values([
+    {
+      controllerId: merakiCtrl.id,
+      syncType: "full",
+      startedAt: new Date(ctrlNow.getTime() - 5 * 60 * 1000),
+      completedAt: new Date(ctrlNow.getTime() - 4.5 * 60 * 1000),
+      status: "success",
+      message: "Synced 3 devices, 5 links, 3 events",
+      recordsProcessed: 11,
+    },
+    {
+      controllerId: fortinetCtrl.id,
+      syncType: "full",
+      startedAt: new Date(ctrlNow.getTime() - 12 * 60 * 1000),
+      completedAt: new Date(ctrlNow.getTime() - 11 * 60 * 1000),
+      status: "success",
+      message: "Synced 3 devices, 3 links, 2 events",
+      recordsProcessed: 8,
+    },
+    {
+      controllerId: merakiCtrl.id,
+      syncType: "full",
+      startedAt: new Date(ctrlNow.getTime() - 65 * 60 * 1000),
+      completedAt: new Date(ctrlNow.getTime() - 64.5 * 60 * 1000),
+      status: "success",
+      message: "Synced 3 devices, 5 links, 0 new events",
+      recordsProcessed: 8,
+    },
+  ]);
+
+  // ─── Managed Devices ─────────────────────────────────────────────────
+  console.log("Creating managed devices...");
+  const [mxHQ, mxDenver, mxAustin, fgtHQPrimary, fgtHQStandby, fgtChicago] = await db
+    .insert(managedDevicesTable)
+    .values([
+      // Meraki devices (Nexatek)
+      {
+        controllerId: merakiCtrl.id,
+        customerId: nexatek.id,
+        siteId: nxtHQ.id,
+        hostname: "MX-NXT-HQ-Primary",
+        deviceType: "appliance",
+        vendor: "Meraki",
+        serialNumber: "Q2TN-XXXX-NXT1",
+        controllerDeviceId: "Q2TN-XXXX-NXT1",
+        model: "MX84",
+        mgmtIp: "10.0.1.1",
+        status: "online",
+        haState: "active",
+        lastSeenAt: new Date(ctrlNow.getTime() - 2 * 60 * 1000),
+        metadataJson: { networkId: "N_001", productType: "appliance" },
+      },
+      {
+        controllerId: merakiCtrl.id,
+        customerId: nexatek.id,
+        siteId: nxtWarehouse.id,
+        hostname: "MX-NXT-Warehouse",
+        deviceType: "appliance",
+        vendor: "Meraki",
+        serialNumber: "Q2TN-XXXX-NXT2",
+        controllerDeviceId: "Q2TN-XXXX-NXT2",
+        model: "MX67",
+        mgmtIp: "10.1.1.1",
+        status: "offline",
+        lastSeenAt: new Date(ctrlNow.getTime() - 2.2 * 3600 * 1000),
+        metadataJson: { networkId: "N_002", productType: "appliance" },
+      },
+      {
+        controllerId: merakiCtrl.id,
+        customerId: nexatek.id,
+        siteId: nxtDC.id,
+        hostname: "MX-NXT-DC1",
+        deviceType: "appliance",
+        vendor: "Meraki",
+        serialNumber: "Q2TN-XXXX-NXT3",
+        controllerDeviceId: "Q2TN-XXXX-NXT3",
+        model: "MX85",
+        mgmtIp: "10.2.1.1",
+        status: "online",
+        lastSeenAt: new Date(ctrlNow.getTime() - 60 * 1000),
+        metadataJson: { networkId: "N_003", productType: "appliance" },
+      },
+      // Fortinet devices (ConvergeX)
+      {
+        controllerId: fortinetCtrl.id,
+        customerId: convergex.id,
+        siteId: cvxHQ.id,
+        hostname: "FGT-CVX-HQ-01",
+        deviceType: "firewall",
+        vendor: "Fortinet",
+        serialNumber: "FGT60F-FAKESERIAL01",
+        controllerDeviceId: "FGT60F-FAKESERIAL01",
+        model: "FortiGate 60F",
+        mgmtIp: "192.168.1.254",
+        status: "online",
+        haState: "active",
+        lastSeenAt: new Date(ctrlNow.getTime() - 5 * 60 * 1000),
+        metadataJson: { osVersion: "FortiOS 7.4.2", vdom: "root" },
+      },
+      {
+        controllerId: fortinetCtrl.id,
+        customerId: convergex.id,
+        siteId: cvxHQ.id,
+        hostname: "FGT-CVX-HQ-02",
+        deviceType: "firewall",
+        vendor: "Fortinet",
+        serialNumber: "FGT60F-FAKESERIAL02",
+        controllerDeviceId: "FGT60F-FAKESERIAL02",
+        model: "FortiGate 60F",
+        mgmtIp: "192.168.1.253",
+        status: "online",
+        haState: "standby",
+        lastSeenAt: new Date(ctrlNow.getTime() - 5 * 60 * 1000),
+        metadataJson: { osVersion: "FortiOS 7.4.2", vdom: "root", haRole: "standby" },
+      },
+      {
+        controllerId: fortinetCtrl.id,
+        customerId: pinnacle.id,
+        siteId: pnlMemphis.id,
+        hostname: "FGT-PNL-Memphis",
+        deviceType: "firewall",
+        vendor: "Fortinet",
+        serialNumber: "FGT40F-FAKESERIAL03",
+        controllerDeviceId: "FGT40F-FAKESERIAL03",
+        model: "FortiGate 40F",
+        mgmtIp: "10.5.1.254",
+        status: "degraded",
+        haState: "standalone",
+        lastSeenAt: new Date(ctrlNow.getTime() - 12 * 60 * 1000),
+        metadataJson: { osVersion: "FortiOS 7.2.8", vdom: "root" },
+      },
+    ])
+    .returning();
+
+  // ─── Network Links ────────────────────────────────────────────────────
+  console.log("Creating network links...");
+  await db.insert(networkLinksTable).values([
+    // Nexatek HQ — primary DIA up, LTE backup up
+    {
+      managedDeviceId: mxHQ.id,
+      customerId: nexatek.id,
+      siteId: nxtHQ.id,
+      linkName: "WAN1 - AT&T Fiber DIA",
+      linkType: "internet",
+      providerName: "AT&T Business",
+      circuitId: "ATT-DIA-290183-A",
+      role: "primary",
+      status: "up",
+      latencyMs: 8.2,
+      jitterMs: 0.4,
+      packetLossPct: 0.0,
+      lastPolledAt: new Date(ctrlNow.getTime() - 2 * 60 * 1000),
+      metadataJson: { interface: "WAN1", publicIp: "12.34.56.78" },
+    },
+    {
+      managedDeviceId: mxHQ.id,
+      customerId: nexatek.id,
+      siteId: nxtHQ.id,
+      linkName: "WAN2 - Verizon LTE Backup",
+      linkType: "lte",
+      providerName: "Verizon",
+      role: "backup",
+      status: "up",
+      latencyMs: 42.1,
+      jitterMs: 3.8,
+      packetLossPct: 0.2,
+      lastPolledAt: new Date(ctrlNow.getTime() - 2 * 60 * 1000),
+      metadataJson: { interface: "WAN2" },
+    },
+    // Nexatek Warehouse — PRIMARY DOWN, LTE FAILOVER ACTIVE
+    {
+      managedDeviceId: mxDenver.id,
+      customerId: nexatek.id,
+      siteId: nxtWarehouse.id,
+      linkName: "WAN1 - Comcast Business",
+      linkType: "broadband",
+      providerName: "Comcast Business",
+      circuitId: "CMC-BIZ-190224-B",
+      role: "primary",
+      status: "down",
+      packetLossPct: 100,
+      lastPolledAt: new Date(ctrlNow.getTime() - 2.2 * 3600 * 1000),
+      metadataJson: { interface: "WAN1", lastStatusChange: new Date(ctrlNow.getTime() - 2.2 * 3600 * 1000).toISOString() },
+    },
+    {
+      managedDeviceId: mxDenver.id,
+      customerId: nexatek.id,
+      siteId: nxtWarehouse.id,
+      linkName: "WAN2 - AT&T LTE Failover",
+      linkType: "lte",
+      providerName: "AT&T",
+      role: "backup",
+      status: "up",
+      latencyMs: 55.3,
+      jitterMs: 6.1,
+      packetLossPct: 0.8,
+      lastPolledAt: new Date(ctrlNow.getTime() - 2.2 * 3600 * 1000),
+      metadataJson: { interface: "WAN2", failoverActive: true },
+    },
+    // Nexatek DC
+    {
+      managedDeviceId: mxAustin.id,
+      customerId: nexatek.id,
+      siteId: nxtDC.id,
+      linkName: "WAN1 - Zayo 10G",
+      linkType: "internet",
+      providerName: "Zayo",
+      circuitId: "ZYO-DIA-NXT-DC1",
+      role: "primary",
+      status: "up",
+      latencyMs: 5.1,
+      jitterMs: 0.2,
+      packetLossPct: 0.0,
+      lastPolledAt: new Date(ctrlNow.getTime() - 60 * 1000),
+      metadataJson: { interface: "WAN1" },
+    },
+    // ConvergeX HQ Fortinet
+    {
+      managedDeviceId: fgtHQPrimary.id,
+      customerId: convergex.id,
+      siteId: cvxHQ.id,
+      linkName: "WAN1 - Zayo Fiber",
+      linkType: "internet",
+      providerName: "Zayo",
+      circuitId: "ZYO-DIA-882901-Z",
+      role: "primary",
+      status: "up",
+      latencyMs: 6.1,
+      jitterMs: 0.3,
+      packetLossPct: 0.0,
+      lastPolledAt: new Date(ctrlNow.getTime() - 5 * 60 * 1000),
+      metadataJson: { interface: "wan1", sdwanMember: 1 },
+    },
+    {
+      managedDeviceId: fgtHQPrimary.id,
+      customerId: convergex.id,
+      siteId: cvxHQ.id,
+      linkName: "WAN2 - Lumen MPLS",
+      linkType: "mpls",
+      providerName: "Lumen",
+      circuitId: "LMN-MPLS-449102-M",
+      role: "backup",
+      status: "up",
+      latencyMs: 15.4,
+      jitterMs: 1.2,
+      packetLossPct: 0.0,
+      lastPolledAt: new Date(ctrlNow.getTime() - 5 * 60 * 1000),
+      metadataJson: { interface: "wan2", sdwanMember: 2 },
+    },
+    // Pinnacle Memphis — degraded link
+    {
+      managedDeviceId: fgtChicago.id,
+      customerId: pinnacle.id,
+      siteId: pnlMemphis.id,
+      linkName: "WAN1 - Comcast Fiber",
+      linkType: "internet",
+      providerName: "Comcast Business",
+      circuitId: "CMC-BIZ-551033-D",
+      role: "primary",
+      status: "degraded",
+      latencyMs: 142.8,
+      jitterMs: 38.5,
+      packetLossPct: 12.3,
+      lastPolledAt: new Date(ctrlNow.getTime() - 12 * 60 * 1000),
+      metadataJson: { interface: "wan1", sdwanHealthCheck: "failing" },
+    },
+  ]);
+
+  // ─── Device Events ────────────────────────────────────────────────────
+  console.log("Creating device events...");
+  const [wanDownEvt, fgtHaEvt, degradedEvt] = await db
+    .insert(deviceEventsTable)
+    .values([
+      {
+        controllerId: merakiCtrl.id,
+        managedDeviceId: mxDenver.id,
+        customerId: nexatek.id,
+        siteId: nxtWarehouse.id,
+        rawEventId: "meraki-evt-001",
+        eventSource: "meraki_dashboard",
+        severity: "high",
+        eventType: "wan_status_change",
+        title: "WAN1 link down — Nexatek Warehouse (Comcast Business)",
+        description: "Primary WAN interface (Comcast Business, CMC-BIZ-190224-B) went offline. LTE failover is active on WAN2. Device is reachable via backup path.",
+        rawPayloadJson: {
+          type: "wan_status_change",
+          networkId: "N_002",
+          deviceSerial: "Q2TN-XXXX-NXT2",
+          uplink: "WAN1",
+          from: "active",
+          to: "failed",
+          circuitId: "CMC-BIZ-190224-B",
+        },
+        occurredAt: new Date(ctrlNow.getTime() - 2.2 * 3600 * 1000),
+      },
+      {
+        controllerId: fortinetCtrl.id,
+        managedDeviceId: fgtHQPrimary.id,
+        customerId: convergex.id,
+        siteId: cvxHQ.id,
+        rawEventId: "fgt-evt-001",
+        eventSource: "fortigate_system",
+        severity: "high",
+        eventType: "ha_failover",
+        title: "HA failover detected — FGT-CVX-HQ cluster",
+        description: "FortiGate HA cluster performed a failover event. FGT-CVX-HQ-02 (standby) was promoted to active. Traffic interruption estimated 2-5 seconds. Root cause: FGT-CVX-HQ-01 NIC heartbeat timeout.",
+        rawPayloadJson: {
+          logid: "0100032001",
+          type: "event",
+          subtype: "ha",
+          level: "warning",
+          msg: "HA master/slave changed",
+          newmaster: "FGT60F-FAKESERIAL02",
+          reason: "heartbeat_timeout",
+        },
+        occurredAt: new Date(ctrlNow.getTime() - 4.2 * 3600 * 1000),
+      },
+      {
+        controllerId: fortinetCtrl.id,
+        managedDeviceId: fgtChicago.id,
+        customerId: pinnacle.id,
+        siteId: pnlMemphis.id,
+        rawEventId: "fgt-evt-002",
+        eventSource: "fortigate_sdwan",
+        severity: "medium",
+        eventType: "sdwan_link_quality",
+        title: "SD-WAN link quality degraded — Pinnacle Memphis (Comcast)",
+        description: "WAN1 SD-WAN health check failing on Pinnacle Memphis FortiGate. Packet loss 12.3%, latency 142ms. Threshold: latency > 100ms, loss > 5%. Service may route to backup if available.",
+        rawPayloadJson: {
+          logid: "0117044545",
+          type: "event",
+          subtype: "sdwan",
+          level: "warning",
+          interface: "wan1",
+          packetloss: 12.3,
+          latency: 142.8,
+          jitter: 38.5,
+          healthcheck: "comcast_hc",
+          status: "fail",
+        },
+        occurredAt: new Date(ctrlNow.getTime() - 55 * 60 * 1000),
+      },
+    ])
+    .returning();
+
+  // ─── Incident Correlations ────────────────────────────────────────────
+  // Link events to the seed tickets (find relevant open tickets)
+  console.log("Creating incident correlations...");
+
+  // Find tickets for nexatek/convergex/pinnacle that might be open
+  const allTickets = await db.select().from(ticketsTable);
+  const nexatekOpenTickets = allTickets.filter(
+    (t) => t.customerId === nexatek.id && !["resolved", "closed"].includes(t.status)
+  );
+  const convergexOpenTickets = allTickets.filter(
+    (t) => t.customerId === convergex.id && !["resolved", "closed"].includes(t.status)
+  );
+  const pinnacleOpenTickets = allTickets.filter(
+    (t) => t.customerId === pinnacle.id && !["resolved", "closed"].includes(t.status)
+  );
+
+  // Correlate WAN down event to a Nexatek open ticket if one exists
+  if (nexatekOpenTickets.length > 0) {
+    await db.insert(incidentCorrelationsTable).values({
+      ticketId: nexatekOpenTickets[0].id,
+      deviceEventId: wanDownEvt.id,
+      correlationType: "trigger",
+    });
+    // Mark that ticket as controller-sourced
+    await db.update(ticketsTable)
+      .set({ incidentSource: "controller", impactedDeviceId: mxDenver.id, failoverActive: true })
+      .where(eq(ticketsTable.id, nexatekOpenTickets[0].id));
+  }
+
+  if (convergexOpenTickets.length > 0) {
+    await db.insert(incidentCorrelationsTable).values({
+      ticketId: convergexOpenTickets[0].id,
+      deviceEventId: fgtHaEvt.id,
+      correlationType: "trigger",
+    });
+  }
+
+  if (pinnacleOpenTickets.length > 0) {
+    await db.insert(incidentCorrelationsTable).values({
+      ticketId: pinnacleOpenTickets[0].id,
+      deviceEventId: degradedEvt.id,
+      correlationType: "related",
+    });
+  }
 
   console.log("\nSeed complete! Login credentials:");
   console.log("  Admin: admin@serviceassurance.ai / Admin123!");

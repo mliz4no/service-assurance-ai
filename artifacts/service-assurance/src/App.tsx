@@ -22,6 +22,12 @@ import TicketNew from "@/pages/tickets/new";
 import TicketDetail from "@/pages/tickets/detail";
 import AdminPanel from "@/pages/admin/index";
 import MyTickets from "@/pages/my-tickets";
+import ControllersPage from "@/pages/controllers/index";
+import ControllerDetailPage from "@/pages/controllers/detail";
+import DevicesPage from "@/pages/devices/index";
+import DeviceDetailPage from "@/pages/devices/detail";
+import NetworkLinksPage from "@/pages/network-links/index";
+import EventMonitorPage from "@/pages/events/index";
 import NotFound from "@/pages/not-found";
 
 const queryClient = new QueryClient({
@@ -85,6 +91,24 @@ function Router() {
       </Route>
       <Route path="/my-tickets">
         <ProtectedRoute><MyTickets /></ProtectedRoute>
+      </Route>
+      <Route path="/controllers">
+        <ProtectedRoute><ControllersPage /></ProtectedRoute>
+      </Route>
+      <Route path="/controllers/:id">
+        <ProtectedRoute><ControllerDetailPage /></ProtectedRoute>
+      </Route>
+      <Route path="/devices">
+        <ProtectedRoute><DevicesPage /></ProtectedRoute>
+      </Route>
+      <Route path="/devices/:id">
+        <ProtectedRoute><DeviceDetailPage /></ProtectedRoute>
+      </Route>
+      <Route path="/network-links">
+        <ProtectedRoute><NetworkLinksPage /></ProtectedRoute>
+      </Route>
+      <Route path="/events">
+        <ProtectedRoute><EventMonitorPage /></ProtectedRoute>
       </Route>
 
       <Route component={NotFound} />

@@ -352,3 +352,134 @@ ${sourceText}`;
 export async function testNormalization(text: string): Promise<NormalizeResult> {
   return normalizeStatus({ text });
 }
+
+// ── Controller event AI functions ───────────────────────────────────────
+
+export interface ControllerEventSummaryResult {
+  summary: string;
+  confidence: number;
+  normalizedStatus?: string;
+  sourceText: string;
+}
+
+export interface ProbableImpactResult {
+  probableImpact: string;
+  confidence: number;
+  sourceText: string;
+}
+
+function validateControllerSummaryResponse(raw: unknown): { summary: string; confidence: number; normalizedStatus?: string } | null {
+  if (!raw || typeof raw !== "object") return null;
+  const r = raw as Record<string, unknown>;
+  if (typeof r.summary !== "string" || r.summary.length < 5) return null;
+  return {
+    summary: r.summary,
+    confidence: clampConfidence(r.confidence),
+    normalizedStatus: typeof r.normalizedStatus === "string" ? r.normalizedStatus : undefined,
+  };
+}
+
+function validateProbableImpactResponse(raw: unknown): { probableImpact: string; confidence: number } | null {
+  if (!raw || typeof raw !== "object") return null;
+  const r = raw as Record<string, unknown>;
+  if (typeof r.probableImpact !== "string" || r.probableImpact.length < 5) return null;
+  return {
+    probableImpact: r.probableImpact,
+    confidence: clampConfidence(r.confidence),
+  };
+}
+
+/**
+ * Summarize a controller-sourced device/link event for NOC operations view.
+ */
+export async function summarizeControllerEvent(params: {
+  title: string;
+  description: string | null;
+  eventType: string;
+  severity: string;
+  vendor: string;
+  deviceType: string | null;
+  deviceStatus: string | null;
+}): Promise<ControllerEventSummaryResult> {
+  const sourceText = [
+    `TITLE: ${params.title}`,
+    `EVENT TYPE: ${params.eventType} | SEVERITY: ${params.severity}`,
+    `VENDOR: ${params.vendor} | DEVICE TYPE: ${params.deviceType ?? "unknown"}`,
+    params.deviceStatus ? `DEVICE STATUS: ${params.deviceStatus}` : "",
+    `DESCRIPTION: ${params.description ?? "No description provided"}`,
+  ]
+    .filter(Boolean)
+    .join("\n");
+
+  const prompt = `You are analyzing a controller-generated network event from a telecom managed services platform.
+
+Return EXACTLY this JSON structure:
+{
+  "summary": "2-3 sentence NOC-ready summary. Name the vendor, device type, and event. State what is known about impact. Do not speculate about root cause.",
+  "confidence": <integer 0-100>,
+  "normalizedStatus": "<one of: investigating | vendor_engaged | monitoring | resolved | unknown>"
+}
+
+${sourceText}`;
+
+  try {
+    const result = await callOpenAIJson(
+      prompt,
+      validateControllerSummaryResponse,
+      { summary: `${params.vendor} event: ${params.title}`, confidence: 0 }
+    );
+    return { ...result, sourceText };
+  } catch (err) {
+    logger.error({ err }, "AI controller event summary failed");
+    throw err;
+  }
+}
+
+/**
+ * Infer probable business/service impact from a controller event.
+ */
+export async function inferProbableImpact(params: {
+  title: string;
+  description: string | null;
+  eventType: string;
+  severity: string;
+  vendor: string;
+  deviceType: string | null;
+}): Promise<ProbableImpactResult> {
+  const sourceText = [
+    `TITLE: ${params.title}`,
+    `EVENT TYPE: ${params.eventType} | SEVERITY: ${params.severity}`,
+    `VENDOR: ${params.vendor} | DEVICE TYPE: ${params.deviceType ?? "unknown"}`,
+    `DESCRIPTION: ${params.description ?? "No description provided"}`,
+  ]
+    .filter(Boolean)
+    .join("\n");
+
+  const prompt = `Based on this controller event, infer the probable business/service impact in telecom operations terms.
+
+Return EXACTLY this JSON structure:
+{
+  "probableImpact": "1-2 sentences describing the probable impact on end users or services. Be specific about what services may be affected. Do not speculate beyond what the event data supports.",
+  "confidence": <integer 0-100>
+}
+
+RULES:
+- If primary WAN is down but backup/LTE failover is active, mention degraded (not full outage) impact
+- If HA failover occurred, mention brief disruption (seconds) rather than extended outage
+- If link is degraded (not down), mention performance impact rather than full outage
+- If informational, mention no user impact expected
+
+${sourceText}`;
+
+  try {
+    const result = await callOpenAIJson(
+      prompt,
+      validateProbableImpactResponse,
+      { probableImpact: `${params.vendor} event may impact connected services.`, confidence: 0 }
+    );
+    return { ...result, sourceText };
+  } catch (err) {
+    logger.error({ err }, "AI probable impact inference failed");
+    throw err;
+  }
+}

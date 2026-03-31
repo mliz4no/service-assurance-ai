@@ -1,4 +1,6 @@
 import { pgTable, text, timestamp, uuid, numeric } from "drizzle-orm/pg-core";
+// Note: primaryManagedDeviceId is stored as a plain uuid (no FK constraint) to avoid circular schema import
+
 import { createInsertSchema } from "drizzle-zod";
 import { z } from "zod/v4";
 import { customersTable } from "./customers";
@@ -17,6 +19,7 @@ export const servicesTable = pgTable("services", {
   monthlyRecurringCharge: numeric("monthly_recurring_charge", { precision: 10, scale: 2 }),
   supportReference: text("support_reference"),
   notes: text("notes"),
+  primaryManagedDeviceId: uuid("primary_managed_device_id"),
   createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
   updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow().$onUpdate(() => new Date()),
 });

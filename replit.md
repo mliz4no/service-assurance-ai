@@ -18,12 +18,30 @@ A full-stack enterprise telecom service assurance and ticket orchestration platf
 - **Customer / Site / Service / Circuit management** — full CRUD
 - **Multi-vendor ticket management** — with SLA tracking, escalation flags, vendor ticket IDs
 - **AI-powered capabilities** (OpenAI gpt-4o-mini):
-  - Ticket summarization
-  - Status normalization
-  - Customer update generation
+  - Ticket summarization, status normalization, customer update generation
+  - Controller event analysis (`summarizeControllerEvent`, `inferProbableImpact`)
 - **Role-based auth**: admin / ops / customer (Bearer token, in-memory session store)
 - **Dashboard**: KPI stat cards, recent tickets, escalation queue
 - **Admin panel**: SLA policy CRUD, user management, config health, AI test panel
+
+### Controller Integrations (new)
+- **Controllers** (`/controllers`) — Cisco Meraki and Fortinet controller CRUD, test connection, sync now
+- **Managed Devices** (`/devices`) — Devices registered from controllers; status online/offline/degraded, HA state, customer/site mapping
+- **Network Links** (`/network-links`) — WAN uplinks, VPN tunnels, LTE backup, SD-WAN transports; real-time metrics (latency, jitter, packet loss)
+- **Event Monitor** (`/events`) — Controller-sourced events with severity badges; click-through AI analysis panel; incident correlation to tickets
+- **Incident Correlator** — Auto-correlates controller events to existing tickets; writes `incidentCorrelations` rows and flags tickets as controller-sourced with failover state
+
+### New DB Tables (controller module)
+`controllers`, `managed_devices`, `network_links`, `device_events`, `controller_sync_logs`, `incident_correlations`
+
+### New API Routes
+- `GET/POST /api/controllers`, `GET/PUT/DELETE /api/controllers/:id`, `POST /api/controllers/:id/test`, `POST /api/controllers/:id/sync`
+- `GET /api/devices`, `GET/PUT /api/devices/:id`
+- `GET /api/network-links`
+- `GET /api/device-events`, `GET /api/device-events/:id`, `POST /api/device-events/:id/ai-analyze`
+
+### Custom Frontend Hooks
+`artifacts/service-assurance/src/lib/controller-hooks.ts` — hand-written React Query hooks for controller module endpoints (not in OpenAPI spec/generated client)
 
 ## Auth
 

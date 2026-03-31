@@ -8,6 +8,10 @@ import ticketsRouter from "./tickets";
 import slaPoliciesRouter from "./sla-policies";
 import usersRouter from "./users";
 import dashboardRouter from "./dashboard";
+import controllersRouter from "./controllers";
+import devicesRouter from "./devices";
+import networkLinksRouter from "./network-links";
+import deviceEventsRouter from "./device-events";
 
 const router: IRouter = Router();
 
@@ -20,5 +24,9 @@ router.use(ticketsRouter);
 router.use(slaPoliciesRouter);
 router.use(usersRouter);
 router.use(dashboardRouter);
+router.use(controllersRouter);
+router.use(devicesRouter);
+router.use(networkLinksRouter);
+router.use(deviceEventsRouter);
 
 export default router;

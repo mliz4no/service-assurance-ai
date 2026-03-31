@@ -10,7 +10,10 @@ import {
   Settings,
   LogOut,
   User as UserIcon,
-  Search
+  Search,
+  Server,
+  Network,
+  Activity
 } from "lucide-react";
 import { useLogout } from "@workspace/api-client-react";
 import { Button } from "@/components/ui/button";
@@ -47,6 +50,10 @@ export function AppLayout({ children, title }: AppLayoutProps) {
     { href: "/customers", label: "Customers", icon: Building2 },
     { href: "/sites", label: "Sites", icon: MapPin },
     { href: "/services", label: "Services", icon: Globe2 },
+    { href: "/controllers", label: "Controllers", icon: Server },
+    { href: "/devices", label: "Devices", icon: Server },
+    { href: "/network-links", label: "Network Links", icon: Network },
+    { href: "/events", label: "Event Monitor", icon: Activity },
     ...(user?.role === "admin" ? [{ href: "/admin", label: "Admin", icon: Settings }] : []),
   ] : [
     { href: "/my-tickets", label: "My Tickets", icon: TicketCheck },
