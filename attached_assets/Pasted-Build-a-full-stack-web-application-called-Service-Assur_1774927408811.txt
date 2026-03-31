@@ -1,0 +1,337 @@
+Build a full-stack web application called “Service Assurance AI” for telecom aggregators, technology advisors, and managed service providers.
+
+The app is an AI-powered service assurance and ticket orchestration MVP. It should help users manage customers, sites, telecom services/circuits, trouble tickets, vendor ticket references, SLA timers, and AI-generated summaries/status updates.
+
+Tech requirements:
+- Use a modern full-stack JavaScript/TypeScript stack
+- Frontend: React with a clean business SaaS UI
+- Backend: Node.js with Express or similar
+- Database: PostgreSQL
+- ORM: Prisma preferred
+- Use server-side API routes
+- Make the app runnable inside Replit
+- Include clear environment variable support
+- Include a README with setup instructions
+- Structure the app cleanly so I can continue enhancing it later
+
+Core product concept:
+This is NOT a network monitoring platform. It is a workflow and visibility platform for service assurance.
+The app must track telecom services and support tickets across multiple vendors/carriers, and use AI to summarize and normalize messy ticket updates.
+
+Main user roles for MVP:
+- Admin
+- Operations user
+- Read-only customer user
+
+Authentication:
+- Build simple email/password authentication
+- Use role-based access control
+- Seed one default admin user in development
+
+Main entities and data model:
+1. Customer
+- id
+- name
+- accountNumber (optional)
+- status (active, inactive)
+- primaryContactName
+- primaryContactEmail
+- primaryContactPhone
+- notes
+- createdAt
+- updatedAt
+
+2. Site
+- id
+- customerId
+- siteName
+- address1
+- address2
+- city
+- state
+- postalCode
+- country
+- timezone
+- siteCode (optional)
+- notes
+- createdAt
+- updatedAt
+
+3. Service
+- id
+- customerId
+- siteId
+- vendorName
+- serviceType (DIA, Broadband, SD-WAN, Voice, Wireless, Other)
+- circuitId
+- bandwidth
+- status (active, pending, down, impaired, disconnected)
+- installDate (optional)
+- monthlyRecurringCharge (optional)
+- supportReference (optional)
+- notes
+- createdAt
+- updatedAt
+
+4. Ticket
+- id
+- ticketNumber (human-readable auto-generated)
+- customerId
+- siteId
+- serviceId
+- title
+- description
+- source (manual, email, api)
+- severity (low, medium, high, critical)
+- status (new, investigating, vendor_engaged, dispatch_scheduled, monitoring, resolved, closed)
+- outageType (outage, impairment, informational, unknown)
+- vendorTicketId (optional)
+- assignedToUserId (optional)
+- openedAt
+- lastUpdatedAt
+- resolvedAt (optional)
+- nextEscalationAt (optional)
+- slaTargetMinutes (optional)
+- aiSummary (optional)
+- aiNormalizedStatus (optional)
+- aiCustomerUpdate (optional)
+- createdAt
+- updatedAt
+
+5. TicketUpdate
+- id
+- ticketId
+- updateType (internal_note, vendor_update, customer_update, system_event, ai_generated)
+- rawText
+- normalizedStatus (optional)
+- visibility (internal, customer)
+- createdByUserId (optional)
+- createdAt
+
+6. User
+- id
+- name
+- email
+- passwordHash
+- role (admin, ops, customer)
+- customerId (optional only for customer users)
+- createdAt
+- updatedAt
+
+7. SLA Policy
+- id
+- name
+- severity
+- initialResponseMinutes
+- escalationMinutes
+- resolutionTargetMinutes
+- isDefault
+- createdAt
+- updatedAt
+
+Main pages and UI:
+1. Login page
+2. Dashboard
+3. Customers list
+4. Customer detail page
+5. Sites list and detail
+6. Services list and detail
+7. Tickets list
+8. Ticket detail page
+9. Admin settings page
+10. Simple customer-facing ticket view for customer users
+
+Dashboard requirements:
+- Cards for:
+  - total active customers
+  - total active services
+  - open tickets
+  - critical tickets
+  - tickets breaching SLA
+- Table of recent tickets
+- Table or list of tickets needing escalation
+- Filters by severity and status
+
+Customers module:
+- CRUD for customers
+- On customer detail page show related sites, services, and tickets
+
+Sites module:
+- CRUD for sites
+- Each site belongs to one customer
+- Show services and tickets for the site
+
+Services module:
+- CRUD for services
+- Each service belongs to one customer and one site
+- Show service status and linked tickets
+- Include search by circuitId, vendorName, and customer
+
+Tickets module:
+- Create ticket manually
+- Link ticket to customer, site, and service
+- Auto-generate ticketNumber like SA-1001, SA-1002, etc.
+- Tickets list page must support:
+  - search
+  - filters by status, severity, vendor, customer
+  - sort by opened date or next escalation
+- Ticket detail page must include:
+  - core ticket details
+  - timeline of updates
+  - vendor ticket reference
+  - AI summary panel
+  - AI normalized status
+  - AI generated customer update
+  - escalation timer information
+  - buttons to add internal update, vendor update, customer update
+  - button to run AI analysis again
+
+AI features:
+Use OpenAI API. Make the integration modular.
+Add environment variable for OPENAI_API_KEY.
+
+Implement 3 AI functions for MVP:
+1. Ticket summarization
+Input:
+- ticket title
+- description
+- latest updates
+Output:
+- concise operational summary for internal ops team
+
+2. Status normalization
+Input:
+- messy vendor or engineer update text
+Output:
+- normalized telecom-friendly status from a controlled set:
+  - investigating
+  - vendor engaged
+  - dispatch scheduled
+  - awaiting update
+  - monitoring
+  - resolved
+  - unknown
+
+3. Customer update generation
+Input:
+- title
+- latest status
+- recent updates
+Output:
+- short professional customer-facing update with no overpromising
+
+Important AI implementation rules:
+- AI output should always be stored in the database
+- Show when AI output was last generated
+- Allow manual override by user
+- Include prompt templates in code as separate helper functions so they can be edited easily
+- Include basic error handling if AI call fails
+- Make prompts telecom/service-assurance aware
+
+Suggested AI behavior:
+- Keep summaries concise and operationally useful
+- Avoid hallucinating root cause
+- If uncertain, say uncertain
+- Never fabricate ETA
+- Customer updates should be calm, professional, and short
+
+Escalation/SLA logic:
+- Add SLA policy support
+- When a ticket is created, assign default SLA based on severity
+- Compute nextEscalationAt based on SLA policy
+- Dashboard should flag tickets that are overdue for escalation
+- Add a background-safe server utility or endpoint that can scan for overdue tickets and mark them for attention
+- Do not build email notifications yet, just build the logic and UI indicators
+
+Seed data:
+Include development seed data for:
+- 3 customers
+- 5 sites
+- 8 services
+- 6 tickets
+- 2 SLA policies
+- 1 admin user
+- 1 ops user
+- 1 customer user
+
+Design and UX:
+- Clean modern SaaS design
+- Sidebar navigation
+- Top header
+- Responsive layout
+- Use cards, tables, badges, filters, and timeline components
+- Ticket status and severity should be visually distinct
+- Avoid overly flashy styling
+- Use a professional enterprise operations look
+
+API requirements:
+Build RESTful endpoints for:
+- auth
+- customers
+- sites
+- services
+- tickets
+- ticket updates
+- SLA policies
+- AI actions
+
+Add specific AI endpoints:
+- POST /api/tickets/:id/ai/summarize
+- POST /api/tickets/:id/ai/normalize-latest-update
+- POST /api/tickets/:id/ai/generate-customer-update
+
+Ticket detail workflow:
+When a user opens a ticket detail page, they should be able to:
+- review raw updates
+- see AI summary
+- see AI normalized status
+- generate a customer update
+- add a new update
+- re-run AI analysis
+- manually change ticket status
+- manually set vendor ticket ID
+
+Admin/settings requirements:
+- Manage SLA policies
+- View users
+- Show environment/config health summary
+- Basic AI test panel where admin can paste sample text and test status normalization
+
+Implementation details:
+- Use Prisma schema with proper relationships
+- Use clean folder structure
+- Add reusable components
+- Add type safety where possible
+- Add form validation
+- Add loading and error states
+- Add search and filtering on major list pages
+- Add empty states
+
+Business rules:
+- A ticket should preferably be linked to a service, but allow tickets without a service for MVP
+- A site must belong to a customer
+- A service must belong to a customer and site
+- Customer users can only see their own customer data
+- Read-only customer users cannot edit internal notes
+- Internal notes should never be visible to customer users
+
+Nice-to-have if easy:
+- File attachment placeholder field on ticket updates
+- CSV export for tickets list
+- Simple audit log entries for ticket status changes
+
+Deliverables:
+- Working full-stack app
+- PostgreSQL schema and migrations
+- Seed script
+- README
+- .env.example
+- Sample prompts/helper files for AI
+- Clean code comments in important places
+
+After generating the app:
+1. Show me the project structure
+2. Explain how to run it in Replit
+3. Point out where to add my OpenAI key
+4. Tell me which file to edit if I want to change AI prompts
+5. Suggest the next 3 improvements after MVP

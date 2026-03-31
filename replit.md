@@ -1,96 +1,69 @@
-# Workspace
+# Service Assurance AI
 
-## Overview
+A full-stack enterprise telecom service assurance and ticket orchestration platform for MSPs, telecom aggregators, and technology advisors.
 
-pnpm workspace monorepo using TypeScript. Each package manages its own dependencies.
+## Architecture
 
-## Stack
+**Monorepo (pnpm workspaces)**
 
-- **Monorepo tool**: pnpm workspaces
-- **Node.js version**: 24
-- **Package manager**: pnpm
-- **TypeScript version**: 5.9
-- **API framework**: Express 5
-- **Database**: PostgreSQL + Drizzle ORM
-- **Validation**: Zod (`zod/v4`), `drizzle-zod`
-- **API codegen**: Orval (from OpenAPI spec)
-- **Build**: esbuild (CJS bundle)
+- `artifacts/api-server` — Express 5 REST API server (port 8080, proxied at `/api`)
+- `artifacts/service-assurance` — React + Vite frontend (port auto-assigned, at `/`)
+- `lib/db` — Drizzle ORM schema + PostgreSQL migrations
+- `lib/api-spec` — OpenAPI 3.1 spec (`openapi.yaml`)
+- `lib/api-client-react` — Generated React Query hooks + Zod schemas (from OpenAPI codegen)
+- `scripts` — Seed script and utilities
 
-## Structure
+## Features
 
-```text
-artifacts-monorepo/
-├── artifacts/              # Deployable applications
-│   └── api-server/         # Express API server
-├── lib/                    # Shared libraries
-│   ├── api-spec/           # OpenAPI spec + Orval codegen config
-│   ├── api-client-react/   # Generated React Query hooks
-│   ├── api-zod/            # Generated Zod schemas from OpenAPI
-│   └── db/                 # Drizzle ORM schema + DB connection
-├── scripts/                # Utility scripts (single workspace package)
-│   └── src/                # Individual .ts scripts, run via `pnpm --filter @workspace/scripts run <script>`
-├── pnpm-workspace.yaml     # pnpm workspace (artifacts/*, lib/*, lib/integrations/*, scripts)
-├── tsconfig.base.json      # Shared TS options (composite, bundler resolution, es2022)
-├── tsconfig.json           # Root TS project references
-└── package.json            # Root package with hoisted devDeps
-```
+- **Customer / Site / Service / Circuit management** — full CRUD
+- **Multi-vendor ticket management** — with SLA tracking, escalation flags, vendor ticket IDs
+- **AI-powered capabilities** (OpenAI gpt-4o-mini):
+  - Ticket summarization
+  - Status normalization
+  - Customer update generation
+- **Role-based auth**: admin / ops / customer (Bearer token, in-memory session store)
+- **Dashboard**: KPI stat cards, recent tickets, escalation queue
+- **Admin panel**: SLA policy CRUD, user management, config health, AI test panel
 
-## TypeScript & Composite Projects
+## Auth
 
-Every package extends `tsconfig.base.json` which sets `composite: true`. The root `tsconfig.json` lists all packages as project references. This means:
+- Bearer token authentication (no cookies/JWTs)
+- Token stored in `localStorage` under key `sa_auth_token`
+- API client reads token via `setAuthTokenGetter` from `@workspace/api-client-react`
+- `ProtectedRoute` component in `auth.tsx` redirects unauthenticated users to `/`
 
-- **Always typecheck from the root** — run `pnpm run typecheck` (which runs `tsc --build --emitDeclarationOnly`). This builds the full dependency graph so that cross-package imports resolve correctly. Running `tsc` inside a single package will fail if its dependencies haven't been built yet.
-- **`emitDeclarationOnly`** — we only emit `.d.ts` files during typecheck; actual JS bundling is handled by esbuild/tsx/vite...etc, not `tsc`.
-- **Project references** — when package A depends on package B, A's `tsconfig.json` must list B in its `references` array. `tsc --build` uses this to determine build order and skip up-to-date packages.
+## Seed Credentials
 
-## Root Scripts
+| Role     | Email                          | Password  |
+|----------|-------------------------------|-----------|
+| Admin    | admin@serviceassurance.ai     | Admin123! |
+| Ops      | ops@serviceassurance.ai       | Ops123!   |
+| Customer | portal@acme.com               | Acme123!  |
 
-- `pnpm run build` — runs `typecheck` first, then recursively runs `build` in all packages that define it
-- `pnpm run typecheck` — runs `tsc --build --emitDeclarationOnly` using project references
+## Key Files
 
-## Packages
+- `artifacts/api-server/src/routes/` — All API route handlers
+- `artifacts/api-server/src/lib/ai.ts` — OpenAI integration
+- `artifacts/api-server/src/lib/session-store.ts` — In-memory session store
+- `lib/db/src/schema/index.ts` — Database schema (Drizzle)
+- `scripts/src/seed.ts` — Database seeder
+- `artifacts/service-assurance/src/App.tsx` — Router with `ProtectedRoute` guards
+- `artifacts/service-assurance/src/lib/auth.tsx` — Auth context + `ProtectedRoute`
+- `artifacts/service-assurance/src/main.tsx` — `setAuthTokenGetter` setup, `saveToken`/`clearToken` helpers
 
-### `artifacts/api-server` (`@workspace/api-server`)
+## Database
 
-Express 5 API server. Routes live in `src/routes/` and use `@workspace/api-zod` for request and response validation and `@workspace/db` for persistence.
+PostgreSQL via `DATABASE_URL` environment variable. Schema pushed with `pnpm --filter @workspace/db run push`. Seed with `pnpm --filter @workspace/scripts run seed`.
 
-- Entry: `src/index.ts` — reads `PORT`, starts Express
-- App setup: `src/app.ts` — mounts CORS, JSON/urlencoded parsing, routes at `/api`
-- Routes: `src/routes/index.ts` mounts sub-routers; `src/routes/health.ts` exposes `GET /health` (full path: `/api/health`)
-- Depends on: `@workspace/db`, `@workspace/api-zod`
-- `pnpm --filter @workspace/api-server run dev` — run the dev server
-- `pnpm --filter @workspace/api-server run build` — production esbuild bundle (`dist/index.cjs`)
-- Build bundles an allowlist of deps (express, cors, pg, drizzle-orm, zod, etc.) and externalizes the rest
+## Environment Variables
 
-### `lib/db` (`@workspace/db`)
+- `DATABASE_URL` — PostgreSQL connection string (auto-provided by Replit)
+- `SESSION_SECRET` — Session signing secret
+- `OPENAI_API_KEY` — Required for AI features (ticket summarization, status normalization, customer updates)
 
-Database layer using Drizzle ORM with PostgreSQL. Exports a Drizzle client instance and schema models.
+## Running
 
-- `src/index.ts` — creates a `Pool` + Drizzle instance, exports schema
-- `src/schema/index.ts` — barrel re-export of all models
-- `src/schema/<modelname>.ts` — table definitions with `drizzle-zod` insert schemas (no models definitions exist right now)
-- `drizzle.config.ts` — Drizzle Kit config (requires `DATABASE_URL`, automatically provided by Replit)
-- Exports: `.` (pool, db, schema), `./schema` (schema only)
-
-Production migrations are handled by Replit when publishing. In development, we just use `pnpm --filter @workspace/db run push`, and we fallback to `pnpm --filter @workspace/db run push-force`.
-
-### `lib/api-spec` (`@workspace/api-spec`)
-
-Owns the OpenAPI 3.1 spec (`openapi.yaml`) and the Orval config (`orval.config.ts`). Running codegen produces output into two sibling packages:
-
-1. `lib/api-client-react/src/generated/` — React Query hooks + fetch client
-2. `lib/api-zod/src/generated/` — Zod schemas
-
-Run codegen: `pnpm --filter @workspace/api-spec run codegen`
-
-### `lib/api-zod` (`@workspace/api-zod`)
-
-Generated Zod schemas from the OpenAPI spec (e.g. `HealthCheckResponse`). Used by `api-server` for response validation.
-
-### `lib/api-client-react` (`@workspace/api-client-react`)
-
-Generated React Query hooks and fetch client from the OpenAPI spec (e.g. `useHealthCheck`, `healthCheck`).
-
-### `scripts` (`@workspace/scripts`)
-
-Utility scripts package. Each script is a `.ts` file in `src/` with a corresponding npm script in `package.json`. Run scripts via `pnpm --filter @workspace/scripts run <script>`. Scripts can import any workspace package (e.g., `@workspace/db`) by adding it as a dependency in `scripts/package.json`.
+All three workflows run automatically:
+1. `artifacts/api-server: API Server` — builds and starts the API
+2. `artifacts/service-assurance: web` — Vite dev server for the frontend
+3. `artifacts/mockup-sandbox: Component Preview Server` — Canvas mockup server (unused in production)

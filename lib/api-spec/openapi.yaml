@@ -1,22 +1,41 @@
 openapi: 3.1.0
 info:
-  # Do not change the title, if the title changes, the import paths will be broken
   title: Api
   version: 0.1.0
-  description: API specification
+  description: Service Assurance AI API
 servers:
   - url: /api
     description: Base API path
 tags:
   - name: health
     description: Health operations
+  - name: auth
+    description: Authentication
+  - name: customers
+    description: Customer management
+  - name: sites
+    description: Site management
+  - name: services
+    description: Service/circuit management
+  - name: tickets
+    description: Ticket management
+  - name: ticket-updates
+    description: Ticket update management
+  - name: sla-policies
+    description: SLA policy management
+  - name: users
+    description: User management
+  - name: ai
+    description: AI-powered operations
+  - name: dashboard
+    description: Dashboard aggregates
+
 paths:
   /healthz:
     get:
       operationId: healthCheck
       tags: [health]
       summary: Health check
-      description: Returns server health status
       responses:
         "200":
           description: Healthy
@@ -24,6 +43,836 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/HealthStatus"
+
+  /auth/login:
+    post:
+      operationId: login
+      tags: [auth]
+      summary: Login with email and password
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/LoginRequest"
+      responses:
+        "200":
+          description: Login successful
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AuthResponse"
+        "401":
+          description: Invalid credentials
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  /auth/logout:
+    post:
+      operationId: logout
+      tags: [auth]
+      summary: Logout current user
+      responses:
+        "200":
+          description: Logged out
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SuccessResponse"
+
+  /auth/me:
+    get:
+      operationId: getCurrentUser
+      tags: [auth]
+      summary: Get current authenticated user
+      responses:
+        "200":
+          description: Current user
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/User"
+        "401":
+          description: Not authenticated
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  /dashboard/summary:
+    get:
+      operationId: getDashboardSummary
+      tags: [dashboard]
+      summary: Get dashboard summary stats
+      responses:
+        "200":
+          description: Dashboard summary
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/DashboardSummary"
+
+  /dashboard/recent-tickets:
+    get:
+      operationId: getRecentTickets
+      tags: [dashboard]
+      summary: Get recent open tickets
+      parameters:
+        - name: limit
+          in: query
+          schema:
+            type: number
+      responses:
+        "200":
+          description: Recent tickets
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/TicketWithRelations"
+
+  /dashboard/escalation-needed:
+    get:
+      operationId: getEscalationNeeded
+      tags: [dashboard]
+      summary: Get tickets needing escalation
+      responses:
+        "200":
+          description: Tickets needing escalation
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/TicketWithRelations"
+
+  /customers:
+    get:
+      operationId: getCustomers
+      tags: [customers]
+      summary: List customers
+      parameters:
+        - name: search
+          in: query
+          schema:
+            type: string
+        - name: status
+          in: query
+          schema:
+            type: string
+      responses:
+        "200":
+          description: List of customers
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Customer"
+    post:
+      operationId: createCustomer
+      tags: [customers]
+      summary: Create a customer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateCustomerRequest"
+      responses:
+        "201":
+          description: Created customer
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Customer"
+
+  /customers/{id}:
+    get:
+      operationId: getCustomer
+      tags: [customers]
+      summary: Get customer by ID
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Customer
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CustomerWithRelations"
+        "404":
+          description: Not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+    put:
+      operationId: updateCustomer
+      tags: [customers]
+      summary: Update a customer
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UpdateCustomerRequest"
+      responses:
+        "200":
+          description: Updated customer
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Customer"
+    delete:
+      operationId: deleteCustomer
+      tags: [customers]
+      summary: Delete a customer
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Deleted
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SuccessResponse"
+
+  /sites:
+    get:
+      operationId: getSites
+      tags: [sites]
+      summary: List sites
+      parameters:
+        - name: customerId
+          in: query
+          schema:
+            type: string
+        - name: search
+          in: query
+          schema:
+            type: string
+      responses:
+        "200":
+          description: List of sites
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/SiteWithCustomer"
+    post:
+      operationId: createSite
+      tags: [sites]
+      summary: Create a site
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateSiteRequest"
+      responses:
+        "201":
+          description: Created site
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Site"
+
+  /sites/{id}:
+    get:
+      operationId: getSite
+      tags: [sites]
+      summary: Get site by ID
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Site
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SiteWithRelations"
+        "404":
+          description: Not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+    put:
+      operationId: updateSite
+      tags: [sites]
+      summary: Update a site
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UpdateSiteRequest"
+      responses:
+        "200":
+          description: Updated site
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Site"
+    delete:
+      operationId: deleteSite
+      tags: [sites]
+      summary: Delete a site
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Deleted
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SuccessResponse"
+
+  /services:
+    get:
+      operationId: getServices
+      tags: [services]
+      summary: List services
+      parameters:
+        - name: customerId
+          in: query
+          schema:
+            type: string
+        - name: siteId
+          in: query
+          schema:
+            type: string
+        - name: search
+          in: query
+          schema:
+            type: string
+        - name: status
+          in: query
+          schema:
+            type: string
+        - name: vendorName
+          in: query
+          schema:
+            type: string
+      responses:
+        "200":
+          description: List of services
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/ServiceWithRelations"
+    post:
+      operationId: createService
+      tags: [services]
+      summary: Create a service
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateServiceRequest"
+      responses:
+        "201":
+          description: Created service
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Service"
+
+  /services/{id}:
+    get:
+      operationId: getService
+      tags: [services]
+      summary: Get service by ID
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Service
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ServiceWithRelations"
+        "404":
+          description: Not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+    put:
+      operationId: updateService
+      tags: [services]
+      summary: Update a service
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UpdateServiceRequest"
+      responses:
+        "200":
+          description: Updated service
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Service"
+    delete:
+      operationId: deleteService
+      tags: [services]
+      summary: Delete a service
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Deleted
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SuccessResponse"
+
+  /tickets:
+    get:
+      operationId: getTickets
+      tags: [tickets]
+      summary: List tickets
+      parameters:
+        - name: search
+          in: query
+          schema:
+            type: string
+        - name: status
+          in: query
+          schema:
+            type: string
+        - name: severity
+          in: query
+          schema:
+            type: string
+        - name: customerId
+          in: query
+          schema:
+            type: string
+        - name: siteId
+          in: query
+          schema:
+            type: string
+        - name: vendorName
+          in: query
+          schema:
+            type: string
+        - name: sortBy
+          in: query
+          schema:
+            type: string
+        - name: sortOrder
+          in: query
+          schema:
+            type: string
+      responses:
+        "200":
+          description: List of tickets
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/TicketWithRelations"
+    post:
+      operationId: createTicket
+      tags: [tickets]
+      summary: Create a ticket
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateTicketRequest"
+      responses:
+        "201":
+          description: Created ticket
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Ticket"
+
+  /tickets/{id}:
+    get:
+      operationId: getTicket
+      tags: [tickets]
+      summary: Get ticket by ID
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Ticket with full details
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/TicketDetail"
+        "404":
+          description: Not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+    put:
+      operationId: updateTicket
+      tags: [tickets]
+      summary: Update a ticket
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UpdateTicketRequest"
+      responses:
+        "200":
+          description: Updated ticket
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Ticket"
+
+  /tickets/{id}/updates:
+    get:
+      operationId: getTicketUpdates
+      tags: [ticket-updates]
+      summary: Get updates for a ticket
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Ticket updates
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/TicketUpdate"
+    post:
+      operationId: createTicketUpdate
+      tags: [ticket-updates]
+      summary: Add an update to a ticket
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateTicketUpdateRequest"
+      responses:
+        "201":
+          description: Created ticket update
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/TicketUpdate"
+
+  /tickets/{id}/ai/summarize:
+    post:
+      operationId: aiSummarizeTicket
+      tags: [ai]
+      summary: Generate AI summary for a ticket
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: AI summary result
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AiSummarizeResponse"
+
+  /tickets/{id}/ai/normalize-latest-update:
+    post:
+      operationId: aiNormalizeLatestUpdate
+      tags: [ai]
+      summary: Normalize the latest vendor update status
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: AI normalized status
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AiNormalizeResponse"
+
+  /tickets/{id}/ai/generate-customer-update:
+    post:
+      operationId: aiGenerateCustomerUpdate
+      tags: [ai]
+      summary: Generate a customer-facing update
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: AI customer update
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AiCustomerUpdateResponse"
+
+  /sla-policies:
+    get:
+      operationId: getSlaPolicies
+      tags: [sla-policies]
+      summary: List SLA policies
+      responses:
+        "200":
+          description: SLA policies
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/SlaPolicy"
+    post:
+      operationId: createSlaPolicy
+      tags: [sla-policies]
+      summary: Create a SLA policy
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateSlaPolicyRequest"
+      responses:
+        "201":
+          description: Created SLA policy
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SlaPolicy"
+
+  /sla-policies/{id}:
+    put:
+      operationId: updateSlaPolicy
+      tags: [sla-policies]
+      summary: Update a SLA policy
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UpdateSlaPolicyRequest"
+      responses:
+        "200":
+          description: Updated SLA policy
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SlaPolicy"
+    delete:
+      operationId: deleteSlaPolicy
+      tags: [sla-policies]
+      summary: Delete a SLA policy
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Deleted
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SuccessResponse"
+
+  /users:
+    get:
+      operationId: getUsers
+      tags: [users]
+      summary: List users (admin only)
+      responses:
+        "200":
+          description: Users
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/User"
+    post:
+      operationId: createUser
+      tags: [users]
+      summary: Create a user (admin only)
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateUserRequest"
+      responses:
+        "201":
+          description: Created user
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/User"
+
+  /users/{id}:
+    put:
+      operationId: updateUser
+      tags: [users]
+      summary: Update a user (admin only)
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UpdateUserRequest"
+      responses:
+        "200":
+          description: Updated user
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/User"
+    delete:
+      operationId: deleteUser
+      tags: [users]
+      summary: Delete a user (admin only)
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Deleted
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SuccessResponse"
+
+  /admin/ai-test:
+    post:
+      operationId: aiTest
+      tags: [ai]
+      summary: Test AI status normalization
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/AiTestRequest"
+      responses:
+        "200":
+          description: AI test result
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AiNormalizeResponse"
+
+  /admin/config-health:
+    get:
+      operationId: getConfigHealth
+      tags: [dashboard]
+      summary: Get environment/config health
+      responses:
+        "200":
+          description: Config health
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ConfigHealth"
+
 components:
   schemas:
     HealthStatus:
@@ -34,3 +883,907 @@ components:
       required:
         - status
 
+    SuccessResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+        message:
+          type: string
+      required:
+        - success
+
+    ErrorResponse:
+      type: object
+      properties:
+        error:
+          type: string
+        message:
+          type: string
+      required:
+        - error
+
+    LoginRequest:
+      type: object
+      properties:
+        email:
+          type: string
+        password:
+          type: string
+      required:
+        - email
+        - password
+
+    AuthResponse:
+      type: object
+      properties:
+        user:
+          $ref: "#/components/schemas/User"
+        token:
+          type: string
+      required:
+        - user
+        - token
+
+    User:
+      type: object
+      properties:
+        id:
+          type: string
+        name:
+          type: string
+        email:
+          type: string
+        role:
+          type: string
+          enum: [admin, ops, customer]
+        customerId:
+          type: string
+          nullable: true
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+      required:
+        - id
+        - name
+        - email
+        - role
+        - createdAt
+        - updatedAt
+
+    CreateUserRequest:
+      type: object
+      properties:
+        name:
+          type: string
+        email:
+          type: string
+        password:
+          type: string
+        role:
+          type: string
+          enum: [admin, ops, customer]
+        customerId:
+          type: string
+          nullable: true
+      required:
+        - name
+        - email
+        - password
+        - role
+
+    UpdateUserRequest:
+      type: object
+      properties:
+        name:
+          type: string
+        email:
+          type: string
+        password:
+          type: string
+        role:
+          type: string
+          enum: [admin, ops, customer]
+        customerId:
+          type: string
+          nullable: true
+
+    Customer:
+      type: object
+      properties:
+        id:
+          type: string
+        name:
+          type: string
+        accountNumber:
+          type: string
+          nullable: true
+        status:
+          type: string
+          enum: [active, inactive]
+        primaryContactName:
+          type: string
+          nullable: true
+        primaryContactEmail:
+          type: string
+          nullable: true
+        primaryContactPhone:
+          type: string
+          nullable: true
+        notes:
+          type: string
+          nullable: true
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+      required:
+        - id
+        - name
+        - status
+        - createdAt
+        - updatedAt
+
+    CustomerWithRelations:
+      allOf:
+        - $ref: "#/components/schemas/Customer"
+        - type: object
+          properties:
+            sites:
+              type: array
+              items:
+                $ref: "#/components/schemas/Site"
+            services:
+              type: array
+              items:
+                $ref: "#/components/schemas/Service"
+            tickets:
+              type: array
+              items:
+                $ref: "#/components/schemas/Ticket"
+
+    CreateCustomerRequest:
+      type: object
+      properties:
+        name:
+          type: string
+        accountNumber:
+          type: string
+          nullable: true
+        status:
+          type: string
+          enum: [active, inactive]
+        primaryContactName:
+          type: string
+          nullable: true
+        primaryContactEmail:
+          type: string
+          nullable: true
+        primaryContactPhone:
+          type: string
+          nullable: true
+        notes:
+          type: string
+          nullable: true
+      required:
+        - name
+        - status
+
+    UpdateCustomerRequest:
+      type: object
+      properties:
+        name:
+          type: string
+        accountNumber:
+          type: string
+          nullable: true
+        status:
+          type: string
+          enum: [active, inactive]
+        primaryContactName:
+          type: string
+          nullable: true
+        primaryContactEmail:
+          type: string
+          nullable: true
+        primaryContactPhone:
+          type: string
+          nullable: true
+        notes:
+          type: string
+          nullable: true
+
+    Site:
+      type: object
+      properties:
+        id:
+          type: string
+        customerId:
+          type: string
+        siteName:
+          type: string
+        address1:
+          type: string
+          nullable: true
+        address2:
+          type: string
+          nullable: true
+        city:
+          type: string
+          nullable: true
+        state:
+          type: string
+          nullable: true
+        postalCode:
+          type: string
+          nullable: true
+        country:
+          type: string
+          nullable: true
+        timezone:
+          type: string
+          nullable: true
+        siteCode:
+          type: string
+          nullable: true
+        notes:
+          type: string
+          nullable: true
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+      required:
+        - id
+        - customerId
+        - siteName
+        - createdAt
+        - updatedAt
+
+    SiteWithCustomer:
+      allOf:
+        - $ref: "#/components/schemas/Site"
+        - type: object
+          properties:
+            customer:
+              $ref: "#/components/schemas/Customer"
+
+    SiteWithRelations:
+      allOf:
+        - $ref: "#/components/schemas/Site"
+        - type: object
+          properties:
+            customer:
+              $ref: "#/components/schemas/Customer"
+            services:
+              type: array
+              items:
+                $ref: "#/components/schemas/Service"
+            tickets:
+              type: array
+              items:
+                $ref: "#/components/schemas/Ticket"
+
+    CreateSiteRequest:
+      type: object
+      properties:
+        customerId:
+          type: string
+        siteName:
+          type: string
+        address1:
+          type: string
+          nullable: true
+        address2:
+          type: string
+          nullable: true
+        city:
+          type: string
+          nullable: true
+        state:
+          type: string
+          nullable: true
+        postalCode:
+          type: string
+          nullable: true
+        country:
+          type: string
+          nullable: true
+        timezone:
+          type: string
+          nullable: true
+        siteCode:
+          type: string
+          nullable: true
+        notes:
+          type: string
+          nullable: true
+      required:
+        - customerId
+        - siteName
+
+    UpdateSiteRequest:
+      type: object
+      properties:
+        siteName:
+          type: string
+        address1:
+          type: string
+          nullable: true
+        address2:
+          type: string
+          nullable: true
+        city:
+          type: string
+          nullable: true
+        state:
+          type: string
+          nullable: true
+        postalCode:
+          type: string
+          nullable: true
+        country:
+          type: string
+          nullable: true
+        timezone:
+          type: string
+          nullable: true
+        siteCode:
+          type: string
+          nullable: true
+        notes:
+          type: string
+          nullable: true
+
+    Service:
+      type: object
+      properties:
+        id:
+          type: string
+        customerId:
+          type: string
+        siteId:
+          type: string
+        vendorName:
+          type: string
+        serviceType:
+          type: string
+          enum: [DIA, Broadband, SD-WAN, Voice, Wireless, Other]
+        circuitId:
+          type: string
+          nullable: true
+        bandwidth:
+          type: string
+          nullable: true
+        status:
+          type: string
+          enum: [active, pending, down, impaired, disconnected]
+        installDate:
+          type: string
+          nullable: true
+        monthlyRecurringCharge:
+          type: number
+          nullable: true
+        supportReference:
+          type: string
+          nullable: true
+        notes:
+          type: string
+          nullable: true
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+      required:
+        - id
+        - customerId
+        - siteId
+        - vendorName
+        - serviceType
+        - status
+        - createdAt
+        - updatedAt
+
+    ServiceWithRelations:
+      allOf:
+        - $ref: "#/components/schemas/Service"
+        - type: object
+          properties:
+            customer:
+              $ref: "#/components/schemas/Customer"
+            site:
+              $ref: "#/components/schemas/Site"
+
+    CreateServiceRequest:
+      type: object
+      properties:
+        customerId:
+          type: string
+        siteId:
+          type: string
+        vendorName:
+          type: string
+        serviceType:
+          type: string
+          enum: [DIA, Broadband, SD-WAN, Voice, Wireless, Other]
+        circuitId:
+          type: string
+          nullable: true
+        bandwidth:
+          type: string
+          nullable: true
+        status:
+          type: string
+          enum: [active, pending, down, impaired, disconnected]
+        installDate:
+          type: string
+          nullable: true
+        monthlyRecurringCharge:
+          type: number
+          nullable: true
+        supportReference:
+          type: string
+          nullable: true
+        notes:
+          type: string
+          nullable: true
+      required:
+        - customerId
+        - siteId
+        - vendorName
+        - serviceType
+        - status
+
+    UpdateServiceRequest:
+      type: object
+      properties:
+        vendorName:
+          type: string
+        serviceType:
+          type: string
+          enum: [DIA, Broadband, SD-WAN, Voice, Wireless, Other]
+        circuitId:
+          type: string
+          nullable: true
+        bandwidth:
+          type: string
+          nullable: true
+        status:
+          type: string
+          enum: [active, pending, down, impaired, disconnected]
+        installDate:
+          type: string
+          nullable: true
+        monthlyRecurringCharge:
+          type: number
+          nullable: true
+        supportReference:
+          type: string
+          nullable: true
+        notes:
+          type: string
+          nullable: true
+
+    Ticket:
+      type: object
+      properties:
+        id:
+          type: string
+        ticketNumber:
+          type: string
+        customerId:
+          type: string
+        siteId:
+          type: string
+          nullable: true
+        serviceId:
+          type: string
+          nullable: true
+        title:
+          type: string
+        description:
+          type: string
+          nullable: true
+        source:
+          type: string
+          enum: [manual, email, api]
+        severity:
+          type: string
+          enum: [low, medium, high, critical]
+        status:
+          type: string
+          enum: [new, investigating, vendor_engaged, dispatch_scheduled, monitoring, resolved, closed]
+        outageType:
+          type: string
+          enum: [outage, impairment, informational, unknown]
+        vendorTicketId:
+          type: string
+          nullable: true
+        assignedToUserId:
+          type: string
+          nullable: true
+        openedAt:
+          type: string
+          format: date-time
+        lastUpdatedAt:
+          type: string
+          format: date-time
+        resolvedAt:
+          type: string
+          format: date-time
+          nullable: true
+        nextEscalationAt:
+          type: string
+          format: date-time
+          nullable: true
+        slaTargetMinutes:
+          type: number
+          nullable: true
+        aiSummary:
+          type: string
+          nullable: true
+        aiNormalizedStatus:
+          type: string
+          nullable: true
+        aiCustomerUpdate:
+          type: string
+          nullable: true
+        aiLastGeneratedAt:
+          type: string
+          format: date-time
+          nullable: true
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+      required:
+        - id
+        - ticketNumber
+        - customerId
+        - title
+        - source
+        - severity
+        - status
+        - outageType
+        - openedAt
+        - lastUpdatedAt
+        - createdAt
+        - updatedAt
+
+    TicketWithRelations:
+      allOf:
+        - $ref: "#/components/schemas/Ticket"
+        - type: object
+          properties:
+            customer:
+              $ref: "#/components/schemas/Customer"
+            site:
+              $ref: "#/components/schemas/Site"
+            service:
+              $ref: "#/components/schemas/Service"
+            assignedTo:
+              $ref: "#/components/schemas/User"
+
+    TicketDetail:
+      allOf:
+        - $ref: "#/components/schemas/TicketWithRelations"
+        - type: object
+          properties:
+            updates:
+              type: array
+              items:
+                $ref: "#/components/schemas/TicketUpdate"
+
+    CreateTicketRequest:
+      type: object
+      properties:
+        customerId:
+          type: string
+        siteId:
+          type: string
+          nullable: true
+        serviceId:
+          type: string
+          nullable: true
+        title:
+          type: string
+        description:
+          type: string
+          nullable: true
+        source:
+          type: string
+          enum: [manual, email, api]
+        severity:
+          type: string
+          enum: [low, medium, high, critical]
+        status:
+          type: string
+          enum: [new, investigating, vendor_engaged, dispatch_scheduled, monitoring, resolved, closed]
+        outageType:
+          type: string
+          enum: [outage, impairment, informational, unknown]
+        vendorTicketId:
+          type: string
+          nullable: true
+        assignedToUserId:
+          type: string
+          nullable: true
+        slaTargetMinutes:
+          type: number
+          nullable: true
+      required:
+        - customerId
+        - title
+        - source
+        - severity
+        - status
+        - outageType
+
+    UpdateTicketRequest:
+      type: object
+      properties:
+        title:
+          type: string
+        description:
+          type: string
+          nullable: true
+        severity:
+          type: string
+          enum: [low, medium, high, critical]
+        status:
+          type: string
+          enum: [new, investigating, vendor_engaged, dispatch_scheduled, monitoring, resolved, closed]
+        outageType:
+          type: string
+          enum: [outage, impairment, informational, unknown]
+        vendorTicketId:
+          type: string
+          nullable: true
+        assignedToUserId:
+          type: string
+          nullable: true
+        nextEscalationAt:
+          type: string
+          format: date-time
+          nullable: true
+        slaTargetMinutes:
+          type: number
+          nullable: true
+        aiSummary:
+          type: string
+          nullable: true
+        aiNormalizedStatus:
+          type: string
+          nullable: true
+        aiCustomerUpdate:
+          type: string
+          nullable: true
+
+    TicketUpdate:
+      type: object
+      properties:
+        id:
+          type: string
+        ticketId:
+          type: string
+        updateType:
+          type: string
+          enum: [internal_note, vendor_update, customer_update, system_event, ai_generated]
+        rawText:
+          type: string
+        normalizedStatus:
+          type: string
+          nullable: true
+        visibility:
+          type: string
+          enum: [internal, customer]
+        createdByUserId:
+          type: string
+          nullable: true
+        createdAt:
+          type: string
+          format: date-time
+        createdBy:
+          $ref: "#/components/schemas/User"
+          nullable: true
+      required:
+        - id
+        - ticketId
+        - updateType
+        - rawText
+        - visibility
+        - createdAt
+
+    CreateTicketUpdateRequest:
+      type: object
+      properties:
+        updateType:
+          type: string
+          enum: [internal_note, vendor_update, customer_update, system_event, ai_generated]
+        rawText:
+          type: string
+        normalizedStatus:
+          type: string
+          nullable: true
+        visibility:
+          type: string
+          enum: [internal, customer]
+      required:
+        - updateType
+        - rawText
+        - visibility
+
+    SlaPolicy:
+      type: object
+      properties:
+        id:
+          type: string
+        name:
+          type: string
+        severity:
+          type: string
+          enum: [low, medium, high, critical]
+        initialResponseMinutes:
+          type: number
+        escalationMinutes:
+          type: number
+        resolutionTargetMinutes:
+          type: number
+        isDefault:
+          type: boolean
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+      required:
+        - id
+        - name
+        - severity
+        - initialResponseMinutes
+        - escalationMinutes
+        - resolutionTargetMinutes
+        - isDefault
+        - createdAt
+        - updatedAt
+
+    CreateSlaPolicyRequest:
+      type: object
+      properties:
+        name:
+          type: string
+        severity:
+          type: string
+          enum: [low, medium, high, critical]
+        initialResponseMinutes:
+          type: number
+        escalationMinutes:
+          type: number
+        resolutionTargetMinutes:
+          type: number
+        isDefault:
+          type: boolean
+      required:
+        - name
+        - severity
+        - initialResponseMinutes
+        - escalationMinutes
+        - resolutionTargetMinutes
+        - isDefault
+
+    UpdateSlaPolicyRequest:
+      type: object
+      properties:
+        name:
+          type: string
+        severity:
+          type: string
+          enum: [low, medium, high, critical]
+        initialResponseMinutes:
+          type: number
+        escalationMinutes:
+          type: number
+        resolutionTargetMinutes:
+          type: number
+        isDefault:
+          type: boolean
+
+    DashboardSummary:
+      type: object
+      properties:
+        totalActiveCustomers:
+          type: number
+        totalActiveServices:
+          type: number
+        openTickets:
+          type: number
+        criticalTickets:
+          type: number
+        slaBreachingTickets:
+          type: number
+        ticketsByStatus:
+          type: object
+          additionalProperties:
+            type: number
+        ticketsBySeverity:
+          type: object
+          additionalProperties:
+            type: number
+      required:
+        - totalActiveCustomers
+        - totalActiveServices
+        - openTickets
+        - criticalTickets
+        - slaBreachingTickets
+        - ticketsByStatus
+        - ticketsBySeverity
+
+    AiSummarizeResponse:
+      type: object
+      properties:
+        summary:
+          type: string
+        ticket:
+          $ref: "#/components/schemas/Ticket"
+      required:
+        - summary
+        - ticket
+
+    AiNormalizeResponse:
+      type: object
+      properties:
+        normalizedStatus:
+          type: string
+        ticket:
+          $ref: "#/components/schemas/Ticket"
+      required:
+        - normalizedStatus
+        - ticket
+
+    AiCustomerUpdateResponse:
+      type: object
+      properties:
+        customerUpdate:
+          type: string
+        ticket:
+          $ref: "#/components/schemas/Ticket"
+      required:
+        - customerUpdate
+        - ticket
+
+    AiTestRequest:
+      type: object
+      properties:
+        text:
+          type: string
+      required:
+        - text
+
+    ConfigHealth:
+      type: object
+      properties:
+        database:
+          type: boolean
+        openAi:
+          type: boolean
+        sessionSecret:
+          type: boolean
+        environment:
+          type: string
+      required:
+        - database
+        - openAi
+        - sessionSecret
+        - environment
