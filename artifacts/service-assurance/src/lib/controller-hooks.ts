@@ -72,6 +72,8 @@ export interface ManagedDeviceRecord {
   mgmtIp: string | null;
   status: "online" | "offline" | "degraded" | "unknown";
   haState: "active" | "standby" | "standalone" | "unknown" | null;
+  /** Controller-native network/site name (e.g. Meraki network name, FortiManager ADOM) */
+  networkName: string | null;
   lastSeenAt: string | null;
   metadataJson: Record<string, unknown> | null;
   createdAt: string;
@@ -96,6 +98,10 @@ export interface NetworkLinkRecord {
   circuitId: string | null;
   role: "primary" | "backup" | "unknown";
   status: "up" | "down" | "degraded" | "unknown";
+  /** True when a backup/cellular link is actively carrying traffic due to primary failure */
+  failoverActive: boolean;
+  /** Controller-native network name (e.g. Meraki network name) */
+  networkName: string | null;
   latencyMs: number | null;
   jitterMs: number | null;
   packetLossPct: number | null;
@@ -125,6 +131,8 @@ export interface DeviceEventRecord {
   aiProbableImpact: string | null;
   aiCustomerUpdate: string | null;
   confidenceScore: number | null;
+  /** Vendor event category (e.g. "appliance_connectivity", "vpn", "security", "ha", "firmware") */
+  category: string | null;
   occurredAt: string;
   createdAt: string;
   controller?: { id: string; name: string; vendor: string } | null;

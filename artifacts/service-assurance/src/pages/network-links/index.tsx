@@ -85,7 +85,7 @@ export default function NetworkLinksPage() {
     up: links?.filter((l) => l.status === "up").length ?? 0,
     down: links?.filter((l) => l.status === "down").length ?? 0,
     degraded: links?.filter((l) => l.status === "degraded").length ?? 0,
-    failoverActive: links?.filter((l) => (l as any).failoverActive).length ?? 0,
+    failoverActive: links?.filter((l) => l.failoverActive).length ?? 0,
   };
 
   return (
@@ -189,7 +189,7 @@ export default function NetworkLinksPage() {
                   </TableCell>
                 </TableRow>
               ) : links?.map((l) => {
-                const isFailover = (l as any).failoverActive === true;
+                const isFailover = l.failoverActive === true;
                 const isPrimaryDown = l.role === "primary" && l.status !== "up";
                 const rowCls = isFailover
                   ? "bg-amber-50/60 border-l-2 border-l-amber-400"
@@ -205,8 +205,8 @@ export default function NetworkLinksPage() {
                     </TableCell>
                     <TableCell className="font-mono text-xs text-muted-foreground">{l.device?.hostname ?? "—"}</TableCell>
                     <TableCell>
-                      {(l as any).networkName ? (
-                        <span className="text-xs text-teal-700 font-medium">{(l as any).networkName}</span>
+                      {l.networkName ? (
+                        <span className="text-xs text-teal-700 font-medium">{l.networkName}</span>
                       ) : (
                         <span className="text-xs text-muted-foreground">{l.site?.siteName ?? "—"}</span>
                       )}

@@ -156,8 +156,8 @@ export default function DevicesPage() {
                     </div>
                   </TableCell>
                   <TableCell>
-                    {(d as any).networkName ? (
-                      <span className="text-xs text-teal-700 font-medium">{(d as any).networkName}</span>
+                    {d.networkName ? (
+                      <span className="text-xs text-teal-700 font-medium">{d.networkName}</span>
                     ) : (
                       <span className="text-xs text-muted-foreground">—</span>
                     )}

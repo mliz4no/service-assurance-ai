@@ -1,5 +1,5 @@
 import { AppLayout } from "@/components/layout/app-layout";
-import { useGetDeviceEvents, useGetControllers, useAiAnalyzeEvent } from "@/lib/controller-hooks";
+import { useGetDeviceEvents, useGetControllers, useAiAnalyzeEvent, type DeviceEventRecord } from "@/lib/controller-hooks";
 import { useState } from "react";
 import { useLocation, Link } from "wouter";
 import { Input } from "@/components/ui/input";
@@ -175,7 +175,7 @@ export default function EventMonitorPage() {
                   <TableCell>
                     <div className="flex flex-col gap-1">
                       {vendorTag(e.eventSource)}
-                      {categoryChip((e as any).category)}
+                      {categoryChip(e.category)}
                     </div>
                   </TableCell>
                   <TableCell>{severityBadge(e.severity)}</TableCell>
@@ -226,7 +226,7 @@ export default function EventMonitorPage() {
             <div className="space-y-4">
               <div className="flex items-center gap-3 flex-wrap">
                 {severityBadge(selectedEvent.severity)}
-                {categoryChip(selectedEvent.category)}
+                {categoryChip((selectedEvent as DeviceEventRecord).category)}
                 <span className="text-sm text-muted-foreground">{selectedEvent.eventType}</span>
                 {vendorTag(selectedEvent.eventSource)}
                 <span className="text-sm text-muted-foreground">{format(new Date(selectedEvent.occurredAt), "MMM d, yyyy HH:mm")}</span>
