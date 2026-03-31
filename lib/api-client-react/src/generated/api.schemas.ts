@@ -115,6 +115,9 @@ export interface Site {
   timezone?: string | null;
   siteCode?: string | null;
   notes?: string | null;
+  lconName?: string | null;
+  lconPhone?: string | null;
+  lconEmail?: string | null;
   latitude?: number | null;
   longitude?: number | null;
   geoSource?: "manual" | "geocoded" | "imported" | null;
@@ -292,6 +295,9 @@ export interface CreateSiteRequest {
   timezone?: string | null;
   siteCode?: string | null;
   notes?: string | null;
+  lconName?: string | null;
+  lconPhone?: string | null;
+  lconEmail?: string | null;
   latitude?: number | null;
   longitude?: number | null;
   geoSource?: "manual" | "geocoded" | "imported" | null;
@@ -308,6 +314,9 @@ export interface UpdateSiteRequest {
   timezone?: string | null;
   siteCode?: string | null;
   notes?: string | null;
+  lconName?: string | null;
+  lconPhone?: string | null;
+  lconEmail?: string | null;
   latitude?: number | null;
   longitude?: number | null;
   geoSource?: "manual" | "geocoded" | "imported" | null;

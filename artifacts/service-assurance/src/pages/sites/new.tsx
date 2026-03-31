@@ -24,6 +24,9 @@ const formSchema = z.object({
   postalCode: z.string().optional(),
   country: z.string().optional(),
   timezone: z.string().optional(),
+  lconName: z.string().optional(),
+  lconPhone: z.string().optional(),
+  lconEmail: z.string().email("Invalid email address").optional().or(z.literal("")),
   notes: z.string().optional(),
 });
 
@@ -47,6 +50,9 @@ export default function SiteNew() {
       postalCode: "",
       country: "",
       timezone: "",
+      lconName: "",
+      lconPhone: "",
+      lconEmail: "",
       notes: "",
     },
   });
@@ -63,6 +69,9 @@ export default function SiteNew() {
       postalCode: values.postalCode || null,
       country: values.country || null,
       timezone: values.timezone || null,
+      lconName: values.lconName || null,
+      lconPhone: values.lconPhone || null,
+      lconEmail: values.lconEmail || null,
       notes: values.notes || null,
     } }, {
       onSuccess: (site) => {
@@ -95,7 +104,7 @@ export default function SiteNew() {
                     <FormItem>
                       <FormLabel>Customer *</FormLabel>
                       <Select onValueChange={field.onChange} defaultValue={field.value}>
-                        <FormControl><SelectTrigger><SelectValue placeholder="Select a customer" /></SelectTrigger></FormControl>
+                        <FormControl><SelectTrigger data-testid="site-customer-select"><SelectValue placeholder="Select a customer" /></SelectTrigger></FormControl>
                         <SelectContent>
                           {customers?.map(c => (
                             <SelectItem key={c.id} value={c.id}>{c.name}</SelectItem>
@@ -108,7 +117,7 @@ export default function SiteNew() {
                   <FormField control={form.control} name="siteName" render={({ field }) => (
                     <FormItem>
                       <FormLabel>Site Name *</FormLabel>
-                      <FormControl><Input {...field} /></FormControl>
+                      <FormControl><Input data-testid="site-name-input" {...field} /></FormControl>
                       <FormMessage />
                     </FormItem>
                   )} />
@@ -177,6 +186,34 @@ export default function SiteNew() {
                 </div>
 
                 <div className="pt-4 border-t border-border/50">
+                  <h3 className="text-sm font-semibold mb-1 text-muted-foreground">Local Contact (LCON)</h3>
+                  <p className="text-xs text-muted-foreground mb-4">On-site point of contact for dispatch, physical access, and field coordination.</p>
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                    <FormField control={form.control} name="lconName" render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>LCON Name</FormLabel>
+                        <FormControl><Input placeholder="Full name" data-testid="site-lcon-name" {...field} /></FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )} />
+                    <FormField control={form.control} name="lconPhone" render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>LCON Phone</FormLabel>
+                        <FormControl><Input type="tel" placeholder="+1 555-000-0000" data-testid="site-lcon-phone" {...field} /></FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )} />
+                    <FormField control={form.control} name="lconEmail" render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>LCON Email</FormLabel>
+                        <FormControl><Input type="email" placeholder="lcon@company.com" data-testid="site-lcon-email" {...field} /></FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )} />
+                  </div>
+                </div>
+
+                <div className="pt-4 border-t border-border/50">
                   <FormField control={form.control} name="notes" render={({ field }) => (
                     <FormItem>
                       <FormLabel>Notes</FormLabel>
@@ -188,7 +225,7 @@ export default function SiteNew() {
 
                 <div className="flex justify-end gap-2 pt-2">
                   <Button type="button" variant="outline" onClick={() => setLocation("/sites")}>Cancel</Button>
-                  <Button type="submit" disabled={createMutation.isPending}>
+                  <Button type="submit" disabled={createMutation.isPending} data-testid="site-submit-btn">
                     {createMutation.isPending ? "Creating..." : "Create Site"}
                   </Button>
                 </div>

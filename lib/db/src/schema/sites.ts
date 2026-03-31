@@ -16,6 +16,10 @@ export const sitesTable = pgTable("sites", {
   timezone: text("timezone"),
   siteCode: text("site_code"),
   notes: text("notes"),
+  /** Local Contact on Network (LCON) — on-site point of contact for dispatch and physical access */
+  lconName: text("lcon_name"),
+  lconPhone: text("lcon_phone"),
+  lconEmail: text("lcon_email"),
   /** WGS-84 latitude decimal degrees — null if unknown */
   latitude: doublePrecision("latitude"),
   /** WGS-84 longitude decimal degrees — null if unknown */

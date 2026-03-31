@@ -2,7 +2,7 @@ import { useParams, useLocation } from "wouter";
 import { AppLayout } from "@/components/layout/app-layout";
 import { useGetSite } from "@workspace/api-client-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Activity, MapPin, Building2, Globe2, Ticket } from "lucide-react";
+import { Activity, MapPin, Building2, Globe2, Ticket, Phone, Mail, User } from "lucide-react";
 import { Link } from "wouter";
 import { StatusBadge } from "@/components/status-badge";
 
@@ -16,6 +16,8 @@ export default function SiteDetail() {
 
   if (isLoading) return <AppLayout title="Loading Site..."><div className="flex justify-center py-12"><Activity className="w-8 h-8 animate-spin text-muted-foreground" /></div></AppLayout>;
   if (!site) return <AppLayout title="Site Not Found"><div className="text-center py-12 text-muted-foreground">Site not found.</div></AppLayout>;
+
+  const hasLcon = site.lconName || site.lconPhone || site.lconEmail;
 
   return (
     <AppLayout title={site.siteName}>
@@ -39,32 +41,81 @@ export default function SiteDetail() {
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-          <Card className="col-span-1 border-border/50 shadow-sm">
-            <CardHeader>
-              <CardTitle className="text-sm font-semibold text-muted-foreground uppercase tracking-wider">Location</CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <div>
-                <p className="font-medium">{site.address1 || "No address provided"}</p>
-                {site.address2 && <p className="font-medium">{site.address2}</p>}
-                <p className="text-sm text-muted-foreground">
-                  {site.city}{site.city && site.state ? ", " : ""}
-                  {site.state} {site.postalCode}
-                </p>
-                <p className="text-sm text-muted-foreground">{site.country}</p>
-              </div>
-              <div className="pt-4 border-t border-border/50">
-                <p className="text-sm text-muted-foreground mb-1">Timezone</p>
-                <p className="font-medium">{site.timezone || "Not set"}</p>
-              </div>
-              {site.notes && (
-                <div className="pt-4 border-t border-border/50">
-                  <p className="text-sm text-muted-foreground mb-1">Notes</p>
-                  <p className="text-sm">{site.notes}</p>
+          <div className="col-span-1 space-y-4">
+            <Card className="border-border/50 shadow-sm">
+              <CardHeader>
+                <CardTitle className="text-sm font-semibold text-muted-foreground uppercase tracking-wider">Location</CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <div>
+                  <p className="font-medium">{site.address1 || "No address provided"}</p>
+                  {site.address2 && <p className="font-medium">{site.address2}</p>}
+                  <p className="text-sm text-muted-foreground">
+                    {site.city}{site.city && site.state ? ", " : ""}
+                    {site.state} {site.postalCode}
+                  </p>
+                  <p className="text-sm text-muted-foreground">{site.country}</p>
                 </div>
-              )}
-            </CardContent>
-          </Card>
+                <div className="pt-3 border-t border-border/50">
+                  <p className="text-xs text-muted-foreground mb-1">Timezone</p>
+                  <p className="font-medium text-sm">{site.timezone || "Not set"}</p>
+                </div>
+                {site.notes && (
+                  <div className="pt-3 border-t border-border/50">
+                    <p className="text-xs text-muted-foreground mb-1">Notes</p>
+                    <p className="text-sm">{site.notes}</p>
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+
+            <Card className="border-border/50 shadow-sm" data-testid="lcon-card">
+              <CardHeader>
+                <div className="flex items-center gap-2">
+                  <User className="w-4 h-4 text-muted-foreground" />
+                  <CardTitle className="text-sm font-semibold text-muted-foreground uppercase tracking-wider">Local Contact (LCON)</CardTitle>
+                </div>
+              </CardHeader>
+              <CardContent>
+                {!hasLcon ? (
+                  <p className="text-sm text-muted-foreground italic" data-testid="lcon-empty">No local contact on file.</p>
+                ) : (
+                  <div className="space-y-3">
+                    {site.lconName && (
+                      <div className="flex items-center gap-2">
+                        <User className="w-4 h-4 text-muted-foreground shrink-0" />
+                        <span className="text-sm font-medium" data-testid="lcon-name">{site.lconName}</span>
+                      </div>
+                    )}
+                    {site.lconPhone && (
+                      <div className="flex items-center gap-2">
+                        <Phone className="w-4 h-4 text-muted-foreground shrink-0" />
+                        <a
+                          href={`tel:${site.lconPhone}`}
+                          className="text-sm text-primary hover:underline font-mono"
+                          data-testid="lcon-phone"
+                        >
+                          {site.lconPhone}
+                        </a>
+                      </div>
+                    )}
+                    {site.lconEmail && (
+                      <div className="flex items-center gap-2">
+                        <Mail className="w-4 h-4 text-muted-foreground shrink-0" />
+                        <a
+                          href={`mailto:${site.lconEmail}`}
+                          className="text-sm text-primary hover:underline"
+                          data-testid="lcon-email"
+                        >
+                          {site.lconEmail}
+                        </a>
+                      </div>
+                    )}
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+          </div>
 
           <div className="col-span-1 md:col-span-2 space-y-6">
             <Card className="border-border/50 shadow-sm">
@@ -83,7 +134,7 @@ export default function SiteDetail() {
                       <div key={s.id} className="p-4 flex items-center justify-between hover:bg-muted/30">
                         <div>
                           <Link href={`/services/${s.id}`} className="font-medium text-primary hover:underline">{s.serviceType}</Link>
-                          <div className="text-sm text-muted-foreground">Vendor: {s.vendorName} • Circuit: {s.circuitId || "N/A"}</div>
+                          <div className="text-sm text-muted-foreground">Vendor: {s.vendorName} · Circuit: {s.circuitId || "N/A"}</div>
                         </div>
                         <StatusBadge status={s.status} />
                       </div>

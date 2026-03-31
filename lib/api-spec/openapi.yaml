@@ -1134,6 +1134,15 @@ components:
         notes:
           type: string
           nullable: true
+        lconName:
+          type: string
+          nullable: true
+        lconPhone:
+          type: string
+          nullable: true
+        lconEmail:
+          type: string
+          nullable: true
         latitude:
           type: number
           format: double
@@ -1217,6 +1226,15 @@ components:
         notes:
           type: string
           nullable: true
+        lconName:
+          type: string
+          nullable: true
+        lconPhone:
+          type: string
+          nullable: true
+        lconEmail:
+          type: string
+          nullable: true
         latitude:
           type: number
           format: double
@@ -1263,6 +1281,15 @@ components:
           type: string
           nullable: true
         notes:
+          type: string
+          nullable: true
+        lconName:
+          type: string
+          nullable: true
+        lconPhone:
+          type: string
+          nullable: true
+        lconEmail:
           type: string
           nullable: true
         latitude:

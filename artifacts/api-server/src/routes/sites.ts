@@ -35,6 +35,9 @@ router.get("/sites", requireAuth, async (req, res): Promise<void> => {
       timezone: sitesTable.timezone,
       siteCode: sitesTable.siteCode,
       notes: sitesTable.notes,
+      lconName: sitesTable.lconName,
+      lconPhone: sitesTable.lconPhone,
+      lconEmail: sitesTable.lconEmail,
       latitude: sitesTable.latitude,
       longitude: sitesTable.longitude,
       geoSource: sitesTable.geoSource,
@@ -67,7 +70,7 @@ router.post("/sites", requireAuth, async (req, res): Promise<void> => {
     return;
   }
 
-  const { customerId, siteName, address1, address2, city, state, postalCode, country, timezone, siteCode, notes, latitude, longitude, geoSource } = req.body;
+  const { customerId, siteName, address1, address2, city, state, postalCode, country, timezone, siteCode, notes, lconName, lconPhone, lconEmail, latitude, longitude, geoSource } = req.body;
   if (!customerId || !siteName) {
     res.status(400).json({ error: "Bad Request", message: "customerId and siteName are required" });
     return;
@@ -75,7 +78,7 @@ router.post("/sites", requireAuth, async (req, res): Promise<void> => {
 
   const [site] = await db
     .insert(sitesTable)
-    .values({ customerId, siteName, address1, address2, city, state, postalCode, country, timezone, siteCode, notes, latitude, longitude, geoSource })
+    .values({ customerId, siteName, address1, address2, city, state, postalCode, country, timezone, siteCode, notes, lconName, lconPhone, lconEmail, latitude, longitude, geoSource })
     .returning();
   res.status(201).json(site);
 });
@@ -110,11 +113,11 @@ router.put("/sites/:id", requireAuth, async (req, res): Promise<void> => {
   }
 
   const id = Array.isArray(req.params.id) ? req.params.id[0] : req.params.id;
-  const { siteName, address1, address2, city, state, postalCode, country, timezone, siteCode, notes, latitude, longitude, geoSource } = req.body;
+  const { siteName, address1, address2, city, state, postalCode, country, timezone, siteCode, notes, lconName, lconPhone, lconEmail, latitude, longitude, geoSource } = req.body;
 
   const [site] = await db
     .update(sitesTable)
-    .set({ siteName, address1, address2, city, state, postalCode, country, timezone, siteCode, notes, latitude, longitude, geoSource, updatedAt: new Date() })
+    .set({ siteName, address1, address2, city, state, postalCode, country, timezone, siteCode, notes, lconName, lconPhone, lconEmail, latitude, longitude, geoSource, updatedAt: new Date() })
     .where(eq(sitesTable.id, id))
     .returning();
 
