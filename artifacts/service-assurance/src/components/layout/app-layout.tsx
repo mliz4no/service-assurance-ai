@@ -54,6 +54,7 @@ export function AppLayout({ children, title }: AppLayoutProps) {
     { href: "/devices", label: "Devices", icon: Server },
     { href: "/network-links", label: "Network Links", icon: Network },
     { href: "/events", label: "Event Monitor", icon: Activity },
+    { href: "/map", label: "Network Map", icon: MapPin },
     ...(user?.role === "admin" ? [{ href: "/admin", label: "Admin", icon: Settings }] : []),
   ] : [
     { href: "/my-tickets", label: "My Tickets", icon: TicketCheck },

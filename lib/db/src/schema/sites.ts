@@ -1,4 +1,4 @@
-import { pgTable, text, timestamp, uuid } from "drizzle-orm/pg-core";
+import { doublePrecision, pgTable, text, timestamp, uuid } from "drizzle-orm/pg-core";
 import { createInsertSchema } from "drizzle-zod";
 import { z } from "zod/v4";
 import { customersTable } from "./customers";
@@ -16,6 +16,12 @@ export const sitesTable = pgTable("sites", {
   timezone: text("timezone"),
   siteCode: text("site_code"),
   notes: text("notes"),
+  /** WGS-84 latitude decimal degrees — null if unknown */
+  latitude: doublePrecision("latitude"),
+  /** WGS-84 longitude decimal degrees — null if unknown */
+  longitude: doublePrecision("longitude"),
+  /** Origin of the coordinate: manual entry, geocoded from address, or bulk import */
+  geoSource: text("geo_source", { enum: ["manual", "geocoded", "imported"] }),
   createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
   updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow().$onUpdate(() => new Date()),
 });

@@ -24,6 +24,17 @@ A full-stack enterprise telecom service assurance and ticket orchestration platf
 - **Dashboard**: KPI stat cards, recent tickets, escalation queue
 - **Admin panel**: SLA policy CRUD, user management, config health, AI test panel
 
+### Network Map (new)
+- **Map page** (`/map`) — Interactive Leaflet map with all sites as colored teardrop pin markers
+  - Color-coded by device status: green=online, amber=degraded, red=offline, gray=unknown
+  - Clustering via `react-leaflet-cluster` for dense areas
+  - Left filter sidebar: customer filter, status filter, layer toggles (Sites/Devices), status count summary
+  - Clicking a marker shows a detail overlay card with site info, device status breakdown, open ticket count, and a "View Site" link
+  - Legend panel (bottom-right) with status color key
+  - All 14 seeded US sites have real WGS-84 coordinates
+- **DB schema**: `latitude`, `longitude`, `geoSource` added to `sites` and `managed_devices` tables
+- **API**: `GET /api/sites` now returns lat/lng; `POST/PUT /api/sites` accept lat/lng
+
 ### Controller Integrations (new)
 - **Controllers** (`/controllers`) — Cisco Meraki and Fortinet controller CRUD, test connection, sync now
 - **Managed Devices** (`/devices`) — Devices registered from controllers; status online/offline/degraded, HA state, customer/site mapping

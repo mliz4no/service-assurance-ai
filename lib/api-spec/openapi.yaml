@@ -1134,6 +1134,18 @@ components:
         notes:
           type: string
           nullable: true
+        latitude:
+          type: number
+          format: double
+          nullable: true
+        longitude:
+          type: number
+          format: double
+          nullable: true
+        geoSource:
+          type: string
+          enum: [manual, geocoded, imported]
+          nullable: true
         createdAt:
           type: string
           format: date-time
@@ -1205,6 +1217,18 @@ components:
         notes:
           type: string
           nullable: true
+        latitude:
+          type: number
+          format: double
+          nullable: true
+        longitude:
+          type: number
+          format: double
+          nullable: true
+        geoSource:
+          type: string
+          enum: [manual, geocoded, imported]
+          nullable: true
       required:
         - customerId
         - siteName
@@ -1240,6 +1264,18 @@ components:
           nullable: true
         notes:
           type: string
+          nullable: true
+        latitude:
+          type: number
+          format: double
+          nullable: true
+        longitude:
+          type: number
+          format: double
+          nullable: true
+        geoSource:
+          type: string
+          enum: [manual, geocoded, imported]
           nullable: true
 
     Service:

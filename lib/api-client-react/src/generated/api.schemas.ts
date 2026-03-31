@@ -115,6 +115,9 @@ export interface Site {
   timezone?: string | null;
   siteCode?: string | null;
   notes?: string | null;
+  latitude?: number | null;
+  longitude?: number | null;
+  geoSource?: "manual" | "geocoded" | "imported" | null;
   createdAt: string;
   updatedAt: string;
 }
@@ -289,6 +292,9 @@ export interface CreateSiteRequest {
   timezone?: string | null;
   siteCode?: string | null;
   notes?: string | null;
+  latitude?: number | null;
+  longitude?: number | null;
+  geoSource?: "manual" | "geocoded" | "imported" | null;
 }
 
 export interface UpdateSiteRequest {
@@ -302,6 +308,9 @@ export interface UpdateSiteRequest {
   timezone?: string | null;
   siteCode?: string | null;
   notes?: string | null;
+  latitude?: number | null;
+  longitude?: number | null;
+  geoSource?: "manual" | "geocoded" | "imported" | null;
 }
 
 export type ServiceWithRelations = Service & {

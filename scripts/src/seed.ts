@@ -215,6 +215,9 @@ async function seed() {
         timezone: "America/Chicago",
         siteCode: "NXT-TX-HQ",
         notes: "Primary trading floor. Latency SLA < 3ms to exchange colocation.",
+        latitude: 32.7918,
+        longitude: -96.8036,
+        geoSource: "imported" as const,
       },
       {
         customerId: nexatek.id,
@@ -227,6 +230,9 @@ async function seed() {
         timezone: "America/Chicago",
         siteCode: "NXT-TX-DC1",
         notes: "Colocation cage in Equinix DA1. Dual-homed Zayo + Lumen.",
+        latitude: 32.7849,
+        longitude: -96.8157,
+        geoSource: "imported" as const,
       },
       {
         customerId: nexatek.id,
@@ -238,6 +244,9 @@ async function seed() {
         country: "US",
         timezone: "America/Chicago",
         siteCode: "NXT-TX-WH1",
+        latitude: 32.8141,
+        longitude: -96.9698,
+        geoSource: "imported" as const,
       },
       // New multi-city Nexatek sites (aligned with Meraki org topology)
       {
@@ -251,6 +260,9 @@ async function seed() {
         timezone: "America/Denver",
         siteCode: "NXT-CO-DEN",
         notes: "Distribution warehouse. Comcast Business primary, AT&T LTE failover. WAN1 currently down — failover active.",
+        latitude: 39.7870,
+        longitude: -104.9180,
+        geoSource: "imported" as const,
       },
       {
         customerId: nexatek.id,
@@ -263,6 +275,9 @@ async function seed() {
         timezone: "America/Chicago",
         siteCode: "NXT-TX-AUS",
         notes: "Regional sales office. AT&T Business Fiber primary, Spectrum backup. AutoVPN to HQ.",
+        latitude: 30.2672,
+        longitude: -97.7453,
+        geoSource: "imported" as const,
       },
       {
         customerId: nexatek.id,
@@ -275,6 +290,9 @@ async function seed() {
         timezone: "America/Phoenix",
         siteCode: "NXT-AZ-PHX",
         notes: "Retail location. Cox Business primary, Verizon LTE backup. Recently upgraded to MX 18.211.",
+        latitude: 33.4484,
+        longitude: -112.0740,
+        geoSource: "imported" as const,
       },
       {
         customerId: ridgeline.id,
@@ -287,6 +305,9 @@ async function seed() {
         timezone: "America/Chicago",
         siteCode: "RDG-TN-NMC",
         notes: "Main hospital campus. EHR system hosted on-site. Fiber only — no wireless fallback.",
+        latitude: 36.1476,
+        longitude: -86.8112,
+        geoSource: "imported" as const,
       },
       {
         customerId: ridgeline.id,
@@ -298,6 +319,9 @@ async function seed() {
         country: "US",
         timezone: "America/New_York",
         siteCode: "RDG-TN-KNX",
+        latitude: 35.9606,
+        longitude: -83.9207,
+        geoSource: "imported" as const,
       },
       {
         customerId: broadfields.id,
@@ -310,6 +334,9 @@ async function seed() {
         timezone: "America/Chicago",
         siteCode: "BRF-IL-DC1",
         notes: "Regional distribution center. 50+ POS terminals. Mission-critical during business hours.",
+        latitude: 41.8827,
+        longitude: -87.6562,
+        geoSource: "imported" as const,
       },
       {
         customerId: broadfields.id,
@@ -321,6 +348,9 @@ async function seed() {
         country: "US",
         timezone: "America/Chicago",
         siteCode: "BRF-IL-RFD",
+        latitude: 42.2711,
+        longitude: -89.0940,
+        geoSource: "imported" as const,
       },
       {
         customerId: convergex.id,
@@ -333,6 +363,9 @@ async function seed() {
         timezone: "America/Chicago",
         siteCode: "CVX-TX-AUS-DC",
         notes: "QTS Austin Data Center. Primary production environment.",
+        latitude: 30.3981,
+        longitude: -97.7119,
+        geoSource: "imported" as const,
       },
       {
         customerId: convergex.id,
@@ -344,6 +377,9 @@ async function seed() {
         country: "US",
         timezone: "America/Chicago",
         siteCode: "CVX-TX-HQ",
+        latitude: 30.2655,
+        longitude: -97.7393,
+        geoSource: "imported" as const,
       },
       {
         customerId: pinnacle.id,
@@ -356,6 +392,9 @@ async function seed() {
         timezone: "America/Chicago",
         siteCode: "PNL-TN-MEM",
         notes: "Primary dispatch terminal. Wireless backup via Cradlepoint.",
+        latitude: 35.2271,
+        longitude: -90.0415,
+        geoSource: "imported" as const,
       },
       {
         customerId: pinnacle.id,
@@ -368,6 +407,9 @@ async function seed() {
         timezone: "America/Chicago",
         siteCode: "PNL-MS-JAX",
         notes: "Remote yard site. Limited IT presence.",
+        latitude: 32.2988,
+        longitude: -90.1848,
+        geoSource: "imported" as const,
       },
     ])
     .returning();

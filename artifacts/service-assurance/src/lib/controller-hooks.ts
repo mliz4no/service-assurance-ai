@@ -74,6 +74,12 @@ export interface ManagedDeviceRecord {
   haState: "active" | "standby" | "standalone" | "unknown" | null;
   /** Controller-native network/site name (e.g. Meraki network name, FortiManager ADOM) */
   networkName: string | null;
+  /** WGS-84 latitude — null means inherit from site for map display */
+  latitude: number | null;
+  /** WGS-84 longitude — null means inherit from site for map display */
+  longitude: number | null;
+  /** Origin of the coordinate */
+  geoSource: string | null;
   lastSeenAt: string | null;
   metadataJson: Record<string, unknown> | null;
   createdAt: string;

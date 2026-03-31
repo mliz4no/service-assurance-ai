@@ -1,0 +1,211 @@
+Add a map feature to the existing telecom service assurance app.
+
+Goal:
+Show a map with pinpoints for where equipment is located, including managed devices, customer sites, and optionally links/services associated with those sites.
+
+Important instructions:
+- Do NOT rebuild the app from scratch
+- Extend the existing data model and UI cleanly
+- Reuse existing Customer, Site, Service, ManagedDevice, and Controller structures
+- Keep the existing stack and app structure
+- Make the map feature work inside the current app
+- Keep it modular so I can later swap map providers if needed
+
+-----------------------------------
+1. MAP FEATURE OVERVIEW
+-----------------------------------
+
+Add a new "Map" page to the sidebar.
+
+The Map page should:
+- show an interactive map
+- show pins for customer sites
+- show pins for managed devices that have coordinates
+- allow filtering by:
+  - customer
+  - site
+  - vendor
+  - device type
+  - status
+- show color-coded or visually distinct markers based on status:
+  - online / healthy
+  - degraded
+  - offline / down
+  - unknown
+- allow clicking a pin to open a detail card or popup
+- popup should show:
+  - customer name
+  - site name
+  - device hostname if applicable
+  - vendor
+  - device type
+  - status
+  - circuit/service reference if available
+  - quick link to open site detail page
+  - quick link to open device detail page
+  - quick link to open related tickets if present
+
+-----------------------------------
+2. DATA MODEL EXTENSIONS
+-----------------------------------
+
+Update the data model to support geolocation.
+
+Site:
+add these fields:
+- latitude (optional decimal)
+- longitude (optional decimal)
+- geoSource (manual, geocoded, imported) optional
+
+ManagedDevice:
+add these fields:
+- latitude (optional decimal)
+- longitude (optional decimal)
+- geoSource (manual, inherited_from_site, imported) optional
+
+Optional:
+if a device has no own coordinates, allow it to inherit site coordinates in the UI logic
+
+-----------------------------------
+3. MAP PROVIDER IMPLEMENTATION
+-----------------------------------
+
+Use a simple browser-friendly map library appropriate for Replit.
+
+Preferred implementation:
+- React map component
+- OpenStreetMap tiles
+- Leaflet or React-Leaflet preferred
+
+Requirements:
+- include setup cleanly
+- build reusable map components
+- avoid overcomplicated configuration
+- include comments explaining where to swap tile provider later if needed
+
+-----------------------------------
+4. MAP PAGE REQUIREMENTS
+-----------------------------------
+
+Create a page like:
+- /map
+
+The page layout should include:
+- filter panel on the left or top
+- interactive map in the main area
+- selected item detail card or popup
+
+Filters:
+- customer dropdown
+- vendor dropdown
+- device type dropdown
+- status dropdown
+- toggle:
+  - show sites
+  - show devices
+  - show only active incidents
+- search box for site name, hostname, customer, circuit ID
+
+Map behavior:
+- default zoom to show all known markers
+- cluster markers if many are present
+- clicking a marker should highlight it
+- selecting a marker should show a detail panel
+- support fit-to-results after filtering
+
+-----------------------------------
+5. STATUS VISUALIZATION
+-----------------------------------
+
+Marker behavior:
+- use different marker colors/icons for:
+  - healthy / online
+  - degraded
+  - offline / down
+  - unknown
+- if there are open tickets for a site/device, indicate that visually
+- if failover is active, show that in popup or detail card
+
+-----------------------------------
+6. RELATED INCIDENTS / TICKETS
+-----------------------------------
+
+When a site or device is selected on the map, show:
+- count of open tickets
+- highest severity open ticket
+- latest incident summary if available
+- link to open the ticket detail page
+
+If easy, support:
+- a “show only sites/devices with open incidents” filter
+
+-----------------------------------
+7. SITE AND DEVICE EDIT FORMS
+-----------------------------------
+
+Update Site create/edit form:
+- include latitude and longitude fields
+- optional helper text for manual entry
+- preserve existing fields
+
+Update ManagedDevice create/edit form:
+- include optional latitude and longitude fields
+- optional toggle:
+  - use site coordinates
+
+Do not require coordinates for MVP.
+
+-----------------------------------
+8. OPTIONAL GEOCODING SUPPORT
+-----------------------------------
+
+If straightforward, add a simple helper utility that can derive coordinates from a site address later.
+Do NOT depend on a paid geocoding API for now.
+Just structure the code so geocoding can be added later.
+
+-----------------------------------
+9. SEED DATA
+-----------------------------------
+
+Update seed data to include realistic coordinates for sample customer sites and devices.
+
+Use realistic branch-style examples such as:
+- San José, Costa Rica
+- Heredia, Costa Rica
+- Alajuela, Costa Rica
+- Chicago, IL
+- Miami, FL
+
+Make sure the sample data gives the map something useful to show.
+
+-----------------------------------
+10. REUSABLE COMPONENTS
+-----------------------------------
+
+Create reusable components such as:
+- MapView
+- MarkerPopup
+- MapFilters
+- StatusLegend
+
+Keep code organized and reusable.
+
+-----------------------------------
+11. UI / UX
+-----------------------------------
+
+Make it feel like an enterprise operations view, not a consumer map.
+Use a clean panel layout.
+Show a legend for statuses.
+Make the page responsive.
+
+-----------------------------------
+12. AFTER IMPLEMENTATION
+-----------------------------------
+
+After updating the project:
+1. Show me the files related to the map feature
+2. Explain how marker coordinates are sourced
+3. Tell me where to edit marker colors/icons
+4. Tell me where to swap the map provider later
+5. Suggest the next improvement for the map feature
