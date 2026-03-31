@@ -126,6 +126,7 @@ export default function DevicesPage() {
               <TableRow>
                 <TableHead>Hostname</TableHead>
                 <TableHead>Vendor / Model</TableHead>
+                <TableHead>Network</TableHead>
                 <TableHead>Type</TableHead>
                 <TableHead>Status</TableHead>
                 <TableHead>HA State</TableHead>
@@ -136,23 +137,30 @@ export default function DevicesPage() {
             <TableBody>
               {isLoading ? (
                 Array.from({ length: 5 }).map((_, i) => (
-                  <TableRow key={i}>{Array.from({ length: 7 }).map((_, j) => <TableCell key={j}><Skeleton className="h-5 w-full" /></TableCell>)}</TableRow>
+                  <TableRow key={i}>{Array.from({ length: 8 }).map((_, j) => <TableCell key={j}><Skeleton className="h-5 w-full" /></TableCell>)}</TableRow>
                 ))
               ) : devices?.length === 0 ? (
                 <TableRow>
-                  <TableCell colSpan={7} className="text-center py-16 text-muted-foreground">
+                  <TableCell colSpan={8} className="text-center py-16 text-muted-foreground">
                     <Server className="h-8 w-8 mx-auto mb-2 opacity-30" />
                     No devices found
                   </TableCell>
                 </TableRow>
               ) : devices?.map((d) => (
-                <TableRow key={d.id} className="cursor-pointer hover:bg-muted/30" onClick={() => setLocation(`/devices/${d.id}`)}>
+                <TableRow key={d.id} className="cursor-pointer hover:bg-muted/30" onClick={() => setLocation(`/devices/${d.id}`)} data-testid="device-row">
                   <TableCell className="font-medium font-mono text-sm">{d.hostname}</TableCell>
                   <TableCell>
                     <div className="flex items-center gap-2">
                       {vendorBadge(d.vendor)}
                       <span className="text-sm text-muted-foreground">{d.model ?? "—"}</span>
                     </div>
+                  </TableCell>
+                  <TableCell>
+                    {(d as any).networkName ? (
+                      <span className="text-xs text-teal-700 font-medium">{(d as any).networkName}</span>
+                    ) : (
+                      <span className="text-xs text-muted-foreground">—</span>
+                    )}
                   </TableCell>
                   <TableCell>
                     <span className="text-sm capitalize">{d.deviceType.replace(/_/g, " ")}</span>

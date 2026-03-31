@@ -1,4 +1,4 @@
-import { pgTable, text, timestamp, uuid, real, jsonb } from "drizzle-orm/pg-core";
+import { pgTable, text, timestamp, uuid, real, jsonb, boolean } from "drizzle-orm/pg-core";
 import { createInsertSchema } from "drizzle-zod";
 import { z } from "zod/v4";
 import { managedDevicesTable } from "./managed_devices";
@@ -21,6 +21,10 @@ export const networkLinksTable = pgTable("network_links", {
   latencyMs: real("latency_ms"),
   jitterMs: real("jitter_ms"),
   packetLossPct: real("packet_loss_pct"),
+  /** True when a backup/cellular link is actively carrying traffic due to primary failure */
+  failoverActive: boolean("failover_active").notNull().default(false),
+  /** Controller-native network name (e.g. Meraki network name) */
+  networkName: text("network_name"),
   lastPolledAt: timestamp("last_polled_at", { withTimezone: true }),
   metadataJson: jsonb("metadata_json"),
   createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),

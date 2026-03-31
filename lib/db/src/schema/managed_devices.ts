@@ -19,6 +19,8 @@ export const managedDevicesTable = pgTable("managed_devices", {
   mgmtIp: text("mgmt_ip"),
   status: text("status", { enum: ["online", "offline", "degraded", "unknown"] }).notNull().default("unknown"),
   haState: text("ha_state", { enum: ["active", "standby", "standalone", "unknown"] }),
+  /** Controller-native network/site name (e.g. Meraki network name, FortiManager ADOM) */
+  networkName: text("network_name"),
   lastSeenAt: timestamp("last_seen_at", { withTimezone: true }),
   metadataJson: jsonb("metadata_json"),
   createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),

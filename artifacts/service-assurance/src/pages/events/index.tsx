@@ -31,6 +31,30 @@ function vendorTag(source: string) {
   return <span className="text-xs text-muted-foreground">{source}</span>;
 }
 
+const CATEGORY_COLORS: Record<string, string> = {
+  appliance_connectivity: "bg-red-50 text-red-700 border-red-200",
+  vpn: "bg-purple-50 text-purple-700 border-purple-200",
+  security: "bg-orange-50 text-orange-700 border-orange-200",
+  firmware: "bg-blue-50 text-blue-700 border-blue-200",
+  ha: "bg-amber-50 text-amber-700 border-amber-200",
+  uplink: "bg-teal-50 text-teal-700 border-teal-200",
+  cellular: "bg-indigo-50 text-indigo-700 border-indigo-200",
+  traffic: "bg-slate-50 text-slate-600 border-slate-200",
+  sdwan: "bg-cyan-50 text-cyan-700 border-cyan-200",
+  device: "bg-violet-50 text-violet-700 border-violet-200",
+  routing: "bg-sky-50 text-sky-700 border-sky-200",
+};
+
+function categoryChip(category: string | null | undefined) {
+  if (!category) return null;
+  const cls = CATEGORY_COLORS[category] ?? "bg-slate-50 text-slate-600 border-slate-200";
+  return (
+    <Badge className={`text-xs font-normal ${cls}`}>
+      {category.replace(/_/g, " ")}
+    </Badge>
+  );
+}
+
 export default function EventMonitorPage() {
   const [search, setSearch] = useState("");
   const [severityFilter, setSeverityFilter] = useState("__all__");
@@ -117,7 +141,7 @@ export default function EventMonitorPage() {
             <TableHeader>
               <TableRow>
                 <TableHead>Event</TableHead>
-                <TableHead>Source</TableHead>
+                <TableHead>Source / Category</TableHead>
                 <TableHead>Severity</TableHead>
                 <TableHead>Customer</TableHead>
                 <TableHead>Linked Ticket</TableHead>
@@ -148,7 +172,12 @@ export default function EventMonitorPage() {
                     <div className="font-medium text-sm max-w-xs">{e.title}</div>
                     <div className="text-xs text-muted-foreground">{e.eventType}</div>
                   </TableCell>
-                  <TableCell>{vendorTag(e.eventSource)}</TableCell>
+                  <TableCell>
+                    <div className="flex flex-col gap-1">
+                      {vendorTag(e.eventSource)}
+                      {categoryChip((e as any).category)}
+                    </div>
+                  </TableCell>
                   <TableCell>{severityBadge(e.severity)}</TableCell>
                   <TableCell className="text-sm">{e.customer?.name ?? "—"}</TableCell>
                   <TableCell>
@@ -197,6 +226,7 @@ export default function EventMonitorPage() {
             <div className="space-y-4">
               <div className="flex items-center gap-3 flex-wrap">
                 {severityBadge(selectedEvent.severity)}
+                {categoryChip(selectedEvent.category)}
                 <span className="text-sm text-muted-foreground">{selectedEvent.eventType}</span>
                 {vendorTag(selectedEvent.eventSource)}
                 <span className="text-sm text-muted-foreground">{format(new Date(selectedEvent.occurredAt), "MMM d, yyyy HH:mm")}</span>

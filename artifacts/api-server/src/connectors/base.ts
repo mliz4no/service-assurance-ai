@@ -17,6 +17,14 @@ export interface NormalizedDevice {
   status: "online" | "offline" | "degraded" | "unknown";
   haState?: "active" | "standby" | "standalone" | "unknown";
   lastSeenAt?: Date;
+  /**
+   * Human-readable network/site name from the controller.
+   * For Meraki: the Meraki Network name (e.g. "Nexatek — HQ Chicago").
+   * For Fortinet: the ADOM or managed-device group name.
+   * Used to show controller-native context in the UI without requiring
+   * a manual Customer→Site mapping.
+   */
+  networkName?: string;
   metadataJson?: Record<string, unknown>;
 }
 
@@ -32,6 +40,17 @@ export interface NormalizedLink {
   packetLossPct?: number;
   // Reference to attach to a device (by controllerDeviceId)
   controllerDeviceId: string;
+  /**
+   * Human-readable network name from the controller.
+   * Same semantics as NormalizedDevice.networkName — controller-native naming.
+   */
+  networkName?: string;
+  /**
+   * Whether this link is currently carrying failover traffic.
+   * True when a backup/cellular link is "active" because the primary failed.
+   * Used to render a distinct "Failover Active" indicator in the UI.
+   */
+  failoverActive?: boolean;
   metadataJson?: Record<string, unknown>;
 }
 
@@ -46,6 +65,12 @@ export interface NormalizedEvent {
   // Optional references for correlation
   controllerDeviceId?: string;
   rawPayloadJson?: Record<string, unknown>;
+  /**
+   * Meraki event category (e.g. "appliance_connectivity", "vpn", "security", "device").
+   * For other vendors: equivalent grouping label.
+   * Displayed in the Event Monitor as a filterable tag.
+   */
+  category?: string;
 }
 
 export interface ConnectorSyncResult {

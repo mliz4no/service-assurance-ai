@@ -25,6 +25,8 @@ export const deviceEventsTable = pgTable("device_events", {
   aiProbableImpact: text("ai_probable_impact"),
   aiCustomerUpdate: text("ai_customer_update"),
   confidenceScore: integer("confidence_score"),
+  /** Vendor event category (e.g. Meraki: "appliance_connectivity", "vpn", "security", "device") */
+  category: text("category"),
   rawPayloadJson: jsonb("raw_payload_json"),
   occurredAt: timestamp("occurred_at", { withTimezone: true }).notNull().defaultNow(),
   createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),

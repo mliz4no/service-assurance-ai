@@ -43,7 +43,7 @@ router.get("/controllers/:id", requireAuth, async (req, res): Promise<void> => {
     return;
   }
 
-  const [recentLogs, devices, links, events] = await Promise.all([
+  const [recentLogs, devices, linkCountResult, events] = await Promise.all([
     db.select().from(controllerSyncLogsTable)
       .where(eq(controllerSyncLogsTable.controllerId, controller.id))
       .orderBy(desc(controllerSyncLogsTable.startedAt))
@@ -52,7 +52,8 @@ router.get("/controllers/:id", requireAuth, async (req, res): Promise<void> => {
       .where(eq(managedDevicesTable.controllerId, controller.id)),
     db.select({ count: count() })
       .from(networkLinksTable)
-      .where(eq(networkLinksTable.managedDeviceId, managedDevicesTable.id)),
+      .innerJoin(managedDevicesTable, eq(networkLinksTable.managedDeviceId, managedDevicesTable.id))
+      .where(eq(managedDevicesTable.controllerId, controller.id)),
     db.select().from(deviceEventsTable)
       .where(eq(deviceEventsTable.controllerId, controller.id))
       .orderBy(desc(deviceEventsTable.occurredAt))
@@ -63,7 +64,7 @@ router.get("/controllers/:id", requireAuth, async (req, res): Promise<void> => {
     ...controller,
     recentSyncLogs: recentLogs,
     deviceCount: devices.length,
-    linkCount: 0,
+    linkCount: Number(linkCountResult[0]?.count ?? 0),
     eventCount: events.length,
     recentEvents: events,
   });
@@ -263,6 +264,7 @@ async function runSync(controller: typeof controllersTable.$inferSelect, syncLog
           mgmtIp: device.mgmtIp ?? null,
           status: device.status,
           haState: device.haState ?? null,
+          networkName: (device as any).networkName ?? null,
           lastSeenAt: device.lastSeenAt ?? null,
           metadataJson: device.metadataJson ?? null,
         });
@@ -299,6 +301,8 @@ async function runSync(controller: typeof controllersTable.$inferSelect, syncLog
           .update(networkLinksTable)
           .set({
             status: link.status,
+            failoverActive: (link as any).failoverActive ?? false,
+            networkName: (link as any).networkName ?? null,
             latencyMs: link.latencyMs ?? null,
             jitterMs: link.jitterMs ?? null,
             packetLossPct: link.packetLossPct ?? null,
@@ -317,6 +321,8 @@ async function runSync(controller: typeof controllersTable.$inferSelect, syncLog
           circuitId: link.circuitId ?? null,
           role: link.role,
           status: link.status,
+          failoverActive: (link as any).failoverActive ?? false,
+          networkName: (link as any).networkName ?? null,
           latencyMs: link.latencyMs ?? null,
           jitterMs: link.jitterMs ?? null,
           packetLossPct: link.packetLossPct ?? null,
@@ -388,6 +394,7 @@ async function runSync(controller: typeof controllersTable.$inferSelect, syncLog
           eventSource: event.eventSource,
           severity: event.severity,
           eventType: event.eventType,
+          category: (event as any).category ?? null,
           title: event.title,
           description: event.description ?? null,
           rawPayloadJson: event.rawPayloadJson ?? null,
