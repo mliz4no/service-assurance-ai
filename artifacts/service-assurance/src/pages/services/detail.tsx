@@ -77,7 +77,7 @@ export default function ServiceDetail() {
                 </div>
                 <div>
                   <p className="text-sm text-muted-foreground flex items-center gap-1"><DollarSign className="w-3 h-3"/> MRC</p>
-                  <p className="font-medium">{service.monthlyRecurringCharge ? `$${service.monthlyRecurringCharge.toFixed(2)}` : "N/A"}</p>
+                  <p className="font-medium">{service.monthlyRecurringCharge ? `$${parseFloat(String(service.monthlyRecurringCharge)).toFixed(2)}` : "N/A"}</p>
                 </div>
                 <div>
                   <p className="text-sm text-muted-foreground flex items-center gap-1"><Phone className="w-3 h-3"/> Support Ref</p>
