@@ -45,13 +45,13 @@ export function EscalationPanel({ ticketId, isCustomer, isResolved }: Props) {
       onSuccess: (result) => {
         queryClient.invalidateQueries({ queryKey: getGetTicketNotificationsQueryKey(ticketId) });
         if (result.notified > 0) {
-          toast({ title: `Escalation evaluated — ${result.notified} contact(s) notified` });
+          toast({ title: `Customer escalation evaluated — ${result.notified} contact(s) notified` });
         } else {
-          toast({ title: "Escalation evaluated — no new notifications required" });
+          toast({ title: "Customer escalation evaluated — no new notifications required" });
         }
       },
       onError: (err: any) => {
-        toast({ title: "Escalation failed", description: err.message, variant: "destructive" });
+        toast({ title: "Customer escalation failed", description: err.message, variant: "destructive" });
       },
     });
   };
@@ -63,7 +63,7 @@ export function EscalationPanel({ ticketId, isCustomer, isResolved }: Props) {
       <CardHeader className="pb-2 pt-4 px-5 flex flex-row items-center justify-between">
         <CardTitle className="text-sm font-semibold text-muted-foreground uppercase tracking-wide flex items-center gap-2">
           <Bell className="w-4 h-4" />
-          Escalation &amp; Notifications
+          Customer Escalation
         </CardTitle>
         {!isResolved && (
           <Button
@@ -84,7 +84,7 @@ export function EscalationPanel({ ticketId, isCustomer, isResolved }: Props) {
           <p className="text-xs text-muted-foreground py-2">Loading...</p>
         ) : !notifications?.length ? (
           <p className="text-xs text-muted-foreground py-2 italic" data-testid="escalation-empty">
-            No notifications sent yet. Click Evaluate to check escalation rules.
+            No customer escalation notifications sent yet. Click Evaluate to check rules.
           </p>
         ) : (
           <div className="space-y-2 mt-1">

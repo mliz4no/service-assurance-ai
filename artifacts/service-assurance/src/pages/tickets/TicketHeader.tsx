@@ -55,7 +55,7 @@ export function TicketHeader({
         <div className="flex items-center gap-3 px-5 py-3 mb-4 bg-red-600 text-white rounded-lg text-sm font-medium shadow-sm">
           <AlertTriangle className="w-4 h-4 shrink-0" />
           <span>
-            SLA BREACH — Escalation was due {formatDuration(breachOverdueMs)} ago. Immediate action required.
+            SLA BREACH — Vendor escalation was due {formatDuration(breachOverdueMs)} ago. Immediate action required.
           </span>
         </div>
       )}
@@ -63,7 +63,7 @@ export function TicketHeader({
         <div className="flex items-center gap-3 px-5 py-3 mb-4 bg-orange-500 text-white rounded-lg text-sm font-medium shadow-sm">
           <Clock className="w-4 h-4 shrink-0" />
           <span>
-            Escalation due in {minsUntilBreach}m — {ticket.ticketNumber} requires attention soon.
+            Vendor escalation due in {minsUntilBreach}m — {ticket.ticketNumber} requires attention soon.
           </span>
         </div>
       )}

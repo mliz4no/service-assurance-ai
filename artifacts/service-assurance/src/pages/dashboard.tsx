@@ -175,7 +175,7 @@ export default function Dashboard() {
             borderColor="border-l-orange-500"
             iconBg="bg-orange-50"
             iconColor="text-orange-600"
-            subtext="Require escalation"
+            subtext="Require vendor escalation"
             isLoading={isLoadingSummary}
           />
         </div>
@@ -322,15 +322,15 @@ export default function Dashboard() {
             </Card>
           </div>
 
-          {/* Escalation Queue — narrower */}
+          {/* Vendor Escalation Queue — narrower */}
           <div className="xl:col-span-2">
             <Card className="border-border/60 border-l-4 border-l-red-500 shadow-sm h-full">
               <CardHeader className="pb-3 pt-4 px-5 flex-row items-center gap-2">
                 <AlertTriangle className="w-4 h-4 text-red-500 shrink-0" />
                 <div className="flex-1">
-                  <CardTitle className="text-sm font-semibold">Escalation Queue</CardTitle>
+                  <CardTitle className="text-sm font-semibold">Vendor Escalation Queue</CardTitle>
                   <p className="text-xs text-muted-foreground mt-0.5">
-                    Requires immediate attention
+                    SLA breach — requires immediate action
                   </p>
                 </div>
                 {escalations && escalations.length > 0 && (

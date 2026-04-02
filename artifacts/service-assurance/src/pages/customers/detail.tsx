@@ -189,13 +189,13 @@ function ContactsTab({ customerId }: { customerId: string }) {
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2">
             <Bell className="w-4 h-4 text-muted-foreground" />
-            <CardTitle className="text-sm font-semibold">Escalation Contacts</CardTitle>
+            <CardTitle className="text-sm font-semibold">Customer Escalation Contacts</CardTitle>
           </div>
           <Button size="sm" variant="outline" onClick={() => setShowAdd(true)} disabled={showAdd} data-testid="add-contact-btn">
             <Plus className="w-3.5 h-3.5 mr-1" /> Add Contact
           </Button>
         </div>
-        <p className="text-xs text-muted-foreground mt-1">Contacts are automatically notified when incident severity and/or duration thresholds are met.</p>
+        <p className="text-xs text-muted-foreground mt-1">Customer contacts are automatically notified when ticket severity and/or open duration thresholds are met. Distinct from vendor escalation.</p>
       </CardHeader>
       <CardContent className="p-4 space-y-3">
         {showAdd && (

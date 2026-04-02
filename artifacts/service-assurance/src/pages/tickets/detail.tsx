@@ -380,7 +380,7 @@ export default function TicketDetail() {
                     <Dash />
                   )}
                 </Row>
-                <Row label="Next Escalation">
+                <Row label="Vendor Escalation">
                   {escalationAt ? (
                     <span
                       className={cn(
