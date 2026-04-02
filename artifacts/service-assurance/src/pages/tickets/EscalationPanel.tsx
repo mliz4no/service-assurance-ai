@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Bell, ChevronDown, ChevronRight, Clock, Mail, RefreshCw, User } from "lucide-react";
+import { Bell, ChevronDown, ChevronRight, Clock, GitBranch, Mail, RefreshCw, User } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { useGetTicketNotifications, useEvaluateEscalation, getGetTicketNotificationsQueryKey } from "@workspace/api-client-react";
@@ -115,7 +115,7 @@ export function EscalationPanel({ ticketId, isCustomer, isResolved }: Props) {
                 </button>
                 {expandedId === n.id && (
                   <div className="px-3 pb-3 pt-1 border-t border-border/50 bg-muted/20">
-                    <div className="flex items-center gap-1 text-xs text-muted-foreground mb-2">
+                    <div className="flex items-center gap-1 text-xs text-muted-foreground mb-1">
                       <Mail className="w-3 h-3" />
                       <span>{n.contactEmail}</span>
                       <span className="ml-2 px-1.5 py-0.5 bg-slate-100 text-slate-600 rounded text-xs">
@@ -125,6 +125,12 @@ export function EscalationPanel({ ticketId, isCustomer, isResolved }: Props) {
                         · {n.durationMinutes}m into incident
                       </span>
                     </div>
+                    {n.ruleDescription && (
+                      <div className="flex items-center gap-1 text-xs text-muted-foreground mb-2">
+                        <GitBranch className="w-3 h-3 shrink-0" />
+                        <span className="italic">{n.ruleDescription}</span>
+                      </div>
+                    )}
                     <pre className="text-xs text-muted-foreground bg-muted/40 rounded p-2 whitespace-pre-wrap font-mono leading-relaxed max-h-48 overflow-y-auto">
                       {n.message}
                     </pre>

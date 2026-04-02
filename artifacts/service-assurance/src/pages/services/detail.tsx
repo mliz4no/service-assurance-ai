@@ -6,6 +6,7 @@ import { Activity, Globe2, Building2, MapPin, DollarSign, Phone, Ticket } from "
 import { Link } from "wouter";
 import { StatusBadge } from "@/components/status-badge";
 import { SeverityBadge } from "@/components/severity-badge";
+import { EscalationMatrixEditor } from "@/components/EscalationMatrixEditor";
 
 export default function ServiceDetail() {
   const params = useParams();
@@ -94,6 +95,14 @@ export default function ServiceDetail() {
             </CardContent>
           </Card>
         </div>
+
+        {/* Circuit Matrix Override */}
+        <EscalationMatrixEditor
+          scopeType="service"
+          scopeId={service.id}
+          scopeLabel="Circuit Severity Matrix Override"
+          defaultExpanded={false}
+        />
 
         {/* Linked Tickets */}
         <Card className="border-border/50 shadow-sm">

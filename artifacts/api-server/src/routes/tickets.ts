@@ -5,6 +5,7 @@ import { requireAuth } from "../middlewares/auth";
 import { summarizeTicket, normalizeStatus, generateCustomerUpdate } from "../lib/ai";
 import { calculateSeverity, type ImpactLevel, type UrgencyLevel } from "../lib/severity";
 import { evaluateEscalation } from "../lib/notificationEngine";
+import { resolveMatrixCellForTicket } from "../lib/matrixResolver";
 
 const router: IRouter = Router();
 
@@ -95,7 +96,14 @@ router.post("/tickets", requireAuth, async (req, res): Promise<void> => {
   const { customerId, siteId, serviceId, title, description, source, outageType, vendorTicketId, assignedToUserId } = req.body;
   let { severity, impactLevel, urgencyLevel } = req.body;
 
-  if (impactLevel && urgencyLevel) {
+  if (impactLevel && urgencyLevel && customerId) {
+    const resolved = await resolveMatrixCellForTicket(
+      { customerId, siteId: siteId ?? null, serviceId: serviceId ?? null },
+      impactLevel as ImpactLevel,
+      urgencyLevel as UrgencyLevel
+    );
+    severity = resolved.severity;
+  } else if (impactLevel && urgencyLevel) {
     severity = calculateSeverity(impactLevel as ImpactLevel, urgencyLevel as UrgencyLevel);
   }
 

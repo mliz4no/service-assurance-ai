@@ -289,6 +289,7 @@ export interface EscalationNotification {
   durationMinutes: number;
   message: string;
   status: EscalationStatus;
+  ruleDescription?: string | null;
   createdAt: string;
 }
 
@@ -769,3 +770,45 @@ export type GetTicketsParams = {
   sortBy?: string;
   sortOrder?: string;
 };
+
+export type MatrixScopeType = "global" | "customer" | "site" | "service";
+export type MatrixImpactLevel = "high" | "medium" | "low";
+export type MatrixUrgencyLevel = "high" | "medium" | "low";
+export type MatrixSeverityLevel = "critical" | "high" | "medium" | "low";
+
+export interface MatrixCell {
+  impactLevel: MatrixImpactLevel;
+  urgencyLevel: MatrixUrgencyLevel;
+  derivedSeverity: MatrixSeverityLevel;
+  isOverride: boolean;
+  overrideId: string | null;
+  inheritedFrom: string | null;
+}
+
+export interface EscalationMatrixResponse {
+  scopeType: MatrixScopeType;
+  scopeId: string | null;
+  cells: MatrixCell[];
+}
+
+export interface EscalationMatrixOverride {
+  id: string;
+  scopeType: MatrixScopeType;
+  scopeId: string | null;
+  impactLevel: MatrixImpactLevel;
+  urgencyLevel: MatrixUrgencyLevel;
+  derivedSeverity: MatrixSeverityLevel;
+  updatedByUserId: string | null;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface UpsertEscalationMatrixRequest {
+  scopeType: MatrixScopeType;
+  scopeId?: string | null;
+  cells: Array<{
+    impactLevel: MatrixImpactLevel;
+    urgencyLevel: MatrixUrgencyLevel;
+    derivedSeverity: MatrixSeverityLevel;
+  }>;
+}

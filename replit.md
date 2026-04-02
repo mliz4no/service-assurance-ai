@@ -93,6 +93,25 @@ A full-stack enterprise telecom service assurance and ticket orchestration platf
 | Customer | portal@nexatek.com            | Acme123!  |
 | Customer | portal@broadfields.com        | Acme123!  |
 
+### Escalation Matrix Overrides (new)
+- **Configurable ITIL severity matrix** — the Impact × Urgency → Severity mapping is now editable and overridable per scope
+- **Scope hierarchy**: Global baseline → Customer override → Location (site) override → Circuit (service) override. Most specific scope wins per-cell.
+- **DB**: `escalation_matrix_overrides` table stores non-default cells only (`scopeType`, `scopeId`, `impactLevel`, `urgencyLevel`, `derivedSeverity`)
+- **DB**: `escalation_notifications.ruleDescription` — records which matrix scope determined the severity for each notification
+- **API**: `GET /api/escalation-matrix?scopeType=X[&scopeId=Y]` → returns all 9 cells with `isOverride` flag
+- **API**: `PUT /api/escalation-matrix` — batch upsert; cells matching defaults are auto-deleted (no junk stored)
+- **API**: `DELETE /api/escalation-matrix/override/:id` — remove single override cell
+- **Ticket creation**: severity is now derived using the resolved matrix (service → site → customer → global → default), not the hardcoded constant
+- **Notification engine**: `ruleDescription` is recorded on each notification showing which scope's matrix was used (e.g. "Customer override · Impact: high, Urgency: medium → high")
+- **UI — `EscalationMatrixEditor` component**: reusable 3×3 grid editor with color-coded severity dropdowns; overridden cells shown with ring highlight + "default: X" indicator; Save/Reset buttons; collapsible
+- **UI integration**:
+  - Admin page (`/admin`) — Global Matrix (expanded by default)
+  - Customer detail Contacts tab — Customer Matrix Override (collapsed)
+  - Site detail (`/sites/:id`) — Location Matrix Override (collapsed)
+  - Service detail (`/services/:id`) — Circuit Matrix Override (collapsed)
+  - EscalationPanel in ticket detail — shows `ruleDescription` per notification (which matrix rule fired)
+- **Vendor Escalation untouched** — SLA policies, `nextEscalationAt`, and escalation queue are unchanged
+
 ## Key Files
 
 - `artifacts/api-server/src/routes/` — All API route handlers

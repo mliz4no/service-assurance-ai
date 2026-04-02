@@ -19,7 +19,8 @@ import {
 import { useQueryClient } from "@tanstack/react-query";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { CheckCircle2, XCircle, Activity, Server, ShieldCheck, Database, BrainCircuit, Play, Plus, Pencil, Trash2, Users } from "lucide-react";
+import { CheckCircle2, XCircle, Activity, Server, ShieldCheck, Database, BrainCircuit, Play, Plus, Pencil, Trash2, Users, Grid3X3 } from "lucide-react";
+import { EscalationMatrixEditor } from "@/components/EscalationMatrixEditor";
 import { SeverityBadge } from "@/components/severity-badge";
 import { Badge } from "@/components/ui/badge";
 import { useState } from "react";
@@ -635,6 +636,22 @@ export default function AdminPanel() {
             </Table>
           </CardContent>
         </Card>
+
+        {/* Global Escalation Matrix */}
+        <div>
+          <div className="flex items-center gap-2 mb-3">
+            <Grid3X3 className="w-5 h-5 text-muted-foreground" />
+            <h2 className="text-base font-semibold">Escalation Severity Matrix</h2>
+          </div>
+          <p className="text-sm text-muted-foreground mb-4">
+            The global matrix defines the default ITIL severity derived from Impact × Urgency. Individual customers, locations, and circuits can override specific cells.
+          </p>
+          <EscalationMatrixEditor
+            scopeType="global"
+            scopeLabel="Global Default Matrix (ITIL Baseline)"
+            defaultExpanded={true}
+          />
+        </div>
 
         {/* AI Test Panel */}
         <Card className="border-border/50 shadow-sm">

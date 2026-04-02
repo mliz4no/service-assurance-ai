@@ -8,6 +8,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Activity, Edit, Building2, MapPin, Globe2, Ticket, Mail, Phone, Users, Plus, Trash2, Pencil, Bell } from "lucide-react";
+import { EscalationMatrixEditor } from "@/components/EscalationMatrixEditor";
 import { Link } from "wouter";
 import { useState } from "react";
 import { useToast } from "@/hooks/use-toast";
@@ -436,8 +437,14 @@ export default function CustomerDetail() {
                 </Card>
               </TabsContent>
 
-              <TabsContent value="contacts" className="mt-4">
+              <TabsContent value="contacts" className="mt-4 space-y-4">
                 <ContactsTab customerId={id} />
+                <EscalationMatrixEditor
+                  scopeType="customer"
+                  scopeId={id}
+                  scopeLabel="Customer Severity Matrix Override"
+                  defaultExpanded={false}
+                />
               </TabsContent>
             </Tabs>
           </div>

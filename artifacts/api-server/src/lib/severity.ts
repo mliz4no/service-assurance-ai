@@ -20,6 +20,14 @@ const SEVERITY_MATRIX: Record<ImpactLevel, Record<UrgencyLevel, SeverityLevel>> 
   },
 };
 
+export function buildDefaultMatrix(): Record<ImpactLevel, Record<UrgencyLevel, SeverityLevel>> {
+  return {
+    high: { high: "critical", medium: "high", low: "medium" },
+    medium: { high: "high", medium: "medium", low: "low" },
+    low: { high: "medium", medium: "low", low: "low" },
+  };
+}
+
 export function calculateSeverity(impact: ImpactLevel, urgency: UrgencyLevel): SeverityLevel {
   return SEVERITY_MATRIX[impact][urgency];
 }

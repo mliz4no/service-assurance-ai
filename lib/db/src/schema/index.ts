@@ -13,3 +13,4 @@ export * from "./controller_sync_logs";
 export * from "./incident_correlations";
 export * from "./customer_contacts";
 export * from "./escalation_notifications";
+export * from "./escalation_matrix_overrides";

@@ -3,6 +3,7 @@ import { AppLayout } from "@/components/layout/app-layout";
 import { useGetSite } from "@workspace/api-client-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Activity, MapPin, Building2, Globe2, Ticket, Phone, Mail, User } from "lucide-react";
+import { EscalationMatrixEditor } from "@/components/EscalationMatrixEditor";
 import { Link } from "wouter";
 import { StatusBadge } from "@/components/status-badge";
 
@@ -143,6 +144,13 @@ export default function SiteDetail() {
                 )}
               </CardContent>
             </Card>
+
+            <EscalationMatrixEditor
+              scopeType="site"
+              scopeId={site.id}
+              scopeLabel="Location Severity Matrix Override"
+              defaultExpanded={false}
+            />
 
             <Card className="border-border/50 shadow-sm">
               <CardHeader className="pb-3 border-b border-border/50">

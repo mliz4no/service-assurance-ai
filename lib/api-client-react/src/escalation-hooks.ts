@@ -5,6 +5,9 @@ import type {
   CreateCustomerContactRequest,
   UpdateCustomerContactRequest,
   EscalationNotification,
+  EscalationMatrixResponse,
+  UpsertEscalationMatrixRequest,
+  MatrixScopeType,
 } from "./generated/api.schemas";
 
 // ─── Query Keys ──────────────────────────────────────────────────────────────
@@ -86,5 +89,51 @@ export function useEvaluateEscalation() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({}),
       }),
+  });
+}
+
+// ─── Escalation Matrix ───────────────────────────────────────────────────────
+
+export const getEscalationMatrixQueryKey = (scopeType: string, scopeId?: string | null) =>
+  ["escalation-matrix", scopeType, scopeId ?? null] as const;
+
+export function useGetEscalationMatrix(scopeType: MatrixScopeType, scopeId?: string | null) {
+  const params = new URLSearchParams({ scopeType });
+  if (scopeId) params.set("scopeId", scopeId);
+  return useQuery<EscalationMatrixResponse>({
+    queryKey: getEscalationMatrixQueryKey(scopeType, scopeId),
+    queryFn: () => customFetch<EscalationMatrixResponse>(`/api/escalation-matrix?${params.toString()}`),
+  });
+}
+
+export function useUpsertEscalationMatrix() {
+  const queryClient = useQueryClient();
+  return useMutation<EscalationMatrixResponse, Error, UpsertEscalationMatrixRequest>({
+    mutationFn: (data) =>
+      customFetch<EscalationMatrixResponse>("/api/escalation-matrix", {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(data),
+      }),
+    onSuccess: (_, variables) => {
+      queryClient.invalidateQueries({
+        queryKey: getEscalationMatrixQueryKey(variables.scopeType, variables.scopeId),
+      });
+    },
+  });
+}
+
+export function useDeleteMatrixOverride() {
+  const queryClient = useQueryClient();
+  return useMutation<{ success: boolean }, Error, { overrideId: string; scopeType: MatrixScopeType; scopeId?: string | null }>({
+    mutationFn: ({ overrideId }) =>
+      customFetch<{ success: boolean }>(`/api/escalation-matrix/override/${overrideId}`, {
+        method: "DELETE",
+      }),
+    onSuccess: (_, variables) => {
+      queryClient.invalidateQueries({
+        queryKey: getEscalationMatrixQueryKey(variables.scopeType, variables.scopeId),
+      });
+    },
   });
 }

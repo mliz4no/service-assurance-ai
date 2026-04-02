@@ -16,6 +16,7 @@ export const escalationNotificationsTable = pgTable("escalation_notifications", 
   durationMinutes: integer("duration_minutes").notNull().default(0),
   message: text("message").notNull(),
   status: text("status", { enum: ["simulated", "sent", "failed"] }).notNull().default("simulated"),
+  ruleDescription: text("rule_description"),
   createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
 });
 
