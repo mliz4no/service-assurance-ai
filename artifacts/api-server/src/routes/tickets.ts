@@ -3,6 +3,8 @@ import { db, ticketsTable, customersTable, sitesTable, servicesTable, usersTable
 import { eq, and, ilike, or, desc, asc, lt, inArray } from "drizzle-orm";
 import { requireAuth } from "../middlewares/auth";
 import { summarizeTicket, normalizeStatus, generateCustomerUpdate } from "../lib/ai";
+import { calculateSeverity, type ImpactLevel, type UrgencyLevel } from "../lib/severity";
+import { evaluateEscalation } from "../lib/notificationEngine";
 
 const router: IRouter = Router();
 
@@ -90,12 +92,19 @@ router.post("/tickets", requireAuth, async (req, res): Promise<void> => {
     return;
   }
 
-  const { customerId, siteId, serviceId, title, description, source, severity, status, outageType, vendorTicketId, assignedToUserId } = req.body;
-  if (!customerId || !title || !source || !severity || !status || !outageType) {
+  const { customerId, siteId, serviceId, title, description, source, outageType, vendorTicketId, assignedToUserId } = req.body;
+  let { severity, impactLevel, urgencyLevel } = req.body;
+
+  if (impactLevel && urgencyLevel) {
+    severity = calculateSeverity(impactLevel as ImpactLevel, urgencyLevel as UrgencyLevel);
+  }
+
+  if (!customerId || !title || !source || !severity || !outageType) {
     res.status(400).json({ error: "Bad Request", message: "Required fields missing" });
     return;
   }
 
+  const status = req.body.status || "new";
   const ticketNumber = await getNextTicketNumber();
 
   let nextEscalationAt: Date | undefined;
@@ -124,6 +133,8 @@ router.post("/tickets", requireAuth, async (req, res): Promise<void> => {
       severity,
       status,
       outageType,
+      impactLevel: impactLevel || null,
+      urgencyLevel: urgencyLevel || null,
       vendorTicketId: vendorTicketId || null,
       assignedToUserId: assignedToUserId || null,
       nextEscalationAt,
@@ -132,14 +143,19 @@ router.post("/tickets", requireAuth, async (req, res): Promise<void> => {
     .returning();
 
   if (req.user?.id) {
+    const severityNote = (impactLevel && urgencyLevel)
+      ? ` | Impact: ${impactLevel}, Urgency: ${urgencyLevel} → Severity: ${severity}`
+      : ` | Severity: ${severity}`;
     await db.insert(ticketUpdatesTable).values({
       ticketId: ticket.id,
       updateType: "system_event",
-      rawText: `Ticket ${ticketNumber} created by ${req.user.name}`,
+      rawText: `Ticket ${ticketNumber} created by ${req.user.name}${severityNote}`,
       visibility: "internal",
       createdByUserId: req.user.id,
     });
   }
+
+  evaluateEscalation(ticket).catch(() => {});
 
   res.status(201).json(ticket);
 });
@@ -203,7 +219,12 @@ router.put("/tickets/:id", requireAuth, async (req, res): Promise<void> => {
   }
 
   const id = Array.isArray(req.params.id) ? req.params.id[0] : req.params.id;
-  const { title, description, severity, status, outageType, vendorTicketId, assignedToUserId, nextEscalationAt, slaTargetMinutes, aiSummary, aiNormalizedStatus, aiCustomerUpdate } = req.body;
+  let { severity } = req.body;
+  const { title, description, status, outageType, vendorTicketId, assignedToUserId, nextEscalationAt, slaTargetMinutes, aiSummary, aiNormalizedStatus, aiCustomerUpdate, impactLevel, urgencyLevel } = req.body;
+
+  if (impactLevel && urgencyLevel) {
+    severity = calculateSeverity(impactLevel as ImpactLevel, urgencyLevel as UrgencyLevel);
+  }
 
   const resolvedAt = status === "resolved" || status === "closed" ? new Date() : undefined;
 
@@ -215,6 +236,8 @@ router.put("/tickets/:id", requireAuth, async (req, res): Promise<void> => {
       severity,
       status,
       outageType,
+      impactLevel: impactLevel || undefined,
+      urgencyLevel: urgencyLevel || undefined,
       vendorTicketId,
       assignedToUserId,
       nextEscalationAt: nextEscalationAt ? new Date(nextEscalationAt) : undefined,

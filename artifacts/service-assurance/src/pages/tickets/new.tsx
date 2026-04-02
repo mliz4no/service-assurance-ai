@@ -1,14 +1,15 @@
 import { useLocation } from "wouter";
-import { useForm } from "react-hook-form";
+import { useForm, useWatch } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
-import { 
-  useCreateTicket, 
-  getGetTicketsQueryKey, 
-  useGetCustomers, 
-  useGetSites, 
+import { useEffect } from "react";
+import {
+  useCreateTicket,
+  getGetTicketsQueryKey,
+  useGetCustomers,
+  useGetSites,
   useGetServices,
-  useGetUsers
+  useGetUsers,
 } from "@workspace/api-client-react";
 import { useQueryClient } from "@tanstack/react-query";
 import { AppLayout } from "@/components/layout/app-layout";
@@ -19,6 +20,25 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Textarea } from "@/components/ui/textarea";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { useToast } from "@/hooks/use-toast";
+import { cn } from "@/lib/utils";
+
+const SEVERITY_MATRIX: Record<string, Record<string, string>> = {
+  high: { high: "critical", medium: "high", low: "medium" },
+  medium: { high: "high", medium: "medium", low: "low" },
+  low: { high: "medium", medium: "low", low: "low" },
+};
+
+function deriveSeverity(impact?: string, urgency?: string): string | null {
+  if (!impact || impact === "__none__" || !urgency || urgency === "__none__") return null;
+  return SEVERITY_MATRIX[impact]?.[urgency] ?? null;
+}
+
+const SEVERITY_COLOR: Record<string, string> = {
+  critical: "bg-red-100 text-red-800 border-red-200",
+  high: "bg-orange-100 text-orange-800 border-orange-200",
+  medium: "bg-yellow-100 text-yellow-800 border-yellow-200",
+  low: "bg-slate-100 text-slate-700 border-slate-200",
+};
 
 const formSchema = z.object({
   customerId: z.string().min(1, "Customer is required"),
@@ -27,8 +47,9 @@ const formSchema = z.object({
   title: z.string().min(1, "Title is required"),
   description: z.string().optional(),
   source: z.enum(["manual", "email", "api"]),
+  impactLevel: z.string().optional(),
+  urgencyLevel: z.string().optional(),
   severity: z.enum(["low", "medium", "high", "critical"]),
-  status: z.enum(["new", "investigating", "vendor_engaged", "dispatch_scheduled", "monitoring", "resolved", "closed"]),
   outageType: z.enum(["outage", "impairment", "informational", "unknown"]),
   vendorTicketId: z.string().optional(),
   assignedToUserId: z.string().optional(),
@@ -39,7 +60,7 @@ export default function TicketNew() {
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const createMutation = useCreateTicket();
-  
+
   const { data: customers } = useGetCustomers({ status: "active" });
   const { data: users } = useGetUsers();
 
@@ -52,8 +73,9 @@ export default function TicketNew() {
       title: "",
       description: "",
       source: "manual",
+      impactLevel: "__none__",
+      urgencyLevel: "__none__",
       severity: "medium",
-      status: "new",
       outageType: "unknown",
       vendorTicketId: "",
       assignedToUserId: "__none__",
@@ -62,12 +84,22 @@ export default function TicketNew() {
 
   const selectedCustomerId = form.watch("customerId");
   const selectedSiteId = form.watch("siteId");
+  const impactLevel = useWatch({ control: form.control, name: "impactLevel" });
+  const urgencyLevel = useWatch({ control: form.control, name: "urgencyLevel" });
+
+  const derivedSeverity = deriveSeverity(impactLevel, urgencyLevel);
+
+  useEffect(() => {
+    if (derivedSeverity) {
+      form.setValue("severity", derivedSeverity as "low" | "medium" | "high" | "critical");
+    }
+  }, [derivedSeverity, form]);
 
   const { data: sites } = useGetSites({ customerId: selectedCustomerId }, {
     query: { enabled: !!selectedCustomerId }
   });
 
-  const { data: services } = useGetServices({ 
+  const { data: services } = useGetServices({
     customerId: selectedCustomerId,
     siteId: (selectedSiteId && selectedSiteId !== "__none__") ? selectedSiteId : undefined
   }, {
@@ -80,19 +112,27 @@ export default function TicketNew() {
   }
 
   function onSubmit(values: z.infer<typeof formSchema>) {
-    createMutation.mutate({ data: {
-      customerId: values.customerId,
-      siteId: toNullable(values.siteId),
-      serviceId: toNullable(values.serviceId),
-      title: values.title,
-      description: values.description || null,
-      source: values.source,
-      severity: values.severity,
-      status: values.status,
-      outageType: values.outageType,
-      vendorTicketId: values.vendorTicketId || null,
-      assignedToUserId: toNullable(values.assignedToUserId),
-    } }, {
+    const impact = toNullable(values.impactLevel);
+    const urgency = toNullable(values.urgencyLevel);
+    const computedSeverity = impact && urgency ? deriveSeverity(impact, urgency) : values.severity;
+
+    createMutation.mutate({
+      data: {
+        customerId: values.customerId,
+        siteId: toNullable(values.siteId),
+        serviceId: toNullable(values.serviceId),
+        title: values.title,
+        description: values.description || null,
+        source: values.source,
+        severity: (computedSeverity || values.severity) as "low" | "medium" | "high" | "critical",
+        status: "new",
+        outageType: values.outageType,
+        impactLevel: impact as "low" | "medium" | "high" | null,
+        urgencyLevel: urgency as "low" | "medium" | "high" | null,
+        vendorTicketId: values.vendorTicketId || null,
+        assignedToUserId: toNullable(values.assignedToUserId),
+      }
+    }, {
       onSuccess: (ticket) => {
         toast({ title: "Ticket created successfully" });
         queryClient.invalidateQueries({ queryKey: getGetTicketsQueryKey() });
@@ -118,7 +158,7 @@ export default function TicketNew() {
           <CardContent>
             <Form {...form}>
               <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
-                
+
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <FormField control={form.control} name="title" render={({ field }) => (
                     <FormItem className="md:col-span-2">
@@ -176,14 +216,60 @@ export default function TicketNew() {
                   )} />
                 </div>
 
+                {/* ITIL Classification */}
                 <div className="pt-4 border-t border-border/50">
-                  <h3 className="text-sm font-semibold mb-4 text-muted-foreground">Classification</h3>
+                  <div className="flex items-center justify-between mb-4">
+                    <h3 className="text-sm font-semibold text-muted-foreground">Classification</h3>
+                    {derivedSeverity && (
+                      <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                        <span>ITIL-derived severity:</span>
+                        <span className={cn("px-2 py-0.5 rounded border font-semibold uppercase text-xs", SEVERITY_COLOR[derivedSeverity])}>
+                          {derivedSeverity}
+                        </span>
+                      </div>
+                    )}
+                  </div>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+                    <FormField control={form.control} name="impactLevel" render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Impact Level</FormLabel>
+                        <Select onValueChange={field.onChange} value={field.value}>
+                          <FormControl><SelectTrigger data-testid="ticket-impact-select"><SelectValue placeholder="Optional" /></SelectTrigger></FormControl>
+                          <SelectContent>
+                            <SelectItem value="__none__">Not set</SelectItem>
+                            <SelectItem value="low">Low — limited scope, few users affected</SelectItem>
+                            <SelectItem value="medium">Medium — significant degradation</SelectItem>
+                            <SelectItem value="high">High — complete service loss / many users</SelectItem>
+                          </SelectContent>
+                        </Select>
+                        <FormMessage />
+                      </FormItem>
+                    )} />
+                    <FormField control={form.control} name="urgencyLevel" render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Urgency Level</FormLabel>
+                        <Select onValueChange={field.onChange} value={field.value}>
+                          <FormControl><SelectTrigger data-testid="ticket-urgency-select"><SelectValue placeholder="Optional" /></SelectTrigger></FormControl>
+                          <SelectContent>
+                            <SelectItem value="__none__">Not set</SelectItem>
+                            <SelectItem value="low">Low — can tolerate delay</SelectItem>
+                            <SelectItem value="medium">Medium — needs timely resolution</SelectItem>
+                            <SelectItem value="high">High — business critical, resolve immediately</SelectItem>
+                          </SelectContent>
+                        </Select>
+                        <FormMessage />
+                      </FormItem>
+                    )} />
+                  </div>
                   <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                     <FormField control={form.control} name="severity" render={({ field }) => (
                       <FormItem>
-                        <FormLabel>Severity</FormLabel>
-                        <Select onValueChange={field.onChange} defaultValue={field.value}>
-                          <FormControl><SelectTrigger><SelectValue /></SelectTrigger></FormControl>
+                        <FormLabel>
+                          Severity
+                          {derivedSeverity && <span className="ml-1 text-xs text-muted-foreground">(auto-derived)</span>}
+                        </FormLabel>
+                        <Select onValueChange={field.onChange} value={field.value} disabled={!!derivedSeverity}>
+                          <FormControl><SelectTrigger data-testid="ticket-severity-select"><SelectValue /></SelectTrigger></FormControl>
                           <SelectContent>
                             <SelectItem value="low">Low</SelectItem>
                             <SelectItem value="medium">Medium</SelectItem>
@@ -266,7 +352,7 @@ export default function TicketNew() {
 
                 <div className="flex justify-end gap-2 pt-2">
                   <Button type="button" variant="outline" onClick={() => setLocation("/tickets")}>Cancel</Button>
-                  <Button type="submit" disabled={createMutation.isPending}>
+                  <Button type="submit" disabled={createMutation.isPending} data-testid="ticket-submit-btn">
                     {createMutation.isPending ? "Creating..." : "Create Ticket"}
                   </Button>
                 </div>

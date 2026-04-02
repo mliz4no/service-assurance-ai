@@ -37,6 +37,9 @@ export const ticketsTable = pgTable("tickets", {
   // AI confidence score (0-100) from the most recent AI operation
   aiConfidence: integer("ai_confidence"),
   aiProbableImpact: text("ai_probable_impact"),
+  // ITIL impact/urgency fields (derive severity)
+  impactLevel: text("impact_level", { enum: ["low", "medium", "high"] }),
+  urgencyLevel: text("urgency_level", { enum: ["low", "medium", "high"] }),
   // Controller-sourced incident fields
   incidentSource: text("incident_source", { enum: ["manual", "email", "controller"] }).default("manual"),
   impactedDeviceId: uuid("impacted_device_id"),

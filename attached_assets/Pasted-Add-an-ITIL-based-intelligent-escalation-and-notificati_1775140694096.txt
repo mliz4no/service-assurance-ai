@@ -1,0 +1,78 @@
+Add an ITIL-based intelligent escalation and notification system to the app.
+
+Goal:
+Automatically notify the correct customer contacts based on incident impact, urgency, severity, and duration.
+
+Do NOT rebuild the system. Extend existing models.
+
+-----------------------------------
+1. INCIDENT MODEL UPDATE
+-----------------------------------
+
+Add fields:
+- impactLevel (low, medium, high)
+- urgencyLevel (low, medium, high)
+- severity (low, medium, high, critical)
+- durationMinutes (calculated or updated over time)
+
+Severity should be derived from impact + urgency.
+
+-----------------------------------
+2. CONTACT MODEL UPDATE
+-----------------------------------
+
+Add fields:
+- role (noc, manager, director, executive)
+- notifyOnSeverity (minimum severity threshold)
+- notifyOnDurationMinutes (optional escalation delay)
+- notificationChannels (email for now)
+
+-----------------------------------
+3. SEVERITY CALCULATION
+-----------------------------------
+
+Implement a simple ITIL-style matrix:
+
+- high impact + high urgency → critical
+- high impact + medium urgency → high
+- medium + medium → medium
+- low + low → low
+
+-----------------------------------
+4. NOTIFICATION ENGINE
+-----------------------------------
+
+Create a service that:
+- evaluates each incident
+- determines who should be notified
+- sends notifications (simulate or log for now)
+
+Rules:
+- notify contacts whose threshold is met
+- escalate to higher roles if duration exceeds thresholds
+
+-----------------------------------
+5. UI UPDATES
+-----------------------------------
+
+- show severity clearly in incident view
+- show which contacts were notified
+- show escalation timeline
+
+-----------------------------------
+6. MVP SIMPLICITY
+-----------------------------------
+
+- do not integrate real email yet (log or simulate)
+- do not overbuild rules
+- keep logic readable and editable
+
+-----------------------------------
+7. AFTER IMPLEMENTATION
+-----------------------------------
+
+Explain:
+1. how severity is calculated
+2. how contacts are selected
+3. how escalation over time works
+4. how this can later integrate with real email/SMS

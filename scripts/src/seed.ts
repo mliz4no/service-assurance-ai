@@ -13,6 +13,7 @@ import {
   deviceEventsTable,
   controllerSyncLogsTable,
   incidentCorrelationsTable,
+  customerContactsTable,
 } from "@workspace/db";
 import crypto from "crypto";
 import { eq } from "drizzle-orm";
@@ -182,6 +183,25 @@ async function seed() {
       role: "customer",
       customerId: broadfields.id,
     },
+  ]);
+
+  // ─── Customer Escalation Contacts ─────────────────────────────────────
+  console.log("Creating customer contacts...");
+  await db.insert(customerContactsTable).values([
+    // Nexatek — 3-tier escalation path
+    { customerId: nexatek.id, name: "Sarah Chen", email: "s.chen@nexatek.com", phone: "+1 972-555-0301", role: "noc", notifyOnSeverity: "medium", notifyOnDurationMinutes: null, notificationChannels: "email" },
+    { customerId: nexatek.id, name: "Brad Torres", email: "b.torres@nexatek.com", phone: "+1 972-555-0302", role: "manager", notifyOnSeverity: "high", notifyOnDurationMinutes: 30, notificationChannels: "email" },
+    { customerId: nexatek.id, name: "Kelly Park", email: "k.park@nexatek.com", phone: "+1 972-555-0303", role: "director", notifyOnSeverity: "critical", notifyOnDurationMinutes: 60, notificationChannels: "email" },
+    // Ridgeline Health — HIPAA environment, aggressive escalation
+    { customerId: ridgeline.id, name: "James Liu", email: "j.liu@ridgelinehealth.com", phone: "+1 615-555-0401", role: "noc", notifyOnSeverity: "low", notifyOnDurationMinutes: null, notificationChannels: "email" },
+    { customerId: ridgeline.id, name: "Lisa Warren", email: "l.warren@ridgelinehealth.com", phone: "+1 615-555-0402", role: "manager", notifyOnSeverity: "medium", notifyOnDurationMinutes: 15, notificationChannels: "email" },
+    { customerId: ridgeline.id, name: "Dr. Priya Nair", email: "p.nair@ridgelinehealth.com", phone: "+1 615-555-0234", role: "executive", notifyOnSeverity: "high", notifyOnDurationMinutes: 30, notificationChannels: "email" },
+    // Broadfields — Retail, POS-sensitive
+    { customerId: broadfields.id, name: "Tony Reyes", email: "t.reyes@broadfields.com", phone: "+1 312-555-0501", role: "noc", notifyOnSeverity: "medium", notifyOnDurationMinutes: null, notificationChannels: "email" },
+    { customerId: broadfields.id, name: "Kevin Huang", email: "khuang@broadfields.com", phone: "+1 312-555-0318", role: "manager", notifyOnSeverity: "high", notifyOnDurationMinutes: 60, notificationChannels: "email" },
+    // Pinnacle Logistics — remote sites, limited IT staff
+    { customerId: pinnacle.id, name: "Mike Fontenot", email: "m.fontenot@pinnaclelogistics.com", phone: "+1 901-555-0601", role: "noc", notifyOnSeverity: "high", notifyOnDurationMinutes: null, notificationChannels: "email" },
+    { customerId: pinnacle.id, name: "Darnell Simmons", email: "dsimmons@pinnaclelogistics.com", phone: "+1 901-555-0561", role: "director", notifyOnSeverity: "critical", notifyOnDurationMinutes: 120, notificationChannels: "email" },
   ]);
 
   // ─── Sites ────────────────────────────────────────────────────────────

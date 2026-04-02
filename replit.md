@@ -54,6 +54,29 @@ A full-stack enterprise telecom service assurance and ticket orchestration platf
 ### Custom Frontend Hooks
 `artifacts/service-assurance/src/lib/controller-hooks.ts` — hand-written React Query hooks for controller module endpoints (not in OpenAPI spec/generated client)
 
+### ITIL Escalation & Notification System (new)
+- **ITIL severity matrix** on tickets: `impactLevel` × `urgencyLevel` → auto-derived `severity` (high+high=critical, etc.)
+- **Customer escalation contacts** (`customer_contacts` table): per-customer contacts with role (noc/manager/director/executive), `notifyOnSeverity` threshold, and optional `notifyOnDurationMinutes`
+- **Notification engine** (`artifacts/api-server/src/lib/notificationEngine.ts`): evaluates contacts on ticket POST (fire-and-forget) and on `POST /api/tickets/:id/evaluate-escalation`; deduplicates by contact+reason per ticket; logs simulated emails to `escalation_notifications` table and writes system_event to ticket timeline
+- **Escalation Notifications panel** in ticket detail (left column below Vendor & SLA): shows who was notified, when, why; expandable simulated email preview; "Evaluate" button for manual re-evaluation
+- **Contacts tab** on customer detail: full inline CRUD for escalation contacts (add/edit/delete, role/severity/duration fields)
+- **Ticket new form**: Impact + Urgency selectors in Classification section; Severity auto-derives and locks when both are set
+
+#### New DB tables
+`customer_contacts`, `escalation_notifications`
+
+#### New API routes
+- `GET/POST /api/customers/:id/contacts`
+- `GET/PUT/DELETE /api/customers/:id/contacts/:contactId`
+- `GET /api/tickets/:id/notifications`
+- `POST /api/tickets/:id/evaluate-escalation`
+
+#### Custom hooks
+`lib/api-client-react/src/escalation-hooks.ts` — 6 hooks: `useGetCustomerContacts`, `useCreateCustomerContact`, `useUpdateCustomerContact`, `useDeleteCustomerContact`, `useGetTicketNotifications`, `useEvaluateEscalation`; all exported from `lib/api-client-react/src/index.ts`
+
+#### Seeded contacts
+10 contacts seeded across Nexatek and Broadfields customers (see `scripts/src/seed.ts`)
+
 ## Auth
 
 - Bearer token authentication (no cookies/JWTs)
@@ -67,7 +90,8 @@ A full-stack enterprise telecom service assurance and ticket orchestration platf
 |----------|-------------------------------|-----------|
 | Admin    | admin@serviceassurance.ai     | Admin123! |
 | Ops      | ops@serviceassurance.ai       | Ops123!   |
-| Customer | portal@acme.com               | Acme123!  |
+| Customer | portal@nexatek.com            | Acme123!  |
+| Customer | portal@broadfields.com        | Acme123!  |
 
 ## Key Files
 

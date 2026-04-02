@@ -12,6 +12,8 @@ import controllersRouter from "./controllers";
 import devicesRouter from "./devices";
 import networkLinksRouter from "./network-links";
 import deviceEventsRouter from "./device-events";
+import contactsRouter from "./contacts";
+import escalationNotificationsRouter from "./escalation-notifications";
 
 const router: IRouter = Router();
 
@@ -28,5 +30,7 @@ router.use(controllersRouter);
 router.use(devicesRouter);
 router.use(networkLinksRouter);
 router.use(deviceEventsRouter);
+router.use(contactsRouter);
+router.use(escalationNotificationsRouter);
 
 export default router;

@@ -28,7 +28,9 @@ import {
   MapPin,
   Tag,
   User as UserIcon,
+  AlertTriangle,
 } from "lucide-react";
+import { EscalationPanel } from "./EscalationPanel";
 import { cn } from "@/lib/utils";
 import { formatDuration, timeAgo } from "./ticket-utils";
 import { TicketHeader } from "./TicketHeader";
@@ -328,6 +330,26 @@ export default function TicketDetail() {
                 <Row label="Source">
                   <span className="capitalize">{ticket.source}</span>
                 </Row>
+                {(ticket.impactLevel || ticket.urgencyLevel) && (
+                  <>
+                    <div className="border-t border-border/40 pt-3 mt-1">
+                      <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide mb-2 flex items-center gap-1">
+                        <AlertTriangle className="w-3.5 h-3.5" />
+                        ITIL Assessment
+                      </p>
+                    </div>
+                    {ticket.impactLevel && (
+                      <Row label="Impact">
+                        <span className="capitalize font-medium">{ticket.impactLevel}</span>
+                      </Row>
+                    )}
+                    {ticket.urgencyLevel && (
+                      <Row label="Urgency">
+                        <span className="capitalize font-medium">{ticket.urgencyLevel}</span>
+                      </Row>
+                    )}
+                  </>
+                )}
               </CardContent>
             </Card>
 
@@ -385,6 +407,13 @@ export default function TicketDetail() {
                 )}
               </CardContent>
             </Card>
+
+
+            <EscalationPanel
+              ticketId={id}
+              isCustomer={isCustomer}
+              isResolved={isResolved}
+            />
 
           </div>
 

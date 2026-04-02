@@ -11,3 +11,5 @@ export * from "./network_links";
 export * from "./device_events";
 export * from "./controller_sync_logs";
 export * from "./incident_correlations";
+export * from "./customer_contacts";
+export * from "./escalation_notifications";

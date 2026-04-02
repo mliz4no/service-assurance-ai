@@ -204,6 +204,9 @@ export const TicketOutageType = {
   unknown: "unknown",
 } as const;
 
+export type TicketImpactLevel = "low" | "medium" | "high";
+export type TicketUrgencyLevel = "low" | "medium" | "high";
+
 export interface Ticket {
   id: string;
   ticketNumber: string;
@@ -216,6 +219,8 @@ export interface Ticket {
   severity: TicketSeverity;
   status: TicketStatus;
   outageType: TicketOutageType;
+  impactLevel?: TicketImpactLevel | null;
+  urgencyLevel?: TicketUrgencyLevel | null;
   vendorTicketId?: string | null;
   assignedToUserId?: string | null;
   openedAt: string;
@@ -229,6 +234,62 @@ export interface Ticket {
   aiLastGeneratedAt?: string | null;
   createdAt: string;
   updatedAt: string;
+}
+
+export type CustomerContactRole = "noc" | "manager" | "director" | "executive";
+
+export interface CustomerContact {
+  id: string;
+  customerId: string;
+  name: string;
+  email: string;
+  phone?: string | null;
+  role: CustomerContactRole;
+  notifyOnSeverity: TicketSeverity;
+  notifyOnDurationMinutes?: number | null;
+  notificationChannels: string;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface CreateCustomerContactRequest {
+  name: string;
+  email: string;
+  phone?: string | null;
+  role: CustomerContactRole;
+  notifyOnSeverity: TicketSeverity;
+  notifyOnDurationMinutes?: number | null;
+  notificationChannels?: string;
+}
+
+export interface UpdateCustomerContactRequest {
+  name?: string;
+  email?: string;
+  phone?: string | null;
+  role?: CustomerContactRole;
+  notifyOnSeverity?: TicketSeverity;
+  notifyOnDurationMinutes?: number | null;
+  notificationChannels?: string;
+}
+
+export type EscalationReason = "severity_threshold" | "duration_threshold" | "manual";
+export type EscalationStatus = "simulated" | "sent" | "failed";
+
+export interface EscalationNotification {
+  id: string;
+  ticketId: string;
+  contactId?: string | null;
+  contactName: string;
+  contactEmail: string;
+  contactRole: string;
+  notifiedAt: string;
+  severity: string;
+  channel: string;
+  reason: EscalationReason;
+  durationMinutes: number;
+  message: string;
+  status: EscalationStatus;
+  createdAt: string;
 }
 
 export type CustomerWithRelations = Customer & {
@@ -490,9 +551,11 @@ export interface CreateTicketRequest {
   title: string;
   description?: string | null;
   source: CreateTicketRequestSource;
-  severity: CreateTicketRequestSeverity;
-  status: CreateTicketRequestStatus;
+  severity?: CreateTicketRequestSeverity;
+  status?: CreateTicketRequestStatus;
   outageType: CreateTicketRequestOutageType;
+  impactLevel?: TicketImpactLevel | null;
+  urgencyLevel?: TicketUrgencyLevel | null;
   vendorTicketId?: string | null;
   assignedToUserId?: string | null;
   slaTargetMinutes?: number | null;
@@ -537,6 +600,8 @@ export interface UpdateTicketRequest {
   severity?: UpdateTicketRequestSeverity;
   status?: UpdateTicketRequestStatus;
   outageType?: UpdateTicketRequestOutageType;
+  impactLevel?: TicketImpactLevel | null;
+  urgencyLevel?: TicketUrgencyLevel | null;
   vendorTicketId?: string | null;
   assignedToUserId?: string | null;
   nextEscalationAt?: string | null;
