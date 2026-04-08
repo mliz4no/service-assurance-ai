@@ -113,11 +113,31 @@ router.put("/sites/:id", requireAuth, async (req, res): Promise<void> => {
   }
 
   const id = Array.isArray(req.params.id) ? req.params.id[0] : req.params.id;
-  const { siteName, address1, address2, city, state, postalCode, country, timezone, siteCode, notes, lconName, lconPhone, lconEmail, latitude, longitude, geoSource } = req.body;
+  const { siteName, address1, address2, city, state, postalCode, country, timezone, siteCode, notes, lconName, lconPhone, lconEmail, latitude, longitude, geoSource, impactLevel, urgencyLevel } = req.body;
+
+  const updateData: Record<string, unknown> = { updatedAt: new Date() };
+  if (siteName !== undefined) updateData.siteName = siteName;
+  if (address1 !== undefined) updateData.address1 = address1;
+  if (address2 !== undefined) updateData.address2 = address2;
+  if (city !== undefined) updateData.city = city;
+  if (state !== undefined) updateData.state = state;
+  if (postalCode !== undefined) updateData.postalCode = postalCode;
+  if (country !== undefined) updateData.country = country;
+  if (timezone !== undefined) updateData.timezone = timezone;
+  if (siteCode !== undefined) updateData.siteCode = siteCode;
+  if (notes !== undefined) updateData.notes = notes;
+  if (lconName !== undefined) updateData.lconName = lconName;
+  if (lconPhone !== undefined) updateData.lconPhone = lconPhone;
+  if (lconEmail !== undefined) updateData.lconEmail = lconEmail;
+  if (latitude !== undefined) updateData.latitude = latitude;
+  if (longitude !== undefined) updateData.longitude = longitude;
+  if (geoSource !== undefined) updateData.geoSource = geoSource;
+  if (impactLevel !== undefined) updateData.impactLevel = impactLevel === "" ? null : impactLevel;
+  if (urgencyLevel !== undefined) updateData.urgencyLevel = urgencyLevel === "" ? null : urgencyLevel;
 
   const [site] = await db
     .update(sitesTable)
-    .set({ siteName, address1, address2, city, state, postalCode, country, timezone, siteCode, notes, lconName, lconPhone, lconEmail, latitude, longitude, geoSource, updatedAt: new Date() })
+    .set(updateData as any)
     .where(eq(sitesTable.id, id))
     .returning();
 

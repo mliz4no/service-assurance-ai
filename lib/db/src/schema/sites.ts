@@ -26,6 +26,10 @@ export const sitesTable = pgTable("sites", {
   longitude: doublePrecision("longitude"),
   /** Origin of the coordinate: manual entry, geocoded from address, or bulk import */
   geoSource: text("geo_source", { enum: ["manual", "geocoded", "imported"] }),
+  /** Business impact classification for this location */
+  impactLevel: text("impact_level", { enum: ["critical", "high", "medium", "low"] }),
+  /** Urgency classification for this location */
+  urgencyLevel: text("urgency_level", { enum: ["high", "medium", "low"] }),
   createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
   updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow().$onUpdate(() => new Date()),
 });

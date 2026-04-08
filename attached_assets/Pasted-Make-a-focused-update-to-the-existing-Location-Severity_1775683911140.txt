@@ -1,0 +1,67 @@
+Make a focused update to the existing Location Severity configuration.
+
+Changes required:
+
+1. LOCATION-LEVEL OVERRIDE
+For location-level severity overrides, allow the user to select both:
+- Impact
+- Urgency
+
+2. DROPDOWN OPTIONS
+Impact options must be exactly:
+- Critical
+- High
+- Medium
+- Low
+
+Urgency options must be exactly:
+- High
+- Medium
+- Low
+
+3. DEFAULT VALUES
+Set the default selected values for location-level overrides to:
+- Impact = High
+- Urgency = Medium
+
+4. TOOLTIP / HELP DEFINITIONS
+Add clear hover/help text for both fields wherever they appear in the location severity UI.
+
+Use these definitions:
+
+Impact:
+- The business effect of the incident on the customer, site, or service.
+
+Urgency:
+- How quickly action is required based on business need, outage duration, available failover, and operational context.
+
+5. IF LEVEL DEFINITIONS ARE SHOWN, USE THESE
+
+Severity definitions:
+- Critical: Major business outage or severe service disruption requiring immediate attention.
+- High: Significant impact to business operations requiring urgent response.
+- Medium: Noticeable service impact that should be addressed promptly but is not a major outage.
+- Low: Limited business impact or minor issue that can be handled in normal workflow.
+
+Urgency definitions:
+- High: Immediate action is required because the issue is causing or is likely to cause serious business disruption.
+- Medium: Action is needed soon, but the issue is not yet causing severe business disruption.
+- Low: Action is needed, but the issue can be handled through normal operational workflow.
+
+6. UI REQUIREMENTS
+- Keep the UI clean and simple
+- Location-level override should show only Impact and Urgency
+- Do not show the full matrix at the location-level override form
+- Keep matrix editing only where broader escalation settings are configured
+
+7. IMPORTANT
+- Do not rebuild the escalation system
+- Do not change Vendor Escalation
+- Do not change circuit-level behavior
+- Keep this as a focused UI/configuration update
+
+After updating:
+1. confirm location-level override now supports both Impact and Urgency
+2. confirm default values are Impact = High and Urgency = Medium
+3. tell me where the tooltip/help text is defined
+4. confirm the full matrix is not shown on the location-level override form
