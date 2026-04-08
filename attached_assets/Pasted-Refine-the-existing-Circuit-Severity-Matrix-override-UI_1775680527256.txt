@@ -1,0 +1,54 @@
+Refine the existing Circuit Severity Matrix override UI and logic.
+
+Important:
+- Do not rebuild the escalation system
+- Do not change Vendor Escalation
+- Make a focused update only
+
+Changes required:
+
+1. CIRCUIT-LEVEL OVERRIDE
+For circuit-level overrides, do NOT show the full matrix or multiple classification inputs.
+Only show a single dropdown field called:
+- Impact
+
+Impact dropdown options must be exactly:
+- Critical
+- High
+- Medium
+- Low
+
+This circuit-level Impact value should represent the business importance of that circuit/service.
+
+2. TOOLTIP / HOVER DEFINITIONS
+Add clear hover tooltip/help text for:
+- Impact
+- Urgency
+- Severity
+
+Definitions:
+- Impact: The business effect of the incident on the customer, site, or service.
+- Urgency: How quickly the issue requires action based on business need and operational context.
+- Severity: The resulting priority level derived from Impact and Urgency, used to drive escalation and notifications.
+
+3. DISPLAY SEVERITY DEFINITIONS
+Where the matrix or classification settings are shown, display the meaning of each severity level clearly, either as inline helper text, a legend, or a visible definitions panel.
+
+Use these definitions:
+- Critical: Major business outage or severe service disruption requiring immediate attention.
+- High: Significant impact to business operations requiring urgent response.
+- Medium: Noticeable service impact that should be addressed promptly but is not a major outage.
+- Low: Limited business impact or minor issue that can be handled in normal workflow.
+
+4. UI REQUIREMENTS
+- Keep the UI clean and simple
+- At the circuit/service level, only show the Impact dropdown
+- Keep matrix editing available only where appropriate at broader configuration levels
+- Make hover/help text easy to understand for non-technical customer users
+
+5. AFTER IMPLEMENTATION
+Tell me:
+1. where the circuit-level Impact dropdown now appears
+2. where the tooltip text is defined
+3. where the severity definitions are displayed
+4. confirm that circuit-level override now only uses one Impact dropdown

@@ -3,8 +3,9 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { useToast } from "@/hooks/use-toast";
-import { RotateCcw, Save, Grid3X3, Info } from "lucide-react";
+import { RotateCcw, Save, Grid3X3, Info, HelpCircle } from "lucide-react";
 import {
   useGetEscalationMatrix,
   useUpsertEscalationMatrix,
@@ -43,6 +44,28 @@ const LEVEL_LABELS: Record<string, string> = {
   medium: "Medium",
   low: "Low",
 };
+
+const SEVERITY_DEFINITIONS: { level: MatrixSeverityLevel; text: string }[] = [
+  { level: "critical", text: "Major business outage or severe service disruption requiring immediate attention." },
+  { level: "high", text: "Significant impact to business operations requiring urgent response." },
+  { level: "medium", text: "Noticeable service impact that should be addressed promptly but is not a major outage." },
+  { level: "low", text: "Limited business impact or minor issue that can be handled in normal workflow." },
+];
+
+function HelpTip({ children }: { children: React.ReactNode }) {
+  return (
+    <TooltipProvider delayDuration={150}>
+      <Tooltip>
+        <TooltipTrigger asChild>
+          <HelpCircle className="w-3 h-3 text-muted-foreground cursor-help inline-block ml-1 align-middle" />
+        </TooltipTrigger>
+        <TooltipContent className="max-w-[220px] text-center leading-snug">
+          {children}
+        </TooltipContent>
+      </Tooltip>
+    </TooltipProvider>
+  );
+}
 
 type CellState = { severity: MatrixSeverityLevel; isOverride: boolean; overrideId: string | null };
 type EditableMatrix = Record<MatrixImpactLevel, Record<MatrixUrgencyLevel, CellState>>;
@@ -221,7 +244,16 @@ export function EscalationMatrixEditor({ scopeType, scopeId, scopeLabel, default
                   <thead>
                     <tr>
                       <th className="text-left pb-2 pr-3 text-xs font-medium text-muted-foreground w-28">
-                        Impact ↓ / Urgency →
+                        <span>
+                          Impact
+                          <HelpTip>The business effect of the incident on the customer, site, or service.</HelpTip>
+                        </span>
+                        <span className="text-muted-foreground/60"> ↓ / </span>
+                        <span>
+                          Urgency
+                          <HelpTip>How quickly the issue requires action based on business need and operational context.</HelpTip>
+                        </span>
+                        <span className="text-muted-foreground/60"> →</span>
                       </th>
                       {URGENCIES.map((urg) => (
                         <th key={urg} className="pb-2 px-2 text-center text-xs font-semibold text-foreground">
@@ -263,6 +295,10 @@ export function EscalationMatrixEditor({ scopeType, scopeId, scopeLabel, default
                                       <SelectValue />
                                     </SelectTrigger>
                                     <SelectContent>
+                                      <p className="px-2 pt-1.5 pb-0.5 text-[10px] font-semibold text-muted-foreground uppercase tracking-wider flex items-center gap-1">
+                                        Severity
+                                        <HelpTip>The resulting priority level derived from Impact and Urgency, used to drive escalation and notifications.</HelpTip>
+                                      </p>
                                       {SEVERITIES.map((s) => (
                                         <SelectItem key={s} value={s} className="text-xs capitalize">
                                           <span className={cn("inline-block px-1.5 py-0.5 rounded text-xs font-medium capitalize mr-1", SEVERITY_COLORS[s])}>
@@ -306,6 +342,23 @@ export function EscalationMatrixEditor({ scopeType, scopeId, scopeLabel, default
                   Unsaved changes — click Save to apply.
                 </p>
               )}
+
+              <div className="border-t border-border/50 mt-4 pt-4">
+                <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-2.5 flex items-center gap-1">
+                  Severity Definitions
+                  <HelpTip>The resulting priority level derived from Impact and Urgency, used to drive escalation and notifications.</HelpTip>
+                </p>
+                <div className="space-y-1.5">
+                  {SEVERITY_DEFINITIONS.map((def) => (
+                    <div key={def.level} className="flex items-start gap-2">
+                      <span className={cn("inline-flex shrink-0 items-center px-1.5 py-0.5 rounded text-xs font-semibold border w-14 justify-center capitalize", SEVERITY_COLORS[def.level])}>
+                        {def.level}
+                      </span>
+                      <p className="text-xs text-muted-foreground leading-relaxed">{def.text}</p>
+                    </div>
+                  ))}
+                </div>
+              </div>
             </>
           )}
         </CardContent>

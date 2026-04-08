@@ -19,6 +19,7 @@ export const servicesTable = pgTable("services", {
   monthlyRecurringCharge: numeric("monthly_recurring_charge", { precision: 10, scale: 2 }),
   supportReference: text("support_reference"),
   notes: text("notes"),
+  impactLevel: text("impact_level", { enum: ["critical", "high", "medium", "low"] }),
   primaryManagedDeviceId: uuid("primary_managed_device_id"),
   createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
   updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow().$onUpdate(() => new Date()),

@@ -142,11 +142,23 @@ router.put("/services/:id", requireAuth, async (req, res): Promise<void> => {
   }
 
   const id = Array.isArray(req.params.id) ? req.params.id[0] : req.params.id;
-  const { vendorName, serviceType, circuitId, bandwidth, status, installDate, monthlyRecurringCharge, supportReference, notes } = req.body;
+  const { vendorName, serviceType, circuitId, bandwidth, status, installDate, monthlyRecurringCharge, supportReference, notes, impactLevel } = req.body;
+
+  const updateData: Record<string, unknown> = { updatedAt: new Date() };
+  if (vendorName !== undefined) updateData.vendorName = vendorName;
+  if (serviceType !== undefined) updateData.serviceType = serviceType;
+  if (circuitId !== undefined) updateData.circuitId = circuitId;
+  if (bandwidth !== undefined) updateData.bandwidth = bandwidth;
+  if (status !== undefined) updateData.status = status;
+  if (installDate !== undefined) updateData.installDate = installDate;
+  if (monthlyRecurringCharge !== undefined) updateData.monthlyRecurringCharge = monthlyRecurringCharge?.toString();
+  if (supportReference !== undefined) updateData.supportReference = supportReference;
+  if (notes !== undefined) updateData.notes = notes;
+  if (impactLevel !== undefined) updateData.impactLevel = impactLevel === "" ? null : impactLevel;
 
   const [service] = await db
     .update(servicesTable)
-    .set({ vendorName, serviceType, circuitId, bandwidth, status, installDate, monthlyRecurringCharge: monthlyRecurringCharge?.toString(), supportReference, notes, updatedAt: new Date() })
+    .set(updateData as any)
     .where(eq(servicesTable.id, id))
     .returning();
 
