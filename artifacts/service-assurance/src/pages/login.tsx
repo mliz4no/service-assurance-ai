@@ -47,7 +47,7 @@ export default function Login() {
         if (data?.token) {
           saveToken(data.token);
         }
-        window.location.href = "/service-assurance/dashboard";
+        window.location.href = "/dashboard";
       },
       onError: (err: any) => {
         setErrorMsg(err?.data?.message || err?.message || "Invalid credentials");
