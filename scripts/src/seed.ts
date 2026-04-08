@@ -14,6 +14,7 @@ import {
   controllerSyncLogsTable,
   incidentCorrelationsTable,
   customerContactsTable,
+  telecomServicesPartnersTable,
 } from "@workspace/db";
 import crypto from "crypto";
 import { eq } from "drizzle-orm";
@@ -38,6 +39,7 @@ async function clearAll() {
   await db.delete(sitesTable);
   await db.delete(usersTable);
   await db.delete(customersTable);
+  await db.delete(telecomServicesPartnersTable);
   await db.delete(slaPoliciesTable);
 }
 
@@ -109,6 +111,22 @@ async function seed() {
     ])
     .returning();
 
+  // ─── Partner Organisations ────────────────────────────────────────────
+  console.log("Creating partner organisations...");
+  const [nexatekPartner] = await db
+    .insert(telecomServicesPartnersTable)
+    .values([
+      {
+        name: "Nexatek Solutions",
+        companyName: "Nexatek Solutions Ltd.",
+        email: "partner@nexatek.com",
+        phone: "+1-800-639-2835",
+        status: "active",
+        notes: "Demo reseller partner account",
+      },
+    ])
+    .returning();
+
   // ─── Customers ────────────────────────────────────────────────────────
   console.log("Creating customers...");
   const [nexatek, ridgeline, broadfields, convergex, pinnacle] = await db
@@ -121,6 +139,7 @@ async function seed() {
         primaryContactName: "Marcus Webb",
         primaryContactEmail: "mwebb@nexatek.com",
         primaryContactPhone: "214-555-0171",
+        telecomServicesPartnerId: nexatekPartner.id,
         notes:
           "Platinum tier. Multi-site enterprise with DIA and SD-WAN across 4 Texas locations. High sensitivity to latency — supports financial trading platforms.",
       },
@@ -131,6 +150,7 @@ async function seed() {
         primaryContactName: "Dr. Priya Nair",
         primaryContactEmail: "p.nair@ridgelinehealth.com",
         primaryContactPhone: "615-555-0234",
+        telecomServicesPartnerId: nexatekPartner.id,
         notes:
           "HIPAA-regulated environment. Redundant connectivity mandatory. Any outage on patient-network circuits must escalate immediately.",
       },
@@ -182,6 +202,17 @@ async function seed() {
       passwordHash: hashPassword("Acme123!"),
       role: "customer",
       customerId: broadfields.id,
+    },
+  ]);
+
+  // ─── Partner portal user ──────────────────────────────────────────────
+  await db.insert(usersTable).values([
+    {
+      name: "Nexatek Partner Admin",
+      email: "partneradmin@nexatek.com",
+      passwordHash: hashPassword("Acme123!"),
+      role: "telecom_services_partner",
+      telecomServicesPartnerId: nexatekPartner.id,
     },
   ]);
 
@@ -1878,6 +1909,7 @@ async function seed() {
   console.log("\nSeed complete! Login credentials:");
   console.log("  Admin: admin@serviceassurance.ai / Admin123!");
   console.log("  Ops:   ops@serviceassurance.ai / Ops123!");
+  console.log("  Partner: partneradmin@nexatek.com / Acme123!");
   console.log("  Customer portal (Nexatek): portal@nexatek.com / Acme123!");
   console.log("  Customer portal (Broadfields): portal@broadfields.com / Acme123!");
 }
