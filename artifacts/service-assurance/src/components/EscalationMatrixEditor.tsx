@@ -52,6 +52,12 @@ const SEVERITY_DEFINITIONS: { level: MatrixSeverityLevel; text: string }[] = [
   { level: "low", text: "Limited business impact or minor issue that can be handled in normal workflow." },
 ];
 
+const URGENCY_DEFINITIONS: { label: string; color: string; text: string }[] = [
+  { label: "High", color: "bg-orange-100 text-orange-800 border-orange-200", text: "Immediate action is required because the issue is causing or is likely to cause serious business disruption." },
+  { label: "Medium", color: "bg-yellow-100 text-yellow-800 border-yellow-200", text: "Action is needed soon, but the issue is not yet causing severe business disruption." },
+  { label: "Low", color: "bg-slate-100 text-slate-700 border-slate-200", text: "Action is needed, but the issue can be handled through normal operational workflow." },
+];
+
 function HelpTip({ children }: { children: React.ReactNode }) {
   return (
     <TooltipProvider delayDuration={150}>
@@ -251,7 +257,7 @@ export function EscalationMatrixEditor({ scopeType, scopeId, scopeLabel, default
                         <span className="text-muted-foreground/60"> ↓ / </span>
                         <span>
                           Urgency
-                          <HelpTip>How quickly the issue requires action based on business need and operational context.</HelpTip>
+                          <HelpTip>How quickly action is required based on business need, outage duration, available failover, and operational context.</HelpTip>
                         </span>
                         <span className="text-muted-foreground/60"> →</span>
                       </th>
@@ -343,20 +349,38 @@ export function EscalationMatrixEditor({ scopeType, scopeId, scopeLabel, default
                 </p>
               )}
 
-              <div className="border-t border-border/50 mt-4 pt-4">
-                <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-2.5 flex items-center gap-1">
-                  Severity Definitions
-                  <HelpTip>The resulting priority level derived from Impact and Urgency, used to drive escalation and notifications.</HelpTip>
-                </p>
-                <div className="space-y-1.5">
-                  {SEVERITY_DEFINITIONS.map((def) => (
-                    <div key={def.level} className="flex items-start gap-2">
-                      <span className={cn("inline-flex shrink-0 items-center px-1.5 py-0.5 rounded text-xs font-semibold border w-14 justify-center capitalize", SEVERITY_COLORS[def.level])}>
-                        {def.level}
-                      </span>
-                      <p className="text-xs text-muted-foreground leading-relaxed">{def.text}</p>
-                    </div>
-                  ))}
+              <div className="border-t border-border/50 mt-4 pt-4 grid grid-cols-1 md:grid-cols-2 gap-5">
+                <div>
+                  <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-2.5 flex items-center gap-1">
+                    Severity Definitions
+                    <HelpTip>The resulting priority level derived from Impact and Urgency, used to drive escalation and notifications.</HelpTip>
+                  </p>
+                  <div className="space-y-1.5">
+                    {SEVERITY_DEFINITIONS.map((def) => (
+                      <div key={def.level} className="flex items-start gap-2">
+                        <span className={cn("inline-flex shrink-0 items-center px-1.5 py-0.5 rounded text-xs font-semibold border w-14 justify-center capitalize", SEVERITY_COLORS[def.level])}>
+                          {def.level}
+                        </span>
+                        <p className="text-xs text-muted-foreground leading-relaxed">{def.text}</p>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+                <div>
+                  <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-2.5 flex items-center gap-1">
+                    Urgency Definitions
+                    <HelpTip>How quickly action is required based on business need, outage duration, available failover, and operational context.</HelpTip>
+                  </p>
+                  <div className="space-y-1.5">
+                    {URGENCY_DEFINITIONS.map((def) => (
+                      <div key={def.label} className="flex items-start gap-2">
+                        <span className={cn("inline-flex shrink-0 items-center px-1.5 py-0.5 rounded text-xs font-semibold border w-14 justify-center", def.color)}>
+                          {def.label}
+                        </span>
+                        <p className="text-xs text-muted-foreground leading-relaxed">{def.text}</p>
+                      </div>
+                    ))}
+                  </div>
                 </div>
               </div>
             </>

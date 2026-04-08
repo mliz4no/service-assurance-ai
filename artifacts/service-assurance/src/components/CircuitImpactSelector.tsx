@@ -81,10 +81,10 @@ export function CircuitImpactSelector({ serviceId, currentImpact, defaultExpande
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const [collapsed, setCollapsed] = useState(!defaultExpanded);
-  const [selected, setSelected] = useState<ImpactLevel | "none">(currentImpact ?? "none");
+  const [selected, setSelected] = useState<ImpactLevel | "none">(currentImpact ?? "high");
   const [isSaving, setIsSaving] = useState(false);
 
-  const isDirty = selected !== (currentImpact ?? "none");
+  const isDirty = selected !== (currentImpact ?? "high");
   const effectiveImpact = selected !== "none" ? selected : null;
 
   const handleSave = async () => {
