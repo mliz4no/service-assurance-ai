@@ -1882,12 +1882,20 @@ async function seed() {
   console.log("  Customer portal (Broadfields): portal@broadfields.com / Acme123!");
 }
 
-seed()
-  .then(() => {
-    console.log("Done!");
-    process.exit(0);
-  })
-  .catch((err) => {
-    console.error("Seed failed:", err);
-    process.exit(1);
-  });
+export { seed };
+
+const isMain =
+  process.argv[1] &&
+  (process.argv[1].endsWith("seed.ts") || process.argv[1].endsWith("seed.js"));
+
+if (isMain) {
+  seed()
+    .then(() => {
+      console.log("Done!");
+      process.exit(0);
+    })
+    .catch((err) => {
+      console.error("Seed failed:", err);
+      process.exit(1);
+    });
+}
