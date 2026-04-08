@@ -6,6 +6,10 @@ import { requireAuth } from "../middlewares/auth";
 const router: IRouter = Router();
 
 router.get("/network-links", requireAuth, async (req, res): Promise<void> => {
+  if (req.user?.role === "telecom_services_partner") {
+    res.status(403).json({ error: "Forbidden" });
+    return;
+  }
   const { customerId, siteId, status, role, search } = req.query as Record<string, string>;
 
   let links = await db.select().from(networkLinksTable);

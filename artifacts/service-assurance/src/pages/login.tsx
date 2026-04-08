@@ -19,15 +19,18 @@ const loginSchema = z.object({
 
 export default function Login() {
   const [, setLocation] = useLocation();
-  const { isAuthenticated, isLoading: authLoading } = useAuth();
+  const { isAuthenticated, isLoading: authLoading, user } = useAuth();
   const loginMutation = useLogin();
   const [errorMsg, setErrorMsg] = useState("");
 
   useEffect(() => {
     if (!authLoading && isAuthenticated) {
-      setLocation("/dashboard");
+      const dest = user?.role === "telecom_services_partner" ? "/customers"
+        : user?.role === "customer" ? "/my-tickets"
+        : "/dashboard";
+      setLocation(dest);
     }
-  }, [authLoading, isAuthenticated, setLocation]);
+  }, [authLoading, isAuthenticated, user, setLocation]);
 
   const form = useForm<z.infer<typeof loginSchema>>({
     resolver: zodResolver(loginSchema),
@@ -44,7 +47,7 @@ export default function Login() {
         if (data?.token) {
           saveToken(data.token);
         }
-        window.location.href = "/dashboard";
+        window.location.href = "/service-assurance/dashboard";
       },
       onError: (err: any) => {
         setErrorMsg(err?.data?.message || err?.message || "Invalid credentials");

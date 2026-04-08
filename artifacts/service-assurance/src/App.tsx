@@ -2,7 +2,7 @@ import { Switch, Route, Router as WouterRouter } from "wouter";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { Toaster } from "@/components/ui/toaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
-import { AuthProvider, ProtectedRoute } from "@/lib/auth";
+import { AuthProvider, ProtectedRoute, InternalOnlyRoute } from "@/lib/auth";
 
 // Pages
 import Login from "@/pages/login";
@@ -46,7 +46,7 @@ function Router() {
       <Route path="/" component={Login} />
 
       <Route path="/dashboard">
-        <ProtectedRoute><Dashboard /></ProtectedRoute>
+        <InternalOnlyRoute><Dashboard /></InternalOnlyRoute>
       </Route>
       <Route path="/customers">
         <ProtectedRoute><CustomersList /></ProtectedRoute>
@@ -88,16 +88,16 @@ function Router() {
         <ProtectedRoute><TicketDetail /></ProtectedRoute>
       </Route>
       <Route path="/admin">
-        <ProtectedRoute><AdminPanel /></ProtectedRoute>
+        <InternalOnlyRoute><AdminPanel /></InternalOnlyRoute>
       </Route>
       <Route path="/my-tickets">
         <ProtectedRoute><MyTickets /></ProtectedRoute>
       </Route>
       <Route path="/controllers">
-        <ProtectedRoute><ControllersPage /></ProtectedRoute>
+        <InternalOnlyRoute><ControllersPage /></InternalOnlyRoute>
       </Route>
       <Route path="/controllers/:id">
-        <ProtectedRoute><ControllerDetailPage /></ProtectedRoute>
+        <InternalOnlyRoute><ControllerDetailPage /></InternalOnlyRoute>
       </Route>
       <Route path="/devices">
         <ProtectedRoute><DevicesPage /></ProtectedRoute>
@@ -106,10 +106,10 @@ function Router() {
         <ProtectedRoute><DeviceDetailPage /></ProtectedRoute>
       </Route>
       <Route path="/network-links">
-        <ProtectedRoute><NetworkLinksPage /></ProtectedRoute>
+        <InternalOnlyRoute><NetworkLinksPage /></InternalOnlyRoute>
       </Route>
       <Route path="/events">
-        <ProtectedRoute><EventMonitorPage /></ProtectedRoute>
+        <InternalOnlyRoute><EventMonitorPage /></InternalOnlyRoute>
       </Route>
       <Route path="/map">
         <ProtectedRoute><MapPage /></ProtectedRoute>

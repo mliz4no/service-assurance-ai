@@ -7,6 +7,10 @@ import { summarizeControllerEvent, inferProbableImpact } from "../lib/ai";
 const router: IRouter = Router();
 
 router.get("/device-events", requireAuth, async (req, res): Promise<void> => {
+  if (req.user?.role === "telecom_services_partner") {
+    res.status(403).json({ error: "Forbidden" });
+    return;
+  }
   const { controllerId, customerId, siteId, severity, search } = req.query as Record<string, string>;
 
   let events = await db

@@ -14,3 +14,4 @@ export * from "./incident_correlations";
 export * from "./customer_contacts";
 export * from "./escalation_notifications";
 export * from "./escalation_matrix_overrides";
+export * from "./telecom_services_partners";

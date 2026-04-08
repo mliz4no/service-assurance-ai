@@ -20,7 +20,7 @@ router.get("/users", requireAuth, requireRole("admin", "ops"), async (_req, res)
 });
 
 router.post("/users", requireAuth, requireRole("admin"), async (req, res): Promise<void> => {
-  const { name, email, password, role, customerId } = req.body;
+  const { name, email, password, role, customerId, telecomServicesPartnerId } = req.body;
   if (!name || !email || !password || !role) {
     res.status(400).json({ error: "Bad Request", message: "name, email, password, and role required" });
     return;
@@ -29,7 +29,7 @@ router.post("/users", requireAuth, requireRole("admin"), async (req, res): Promi
   const passwordHash = hashPassword(password);
   const [user] = await db
     .insert(usersTable)
-    .values({ name, email, passwordHash, role, customerId: customerId || null })
+    .values({ name, email, passwordHash, role, customerId: customerId || null, telecomServicesPartnerId: telecomServicesPartnerId || null })
     .returning({
       id: usersTable.id,
       name: usersTable.name,
@@ -45,9 +45,9 @@ router.post("/users", requireAuth, requireRole("admin"), async (req, res): Promi
 
 router.put("/users/:id", requireAuth, requireRole("admin"), async (req, res): Promise<void> => {
   const id = Array.isArray(req.params.id) ? req.params.id[0] : req.params.id;
-  const { name, email, password, role, customerId } = req.body;
+  const { name, email, password, role, customerId, telecomServicesPartnerId } = req.body;
 
-  const updates: Record<string, unknown> = { name, email, role, customerId: customerId || null, updatedAt: new Date() };
+  const updates: Record<string, unknown> = { name, email, role, customerId: customerId || null, telecomServicesPartnerId: telecomServicesPartnerId || null, updatedAt: new Date() };
   if (password) {
     updates.passwordHash = hashPassword(password);
   }

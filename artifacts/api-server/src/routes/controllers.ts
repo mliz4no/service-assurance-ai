@@ -11,6 +11,10 @@ const router: IRouter = Router();
 // ── List controllers ─────────────────────────────────────────────────────────
 
 router.get("/controllers", requireAuth, async (req, res): Promise<void> => {
+  if (req.user?.role === "telecom_services_partner") {
+    res.status(403).json({ error: "Forbidden" });
+    return;
+  }
   const controllers = await db.select().from(controllersTable).orderBy(controllersTable.name);
 
   const enriched = await Promise.all(

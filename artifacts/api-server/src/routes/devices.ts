@@ -10,6 +10,11 @@ router.get("/devices", requireAuth, async (req, res): Promise<void> => {
 
   let devices = await db.select().from(managedDevicesTable).orderBy(managedDevicesTable.hostname);
 
+  if (req.user?.role === "telecom_services_partner") {
+    const pIds = req.partnerCustomerIds ?? [];
+    devices = devices.filter((d) => d.customerId && pIds.includes(d.customerId));
+  }
+
   // Simple in-memory filtering
   if (customerId) devices = devices.filter((d) => d.customerId === customerId);
   if (siteId) devices = devices.filter((d) => d.siteId === siteId);

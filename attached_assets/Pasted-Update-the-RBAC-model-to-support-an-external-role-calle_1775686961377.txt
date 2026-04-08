@@ -1,0 +1,101 @@
+Update the RBAC model to support an external role called Telecom Services Partner.
+
+Goal:
+A Telecom Services Partner is an independent sales/referral partner who should be able to log in and view everything tied to the customers they brought to us.
+
+Important:
+- Do not rebuild authentication
+- Extend the existing RBAC and visibility model
+- Keep this simple and secure
+- This is different from an internal agent role
+
+-----------------------------------
+1. NEW ROLE
+-----------------------------------
+
+Add a new user role:
+- telecom_services_partner
+
+This role is external-facing and should have restricted visibility.
+
+-----------------------------------
+2. PARTNER ENTITY
+-----------------------------------
+
+Add a model called TelecomServicesPartner with fields such as:
+- id
+- name
+- companyName
+- email
+- phone
+- status
+- createdAt
+- updatedAt
+
+Update User so a user can optionally belong to a TelecomServicesPartner:
+- telecomServicesPartnerId (optional)
+
+Update Customer so a customer can optionally be linked to a TelecomServicesPartner:
+- telecomServicesPartnerId (optional)
+
+For MVP, assume one customer belongs to one Telecom Services Partner.
+
+-----------------------------------
+3. ACCESS RULES
+-----------------------------------
+
+When a Telecom Services Partner logs in, they should only see records tied to customers linked to their telecomServicesPartnerId.
+
+They should be able to view:
+- their customers
+- sites for those customers
+- services/circuits for those customers
+- devices/links tied to those customers
+- tickets/incidents for those customers
+- customer-facing updates for those customers
+
+They should not be able to view:
+- other partners' customers
+- admin/settings pages
+- internal-only notes
+- unrelated operational records
+
+-----------------------------------
+4. UI UPDATES
+-----------------------------------
+
+For Telecom Services Partner users, add a restricted portal-style view with navigation such as:
+- My Customers
+- My Sites
+- My Services
+- My Incidents / Tickets
+- optional Map view filtered to their customers
+
+Hide admin/internal navigation items.
+
+-----------------------------------
+5. BACKEND ENFORCEMENT
+-----------------------------------
+
+Enforce access control server-side:
+- partner users can only query records tied to their customers
+- direct URL/API access to other customers' records must be blocked
+- related site/service/device/ticket data should only be returned if tied to an allowed customer
+
+-----------------------------------
+6. CUSTOMER-FACING VS INTERNAL DATA
+-----------------------------------
+
+Only show customer-facing fields and updates to Telecom Services Partner users.
+Do not expose internal notes by default.
+
+-----------------------------------
+7. AFTER IMPLEMENTATION
+-----------------------------------
+
+After updating:
+1. explain the Telecom Services Partner data model
+2. explain how customer ownership is linked to the partner
+3. confirm what records a partner can see
+4. confirm what records are hidden
+5. list which pages/navigation items are shown for this role

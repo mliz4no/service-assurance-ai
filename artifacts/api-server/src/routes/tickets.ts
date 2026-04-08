@@ -57,6 +57,10 @@ router.get("/tickets", requireAuth, async (req, res): Promise<void> => {
 
   if (req.user?.role === "customer" && req.user.customerId) {
     conditions.push(eq(ticketsTable.customerId, req.user.customerId));
+  } else if (req.user?.role === "telecom_services_partner") {
+    const pIds = req.partnerCustomerIds ?? [];
+    if (pIds.length === 0) { res.json([]); return; }
+    conditions.push(inArray(ticketsTable.customerId, pIds));
   } else if (customerId) {
     conditions.push(eq(ticketsTable.customerId, customerId));
   }
@@ -88,7 +92,7 @@ router.get("/tickets", requireAuth, async (req, res): Promise<void> => {
 });
 
 router.post("/tickets", requireAuth, async (req, res): Promise<void> => {
-  if (req.user?.role === "customer") {
+  if (req.user?.role === "customer" || req.user?.role === "telecom_services_partner") {
     res.status(403).json({ error: "Forbidden" });
     return;
   }
@@ -178,6 +182,10 @@ router.get("/tickets/:id", requireAuth, async (req, res): Promise<void> => {
   }
 
   if (req.user?.role === "customer" && req.user.customerId !== ticket.customerId) {
+    res.status(403).json({ error: "Forbidden" });
+    return;
+  }
+  if (req.user?.role === "telecom_services_partner" && !(req.partnerCustomerIds ?? []).includes(ticket.customerId)) {
     res.status(403).json({ error: "Forbidden" });
     return;
   }

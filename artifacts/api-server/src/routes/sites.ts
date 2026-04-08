@@ -1,6 +1,6 @@
 import { Router, type IRouter } from "express";
 import { db, sitesTable, customersTable, servicesTable, ticketsTable } from "@workspace/db";
-import { eq, and, ilike, or } from "drizzle-orm";
+import { eq, and, ilike, or, inArray } from "drizzle-orm";
 import { requireAuth } from "../middlewares/auth";
 
 const router: IRouter = Router();
@@ -11,6 +11,10 @@ router.get("/sites", requireAuth, async (req, res): Promise<void> => {
 
   if (req.user?.role === "customer" && req.user.customerId) {
     conditions.push(eq(sitesTable.customerId, req.user.customerId));
+  } else if (req.user?.role === "telecom_services_partner") {
+    const pIds = req.partnerCustomerIds ?? [];
+    if (pIds.length === 0) { res.json([]); return; }
+    conditions.push(inArray(sitesTable.customerId, pIds));
   } else if (customerId) {
     conditions.push(eq(sitesTable.customerId, customerId));
   }
@@ -96,6 +100,10 @@ router.get("/sites/:id", requireAuth, async (req, res): Promise<void> => {
     res.status(403).json({ error: "Forbidden" });
     return;
   }
+  if (req.user?.role === "telecom_services_partner" && !(req.partnerCustomerIds ?? []).includes(site.customerId)) {
+    res.status(403).json({ error: "Forbidden" });
+    return;
+  }
 
   const [customer] = await db.select().from(customersTable).where(eq(customersTable.id, site.customerId));
   const [services, tickets] = await Promise.all([
@@ -107,7 +115,7 @@ router.get("/sites/:id", requireAuth, async (req, res): Promise<void> => {
 });
 
 router.put("/sites/:id", requireAuth, async (req, res): Promise<void> => {
-  if (req.user?.role === "customer") {
+  if (req.user?.role === "customer" || req.user?.role === "telecom_services_partner") {
     res.status(403).json({ error: "Forbidden" });
     return;
   }

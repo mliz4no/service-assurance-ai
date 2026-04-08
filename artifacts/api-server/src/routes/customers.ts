@@ -1,6 +1,6 @@
 import { Router, type IRouter } from "express";
 import { db, customersTable, sitesTable, servicesTable, ticketsTable } from "@workspace/db";
-import { eq, and, ilike, or } from "drizzle-orm";
+import { eq, and, ilike, or, inArray } from "drizzle-orm";
 import { requireAuth } from "../middlewares/auth";
 
 const router: IRouter = Router();
@@ -13,6 +13,10 @@ router.get("/customers", requireAuth, async (req, res): Promise<void> => {
 
   if (req.user?.role === "customer" && req.user.customerId) {
     conditions.push(eq(customersTable.id, req.user.customerId));
+  } else if (req.user?.role === "telecom_services_partner") {
+    const pIds = req.partnerCustomerIds ?? [];
+    if (pIds.length === 0) { res.json([]); return; }
+    conditions.push(inArray(customersTable.id, pIds));
   }
   if (search) {
     conditions.push(
@@ -31,11 +35,12 @@ router.get("/customers", requireAuth, async (req, res): Promise<void> => {
   }
 
   const customers = await query.orderBy(customersTable.name);
-  res.json(customers);
+  const isPartner = req.user?.role === "telecom_services_partner";
+  res.json(isPartner ? customers.map(({ notes: _notes, ...rest }) => rest) : customers);
 });
 
 router.post("/customers", requireAuth, async (req, res): Promise<void> => {
-  if (req.user?.role === "customer") {
+  if (req.user?.role === "customer" || req.user?.role === "telecom_services_partner") {
     res.status(403).json({ error: "Forbidden" });
     return;
   }
@@ -60,6 +65,10 @@ router.get("/customers/:id", requireAuth, async (req, res): Promise<void> => {
     res.status(403).json({ error: "Forbidden" });
     return;
   }
+  if (req.user?.role === "telecom_services_partner" && !(req.partnerCustomerIds ?? []).includes(id)) {
+    res.status(403).json({ error: "Forbidden" });
+    return;
+  }
 
   const [customer] = await db.select().from(customersTable).where(eq(customersTable.id, id));
   if (!customer) {
@@ -73,21 +82,28 @@ router.get("/customers/:id", requireAuth, async (req, res): Promise<void> => {
     db.select().from(ticketsTable).where(eq(ticketsTable.customerId, id)).orderBy(ticketsTable.openedAt),
   ]);
 
-  res.json({ ...customer, sites, services, tickets });
+  const isPartner = req.user?.role === "telecom_services_partner";
+  const { notes: _notes, ...customerPublic } = customer;
+  res.json(isPartner ? { ...customerPublic, sites, services, tickets } : { ...customer, sites, services, tickets });
 });
 
 router.put("/customers/:id", requireAuth, async (req, res): Promise<void> => {
-  if (req.user?.role === "customer") {
+  if (req.user?.role === "customer" || req.user?.role === "telecom_services_partner") {
     res.status(403).json({ error: "Forbidden" });
     return;
   }
 
   const id = Array.isArray(req.params.id) ? req.params.id[0] : req.params.id;
-  const { name, accountNumber, status, primaryContactName, primaryContactEmail, primaryContactPhone, notes } = req.body;
+  const { name, accountNumber, status, primaryContactName, primaryContactEmail, primaryContactPhone, notes, telecomServicesPartnerId } = req.body;
+
+  const updateData: Record<string, unknown> = { name, accountNumber, status, primaryContactName, primaryContactEmail, primaryContactPhone, notes, updatedAt: new Date() };
+  if (telecomServicesPartnerId !== undefined) {
+    updateData.telecomServicesPartnerId = telecomServicesPartnerId || null;
+  }
 
   const [customer] = await db
     .update(customersTable)
-    .set({ name, accountNumber, status, primaryContactName, primaryContactEmail, primaryContactPhone, notes, updatedAt: new Date() })
+    .set(updateData as any)
     .where(eq(customersTable.id, id))
     .returning();
 

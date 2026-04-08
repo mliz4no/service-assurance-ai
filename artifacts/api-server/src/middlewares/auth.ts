@@ -1,11 +1,14 @@
 import type { Request, Response, NextFunction } from "express";
 import { getUserFromToken } from "../lib/session-store";
+import { db, customersTable } from "@workspace/db";
+import { eq } from "drizzle-orm";
 import type { User } from "@workspace/db";
 
 declare global {
   namespace Express {
     interface Request {
       user?: User;
+      partnerCustomerIds?: string[];
     }
   }
 }
@@ -24,6 +27,15 @@ export async function requireAuth(req: Request, res: Response, next: NextFunctio
   }
 
   req.user = user;
+
+  if (user.role === "telecom_services_partner" && user.telecomServicesPartnerId) {
+    const rows = await db
+      .select({ id: customersTable.id })
+      .from(customersTable)
+      .where(eq(customersTable.telecomServicesPartnerId, user.telecomServicesPartnerId));
+    req.partnerCustomerIds = rows.map((r) => r.id);
+  }
+
   next();
 }
 

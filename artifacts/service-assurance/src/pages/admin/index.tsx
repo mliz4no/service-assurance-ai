@@ -19,7 +19,9 @@ import {
 import { useQueryClient } from "@tanstack/react-query";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { CheckCircle2, XCircle, Activity, Server, ShieldCheck, Database, BrainCircuit, Play, Plus, Pencil, Trash2, Users, Grid3X3 } from "lucide-react";
+import { CheckCircle2, XCircle, Activity, Server, ShieldCheck, Database, BrainCircuit, Play, Plus, Pencil, Trash2, Users, Grid3X3, Handshake } from "lucide-react";
+import { useQuery, useMutation } from "@tanstack/react-query";
+import { getToken } from "@/lib/token";
 import { EscalationMatrixEditor } from "@/components/EscalationMatrixEditor";
 import { SeverityBadge } from "@/components/severity-badge";
 import { Badge } from "@/components/ui/badge";
@@ -224,14 +226,196 @@ function SlaPolicyDialog({
   );
 }
 
+// ── Partners API hooks ──────────────────────────────────────────────────
+
+const API_BASE = import.meta.env.BASE_URL?.replace(/\/$/, "") || "";
+
+async function apiFetch(path: string, options?: RequestInit) {
+  const token = getToken();
+  const res = await fetch(`${API_BASE}/api${path}`, {
+    ...options,
+    headers: {
+      "Content-Type": "application/json",
+      ...(token ? { Authorization: `Bearer ${token}` } : {}),
+      ...options?.headers,
+    },
+  });
+  if (!res.ok) {
+    const err = await res.json().catch(() => ({ message: res.statusText }));
+    throw new Error(err.message || res.statusText);
+  }
+  return res.json();
+}
+
+function usePartners() {
+  return useQuery({ queryKey: ["partners"], queryFn: () => apiFetch("/partners") });
+}
+
+function useCreatePartner() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (data: any) => apiFetch("/partners", { method: "POST", body: JSON.stringify(data) }),
+    onSuccess: () => qc.invalidateQueries({ queryKey: ["partners"] }),
+  });
+}
+
+function useUpdatePartner() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: ({ id, data }: { id: string; data: any }) => apiFetch(`/partners/${id}`, { method: "PUT", body: JSON.stringify(data) }),
+    onSuccess: () => qc.invalidateQueries({ queryKey: ["partners"] }),
+  });
+}
+
+function useDeletePartner() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (id: string) => apiFetch(`/partners/${id}`, { method: "DELETE" }),
+    onSuccess: () => qc.invalidateQueries({ queryKey: ["partners"] }),
+  });
+}
+
+const partnerFormSchema = z.object({
+  name: z.string().min(1, "Contact name required"),
+  companyName: z.string().min(1, "Company name required"),
+  email: z.string().email("Invalid email"),
+  phone: z.string().optional(),
+  status: z.enum(["active", "inactive"]),
+  notes: z.string().optional(),
+});
+type PartnerFormData = z.infer<typeof partnerFormSchema>;
+
+function PartnerDialog({
+  open,
+  onOpenChange,
+  partner,
+}: {
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
+  partner?: any | null;
+}) {
+  const { toast } = useToast();
+  const createMutation = useCreatePartner();
+  const updateMutation = useUpdatePartner();
+  const isEdit = !!partner;
+
+  const form = useForm<PartnerFormData>({
+    resolver: zodResolver(partnerFormSchema),
+    defaultValues: { name: "", companyName: "", email: "", phone: "", status: "active", notes: "" },
+  });
+
+  useEffect(() => {
+    if (open) {
+      if (partner) {
+        form.reset({
+          name: partner.name,
+          companyName: partner.companyName,
+          email: partner.email,
+          phone: partner.phone || "",
+          status: partner.status,
+          notes: partner.notes || "",
+        });
+      } else {
+        form.reset({ name: "", companyName: "", email: "", phone: "", status: "active", notes: "" });
+      }
+    }
+  }, [open, partner, form]);
+
+  function onSubmit(values: PartnerFormData) {
+    const payload = { ...values, phone: values.phone || null, notes: values.notes || null };
+    if (isEdit) {
+      updateMutation.mutate({ id: partner.id, data: payload }, {
+        onSuccess: () => { toast({ title: "Partner updated" }); onOpenChange(false); },
+        onError: (err: any) => toast({ title: "Error", description: err.message, variant: "destructive" }),
+      });
+    } else {
+      createMutation.mutate(payload, {
+        onSuccess: () => { toast({ title: "Partner created" }); onOpenChange(false); },
+        onError: (err: any) => toast({ title: "Error", description: err.message, variant: "destructive" }),
+      });
+    }
+  }
+
+  return (
+    <Dialog open={open} onOpenChange={onOpenChange}>
+      <DialogContent className="sm:max-w-[500px]">
+        <DialogHeader>
+          <DialogTitle>{isEdit ? "Edit Partner" : "New Partner"}</DialogTitle>
+        </DialogHeader>
+        <Form {...form}>
+          <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4 pt-2">
+            <div className="grid grid-cols-2 gap-4">
+              <FormField control={form.control} name="companyName" render={({ field }) => (
+                <FormItem className="col-span-2">
+                  <FormLabel>Company Name *</FormLabel>
+                  <FormControl><Input {...field} /></FormControl>
+                  <FormMessage />
+                </FormItem>
+              )} />
+              <FormField control={form.control} name="name" render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Primary Contact *</FormLabel>
+                  <FormControl><Input {...field} /></FormControl>
+                  <FormMessage />
+                </FormItem>
+              )} />
+              <FormField control={form.control} name="email" render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Email *</FormLabel>
+                  <FormControl><Input type="email" {...field} /></FormControl>
+                  <FormMessage />
+                </FormItem>
+              )} />
+              <FormField control={form.control} name="phone" render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Phone</FormLabel>
+                  <FormControl><Input {...field} /></FormControl>
+                  <FormMessage />
+                </FormItem>
+              )} />
+              <FormField control={form.control} name="status" render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Status</FormLabel>
+                  <Select onValueChange={field.onChange} value={field.value}>
+                    <FormControl><SelectTrigger><SelectValue /></SelectTrigger></FormControl>
+                    <SelectContent>
+                      <SelectItem value="active">Active</SelectItem>
+                      <SelectItem value="inactive">Inactive</SelectItem>
+                    </SelectContent>
+                  </Select>
+                  <FormMessage />
+                </FormItem>
+              )} />
+            </div>
+            <FormField control={form.control} name="notes" render={({ field }) => (
+              <FormItem>
+                <FormLabel>Internal Notes</FormLabel>
+                <FormControl><Textarea rows={2} {...field} /></FormControl>
+                <FormMessage />
+              </FormItem>
+            )} />
+            <DialogFooter className="pt-2">
+              <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>Cancel</Button>
+              <Button type="submit" disabled={createMutation.isPending || updateMutation.isPending}>
+                {createMutation.isPending || updateMutation.isPending ? "Saving..." : isEdit ? "Save Changes" : "Create Partner"}
+              </Button>
+            </DialogFooter>
+          </form>
+        </Form>
+      </DialogContent>
+    </Dialog>
+  );
+}
+
 // ── User form ────────────────────────────────────────────────────────────
 
 const userFormSchema = z.object({
   name: z.string().min(1, "Name is required"),
   email: z.string().email("Invalid email"),
   password: z.string().min(6, "Password must be at least 6 characters").optional().or(z.literal("")),
-  role: z.enum(["admin", "ops", "customer"]),
+  role: z.enum(["admin", "ops", "customer", "telecom_services_partner"]),
   customerId: z.string().optional(),
+  telecomServicesPartnerId: z.string().optional(),
 });
 type UserFormData = z.infer<typeof userFormSchema>;
 
@@ -251,6 +435,8 @@ function UserDialog({
   const { data: customers } = useGetCustomers();
   const isEdit = !!user;
 
+  const { data: partners } = usePartners();
+
   const form = useForm<UserFormData>({
     resolver: zodResolver(
       isEdit
@@ -263,6 +449,7 @@ function UserDialog({
       password: "",
       role: "ops",
       customerId: "__none__",
+      telecomServicesPartnerId: "__none__",
     },
   });
 
@@ -277,21 +464,24 @@ function UserDialog({
           password: "",
           role: user.role as UserFormData["role"],
           customerId: (user as any).customerId || "__none__",
+          telecomServicesPartnerId: (user as any).telecomServicesPartnerId || "__none__",
         });
       } else {
-        form.reset({ name: "", email: "", password: "", role: "ops", customerId: "__none__" });
+        form.reset({ name: "", email: "", password: "", role: "ops", customerId: "__none__", telecomServicesPartnerId: "__none__" });
       }
     }
   }, [open, user, form]);
 
   function onSubmit(values: UserFormData) {
+    const custId = values.customerId && values.customerId !== "__none__" ? values.customerId : null;
+    const tspId = values.telecomServicesPartnerId && values.telecomServicesPartnerId !== "__none__" ? values.telecomServicesPartnerId : null;
     if (isEdit && user) {
-      const custId = values.customerId && values.customerId !== "__none__" ? values.customerId : null;
       const data: any = {
         name: values.name,
         email: values.email,
         role: values.role as any,
         customerId: values.role === "customer" ? custId : null,
+        telecomServicesPartnerId: values.role === "telecom_services_partner" ? tspId : null,
       };
       if (values.password) data.password = values.password;
 
@@ -306,15 +496,15 @@ function UserDialog({
         },
       });
     } else {
-      const custIdCreate = values.customerId && values.customerId !== "__none__" ? values.customerId : null;
       createMutation.mutate({
         data: {
           name: values.name,
           email: values.email,
           password: values.password || "",
           role: values.role as any,
-          customerId: values.role === "customer" ? custIdCreate : null,
-        },
+          customerId: values.role === "customer" ? custId : null,
+          telecomServicesPartnerId: values.role === "telecom_services_partner" ? tspId : null,
+        } as any,
       }, {
         onSuccess: () => {
           toast({ title: "User created" });
@@ -373,6 +563,7 @@ function UserDialog({
                     <SelectItem value="admin">Admin</SelectItem>
                     <SelectItem value="ops">Ops</SelectItem>
                     <SelectItem value="customer">Customer</SelectItem>
+                    <SelectItem value="telecom_services_partner">Telecom Services Partner</SelectItem>
                   </SelectContent>
                 </Select>
                 <FormMessage />
@@ -391,6 +582,26 @@ function UserDialog({
                       <SelectItem value="__none__">None</SelectItem>
                       {customers?.map(c => (
                         <SelectItem key={c.id} value={c.id}>{c.name}</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                  <FormMessage />
+                </FormItem>
+              )} />
+            )}
+
+            {watchedRole === "telecom_services_partner" && (
+              <FormField control={form.control} name="telecomServicesPartnerId" render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Partner Organisation</FormLabel>
+                  <Select onValueChange={field.onChange} value={field.value}>
+                    <FormControl>
+                      <SelectTrigger><SelectValue placeholder="Select partner" /></SelectTrigger>
+                    </FormControl>
+                    <SelectContent>
+                      <SelectItem value="__none__">None</SelectItem>
+                      {partners?.map((p: any) => (
+                        <SelectItem key={p.id} value={p.id}>{p.companyName}</SelectItem>
                       ))}
                     </SelectContent>
                   </Select>
@@ -419,10 +630,17 @@ function roleBadge(role: string) {
     admin: "bg-red-100 text-red-700 border-red-200",
     ops: "bg-blue-100 text-blue-700 border-blue-200",
     customer: "bg-slate-100 text-slate-600 border-slate-200",
+    telecom_services_partner: "bg-violet-100 text-violet-700 border-violet-200",
+  };
+  const labels: Record<string, string> = {
+    admin: "admin",
+    ops: "ops",
+    customer: "customer",
+    telecom_services_partner: "partner",
   };
   return (
     <span className={`inline-flex items-center px-2 py-0.5 rounded text-xs font-semibold border ${colors[role] || "bg-slate-100 text-slate-600"}`}>
-      {role}
+      {labels[role] || role}
     </span>
   );
 }
@@ -431,8 +649,10 @@ export default function AdminPanel() {
   const { data: policies, isLoading: loadingPolicies } = useGetSlaPolicies();
   const { data: users, isLoading: loadingUsers } = useGetUsers();
   const { data: health, isLoading: loadingHealth } = useGetConfigHealth();
+  const { data: partners, isLoading: loadingPartners } = usePartners();
   const deleteSlaPolicy = useDeleteSlaPolicy();
   const deleteUser = useDeleteUser();
+  const deletePartner = useDeletePartner();
   const queryClient = useQueryClient();
   const { toast } = useToast();
 
@@ -446,6 +666,10 @@ export default function AdminPanel() {
   const [userDialogOpen, setUserDialogOpen] = useState(false);
   const [editingUser, setEditingUser] = useState<User | null>(null);
   const [deletingUserId, setDeletingUserId] = useState<string | null>(null);
+
+  const [partnerDialogOpen, setPartnerDialogOpen] = useState(false);
+  const [editingPartner, setEditingPartner] = useState<any | null>(null);
+  const [deletingPartnerId, setDeletingPartnerId] = useState<string | null>(null);
 
   const handleTestAi = () => {
     if (!aiTestInput) return;
@@ -496,6 +720,19 @@ export default function AdminPanel() {
       onError: (err: any) => {
         toast({ title: "Error deleting user", description: err.message, variant: "destructive" });
         setDeletingUserId(null);
+      },
+    });
+  }
+
+  function confirmDeletePartner(id: string) {
+    deletePartner.mutate(id, {
+      onSuccess: () => {
+        toast({ title: "Partner deleted" });
+        setDeletingPartnerId(null);
+      },
+      onError: (err: any) => {
+        toast({ title: "Error deleting partner", description: err.message, variant: "destructive" });
+        setDeletingPartnerId(null);
       },
     });
   }
@@ -637,6 +874,62 @@ export default function AdminPanel() {
           </CardContent>
         </Card>
 
+        {/* Partners */}
+        <Card className="border-border/50 shadow-sm">
+          <CardHeader className="pb-3 border-b border-border/50 flex flex-row items-center justify-between">
+            <div>
+              <CardTitle className="text-base font-semibold flex items-center gap-2">
+                <Handshake className="w-5 h-5 text-muted-foreground" /> Telecom Services Partners
+              </CardTitle>
+              <CardDescription className="text-xs mt-0.5">Resellers and aggregators with scoped multi-customer access</CardDescription>
+            </div>
+            <Button size="sm" onClick={() => { setEditingPartner(null); setPartnerDialogOpen(true); }}>
+              <Plus className="w-4 h-4 mr-1.5" /> Add Partner
+            </Button>
+          </CardHeader>
+          <CardContent className="p-0">
+            <Table>
+              <TableHeader>
+                <TableRow className="bg-muted/30">
+                  <TableHead>Company</TableHead>
+                  <TableHead>Primary Contact</TableHead>
+                  <TableHead>Email</TableHead>
+                  <TableHead>Status</TableHead>
+                  <TableHead className="w-20" />
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {loadingPartners ? (
+                  <TableRow><TableCell colSpan={5} className="text-center py-6"><Activity className="w-5 h-5 animate-spin mx-auto text-muted-foreground" /></TableCell></TableRow>
+                ) : !partners?.length ? (
+                  <TableRow><TableCell colSpan={5} className="text-center py-6 text-muted-foreground">No partners configured.</TableCell></TableRow>
+                ) : partners.map((p: any) => (
+                  <TableRow key={p.id} className="hover:bg-muted/20">
+                    <TableCell className="font-medium">{p.companyName}</TableCell>
+                    <TableCell>{p.name}</TableCell>
+                    <TableCell className="text-muted-foreground">{p.email}</TableCell>
+                    <TableCell>
+                      <span className={`inline-flex items-center px-2 py-0.5 rounded text-xs font-semibold border ${p.status === "active" ? "bg-green-100 text-green-700 border-green-200" : "bg-slate-100 text-slate-500 border-slate-200"}`}>
+                        {p.status}
+                      </span>
+                    </TableCell>
+                    <TableCell>
+                      <div className="flex items-center gap-1">
+                        <Button size="icon" variant="ghost" className="h-7 w-7" onClick={() => { setEditingPartner(p); setPartnerDialogOpen(true); }}>
+                          <Pencil className="w-3.5 h-3.5" />
+                        </Button>
+                        <Button size="icon" variant="ghost" className="h-7 w-7 text-destructive hover:text-destructive" onClick={() => setDeletingPartnerId(p.id)}>
+                          <Trash2 className="w-3.5 h-3.5" />
+                        </Button>
+                      </div>
+                    </TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          </CardContent>
+        </Card>
+
         {/* Global Escalation Matrix */}
         <div>
           <div className="flex items-center gap-2 mb-3">
@@ -735,6 +1028,15 @@ export default function AdminPanel() {
         user={editingUser}
       />
 
+      <PartnerDialog
+        open={partnerDialogOpen}
+        onOpenChange={(open) => {
+          setPartnerDialogOpen(open);
+          if (!open) setEditingPartner(null);
+        }}
+        partner={editingPartner}
+      />
+
       {/* Delete SLA Policy Confirm */}
       <AlertDialog open={!!deletingPolicyId} onOpenChange={(open) => !open && setDeletingPolicyId(null)}>
         <AlertDialogContent data-testid="delete-sla-confirm-dialog">
@@ -750,6 +1052,27 @@ export default function AdminPanel() {
               onClick={() => deletingPolicyId && confirmDeletePolicy(deletingPolicyId)}
               className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
               data-testid="confirm-delete-sla-btn"
+            >
+              Delete
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      {/* Delete Partner Confirm */}
+      <AlertDialog open={!!deletingPartnerId} onOpenChange={(open) => !open && setDeletingPartnerId(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Delete Partner?</AlertDialogTitle>
+            <AlertDialogDescription>
+              This will delete the partner organisation. Their linked customers will remain but will lose the partner association. User accounts will also lose partner access.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={() => deletingPartnerId && confirmDeletePartner(deletingPartnerId)}
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
             >
               Delete
             </AlertDialogAction>

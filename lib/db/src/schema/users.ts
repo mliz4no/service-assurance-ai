@@ -7,8 +7,9 @@ export const usersTable = pgTable("users", {
   name: text("name").notNull(),
   email: text("email").notNull().unique(),
   passwordHash: text("password_hash").notNull(),
-  role: text("role", { enum: ["admin", "ops", "customer"] }).notNull().default("ops"),
+  role: text("role", { enum: ["admin", "ops", "customer", "telecom_services_partner"] }).notNull().default("ops"),
   customerId: uuid("customer_id"),
+  telecomServicesPartnerId: uuid("telecom_services_partner_id"),
   createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
   updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow().$onUpdate(() => new Date()),
 });

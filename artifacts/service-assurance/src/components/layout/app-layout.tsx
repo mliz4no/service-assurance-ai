@@ -13,11 +13,13 @@ import {
   Search,
   Server,
   Network,
-  Activity
+  Activity,
+  Handshake
 } from "lucide-react";
 import { useLogout } from "@workspace/api-client-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { Badge } from "@/components/ui/badge";
 
 interface AppLayoutProps {
   children: React.ReactNode;
@@ -43,6 +45,7 @@ export function AppLayout({ children, title }: AppLayoutProps) {
   };
 
   const isAdminOrOps = user?.role === "admin" || user?.role === "ops";
+  const isPartner = user?.role === "telecom_services_partner";
 
   const navItems = isAdminOrOps ? [
     { href: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
@@ -56,9 +59,23 @@ export function AppLayout({ children, title }: AppLayoutProps) {
     { href: "/events", label: "Event Monitor", icon: Activity },
     { href: "/map", label: "Network Map", icon: MapPin },
     ...(user?.role === "admin" ? [{ href: "/admin", label: "Admin", icon: Settings }] : []),
+  ] : isPartner ? [
+    { href: "/customers", label: "My Customers", icon: Building2 },
+    { href: "/sites", label: "My Sites", icon: MapPin },
+    { href: "/services", label: "My Services", icon: Globe2 },
+    { href: "/tickets", label: "My Incidents", icon: TicketCheck },
+    { href: "/devices", label: "My Devices", icon: Server },
+    { href: "/map", label: "Network Map", icon: MapPin },
   ] : [
     { href: "/my-tickets", label: "My Tickets", icon: TicketCheck },
   ];
+
+  const roleLabel: Record<string, string> = {
+    admin: "Admin",
+    ops: "Operations",
+    customer: "Customer",
+    telecom_services_partner: "Partner",
+  };
 
   return (
     <div className="flex min-h-screen w-full bg-slate-50">
@@ -72,6 +89,15 @@ export function AppLayout({ children, title }: AppLayoutProps) {
             Service Assurance AI
           </div>
         </div>
+
+        {isPartner && (
+          <div className="px-4 py-2.5 border-b border-sidebar-border/30 bg-blue-900/20">
+            <div className="flex items-center gap-1.5 text-xs text-blue-300">
+              <Handshake className="w-3.5 h-3.5" />
+              <span className="font-medium">Partner Portal</span>
+            </div>
+          </div>
+        )}
 
         <div className="flex-1 overflow-y-auto py-4 px-3 flex flex-col gap-1">
           <div className="text-xs font-semibold text-sidebar-foreground/50 uppercase tracking-wider mb-2 px-3">
@@ -100,11 +126,11 @@ export function AppLayout({ children, title }: AppLayoutProps) {
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-2 max-w-[140px]">
               <div className="w-8 h-8 rounded-full bg-sidebar-accent flex items-center justify-center text-sidebar-accent-foreground">
-                <UserIcon className="w-4 h-4" />
+                {isPartner ? <Handshake className="w-4 h-4" /> : <UserIcon className="w-4 h-4" />}
               </div>
               <div className="flex flex-col overflow-hidden">
                 <span className="text-sm font-medium truncate" title={user?.name}>{user?.name}</span>
-                <span className="text-xs text-sidebar-foreground/60 capitalize">{user?.role}</span>
+                <span className="text-xs text-sidebar-foreground/60">{roleLabel[user?.role ?? ""] ?? user?.role}</span>
               </div>
             </div>
             <Button variant="ghost" size="icon" className="h-8 w-8 text-sidebar-foreground hover:bg-sidebar-accent" onClick={handleLogout} title="Logout">
@@ -120,6 +146,11 @@ export function AppLayout({ children, title }: AppLayoutProps) {
         <header className="h-16 bg-white border-b border-border flex items-center justify-between px-6 sticky top-0 z-10">
           <h1 className="text-xl font-semibold text-foreground tracking-tight">{title || "Dashboard"}</h1>
           <div className="flex items-center gap-4">
+            {isPartner && (
+              <Badge variant="outline" className="text-xs text-blue-700 border-blue-200 bg-blue-50">
+                Partner View
+              </Badge>
+            )}
             <div className="relative hidden md:block w-64">
               <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
               <Input

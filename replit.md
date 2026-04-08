@@ -20,9 +20,9 @@ A full-stack enterprise telecom service assurance and ticket orchestration platf
 - **AI-powered capabilities** (OpenAI gpt-4o-mini):
   - Ticket summarization, status normalization, customer update generation
   - Controller event analysis (`summarizeControllerEvent`, `inferProbableImpact`)
-- **Role-based auth**: admin / ops / customer (Bearer token, in-memory session store)
+- **Role-based auth**: admin / ops / customer / telecom_services_partner (Bearer token, in-memory session store)
 - **Dashboard**: KPI stat cards, recent tickets, escalation queue
-- **Admin panel**: SLA policy CRUD, user management, config health, AI test panel
+- **Admin panel**: SLA policy CRUD, user management, partner management, config health, AI test panel
 
 ### Network Map (new)
 - **Map page** (`/map`) — Interactive Leaflet map with all sites as colored teardrop pin markers
@@ -41,6 +41,20 @@ A full-stack enterprise telecom service assurance and ticket orchestration platf
 - **Network Links** (`/network-links`) — WAN uplinks, VPN tunnels, LTE backup, SD-WAN transports; real-time metrics (latency, jitter, packet loss)
 - **Event Monitor** (`/events`) — Controller-sourced events with severity badges; click-through AI analysis panel; incident correlation to tickets
 - **Incident Correlator** — Auto-correlates controller events to existing tickets; writes `incidentCorrelations` rows and flags tickets as controller-sourced with failover state
+
+### Telecom Services Partner RBAC (new)
+- **New role**: `telecom_services_partner` — scoped multi-customer portal access for resellers/aggregators
+- **`telecom_services_partners` table**: id, name, companyName, email, phone, status, notes
+- **Customer scoping**: `customers.telecomServicesPartnerId` links customers to a partner; `users.telecomServicesPartnerId` links user accounts to a partner org
+- **Auth middleware**: on login, injects `req.partnerCustomerIds[]` (all customer IDs for that partner's org)
+- **Server-side filtering**: `GET /customers`, `/sites`, `/services`, `/tickets`, `/devices` all filter by `inArray(table.customerId, partnerCustomerIds)` for partner users
+- **Write blocks**: POST/PUT/DELETE on customers, services, tickets returns 403 for partner users
+- **Partner-blocked endpoints** (403): `/controllers`, `/network-links`, `/device-events`, `/partners`
+- **Notes suppression**: `customers.notes` (internal field) is omitted from partner-user responses
+- **Frontend nav**: Partner users see a "Partner Portal" sidebar with My Customers / My Sites / My Services / My Incidents / My Devices / Map only
+- **Route guard**: `InternalOnlyRoute` blocks partners from `/dashboard`, `/admin`, `/controllers`, `/events`, `/network-links` with redirect to `/customers`
+- **Admin UI**: Partners card in `/admin` with full CRUD (admin only); `UserDialog` now supports `telecom_services_partner` role with partner organisation selector
+- **Demo credentials**: `partneradmin@nexatek.com` / `Acme123!` (linked to Nexatek Solutions Ltd., sees 2 customers)
 
 ### New DB Tables (controller module)
 `controllers`, `managed_devices`, `network_links`, `device_events`, `controller_sync_logs`, `incident_correlations`
