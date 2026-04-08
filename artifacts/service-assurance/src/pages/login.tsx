@@ -118,10 +118,11 @@ export default function Login() {
               </form>
             </Form>
 
-            <div className="mt-8 text-center text-sm text-muted-foreground">
-              <p>Demo Credentials:</p>
-              <p className="mt-1">admin@serviceassurance.ai / Admin123!</p>
+            <div className="mt-8 text-center text-sm text-muted-foreground space-y-1">
+              <p className="font-medium">Demo Credentials:</p>
+              <p>admin@serviceassurance.ai / Admin123!</p>
               <p>ops@serviceassurance.ai / Ops123!</p>
+              <p>partneradmin@nexatek.com / Acme123!</p>
             </div>
           </CardContent>
         </Card>
