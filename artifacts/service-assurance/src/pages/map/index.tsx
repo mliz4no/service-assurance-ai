@@ -1,4 +1,4 @@
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
 import { AppLayout } from "@/components/layout/app-layout";
 import { useGetSites, useGetCustomers, useGetTickets } from "@workspace/api-client-react";
 import { useGetDevices } from "@/lib/controller-hooks";
@@ -613,10 +613,12 @@ interface FitBoundsOnceProps {
 
 function FitBoundsOnce({ coords, onDone }: FitBoundsOnceProps) {
   const map = useMap();
-  if (coords.length > 0) {
+  useEffect(() => {
+    if (coords.length === 0) return;
     const bounds = L.latLngBounds(coords.map(([lat, lng]) => L.latLng(lat, lng)));
     map.fitBounds(bounds, { padding: [48, 48], maxZoom: 9 });
     onDone();
-  }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
   return null;
 }
