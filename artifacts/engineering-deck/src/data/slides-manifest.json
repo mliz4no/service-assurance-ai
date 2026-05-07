@@ -1,1 +1,146 @@
-[]
+[
+  {
+    "id": "a1b2c3d4-0001-0001-0001-000000000001",
+    "position": 1,
+    "filepath": "src/pages/slides/Slide01Title.tsx",
+    "title": "Service Assurance AI",
+    "description": "Title slide — Engineering Handoff",
+    "speakerNotes": ""
+  },
+  {
+    "id": "a1b2c3d4-0001-0001-0001-000000000002",
+    "position": 2,
+    "filepath": "src/pages/slides/Slide02Overview.tsx",
+    "title": "Product Overview",
+    "description": "Platform scope, core modules, user roles",
+    "speakerNotes": ""
+  },
+  {
+    "id": "a1b2c3d4-0001-0001-0001-000000000003",
+    "position": 3,
+    "filepath": "src/pages/slides/Slide03Dashboard.tsx",
+    "title": "Operations Dashboard",
+    "description": "Dashboard screenshot with feature callouts",
+    "speakerNotes": ""
+  },
+  {
+    "id": "a1b2c3d4-0001-0001-0001-000000000004",
+    "position": 4,
+    "filepath": "src/pages/slides/Slide04TechStack.tsx",
+    "title": "Tech Stack",
+    "description": "Frontend, backend, database, auth, AI, integrations",
+    "speakerNotes": ""
+  },
+  {
+    "id": "a1b2c3d4-0001-0001-0001-000000000005",
+    "position": 5,
+    "filepath": "src/pages/slides/Slide05Monorepo.tsx",
+    "title": "Monorepo Architecture",
+    "description": "pnpm workspace structure and package responsibilities",
+    "speakerNotes": ""
+  },
+  {
+    "id": "a1b2c3d4-0001-0001-0001-000000000006",
+    "position": 6,
+    "filepath": "src/pages/slides/Slide06DbSchema.tsx",
+    "title": "Database Schema",
+    "description": "17 tables organized into 4 groups",
+    "speakerNotes": ""
+  },
+  {
+    "id": "a1b2c3d4-0001-0001-0001-000000000007",
+    "position": 7,
+    "filepath": "src/pages/slides/Slide07ApiLayer.tsx",
+    "title": "API Layer",
+    "description": "Express 5 route groups — CRUD, controllers, ITIL, AI",
+    "speakerNotes": ""
+  },
+  {
+    "id": "a1b2c3d4-0001-0001-0001-000000000008",
+    "position": 8,
+    "filepath": "src/pages/slides/Slide08AuthRbac.tsx",
+    "title": "Authentication & RBAC",
+    "description": "4 roles — Bearer token — middleware enforcement",
+    "speakerNotes": ""
+  },
+  {
+    "id": "a1b2c3d4-0001-0001-0001-000000000009",
+    "position": 9,
+    "filepath": "src/pages/slides/Slide09Tickets.tsx",
+    "title": "Ticket Management",
+    "description": "Ticket status flow, key fields, screenshot",
+    "speakerNotes": ""
+  },
+  {
+    "id": "a1b2c3d4-0001-0001-0001-000000000010",
+    "position": 10,
+    "filepath": "src/pages/slides/Slide10ItilMatrix.tsx",
+    "title": "ITIL Severity Matrix",
+    "description": "Impact × Urgency → Severity — configurable per scope",
+    "speakerNotes": ""
+  },
+  {
+    "id": "a1b2c3d4-0001-0001-0001-000000000011",
+    "position": 11,
+    "filepath": "src/pages/slides/Slide11EscalationEngine.tsx",
+    "title": "Escalation Notification Engine",
+    "description": "Customer contacts, notification engine, log table",
+    "speakerNotes": ""
+  },
+  {
+    "id": "a1b2c3d4-0001-0001-0001-000000000012",
+    "position": 12,
+    "filepath": "src/pages/slides/Slide12AiFeatures.tsx",
+    "title": "AI Integration",
+    "description": "4 AI endpoints — gpt-4o-mini — synchronous in-request",
+    "speakerNotes": ""
+  },
+  {
+    "id": "a1b2c3d4-0001-0001-0001-000000000013",
+    "position": 13,
+    "filepath": "src/pages/slides/Slide13NetworkMap.tsx",
+    "title": "Network Map",
+    "description": "Leaflet map, device status pins, filter sidebar",
+    "speakerNotes": ""
+  },
+  {
+    "id": "a1b2c3d4-0001-0001-0001-000000000014",
+    "position": 14,
+    "filepath": "src/pages/slides/Slide14Controllers.tsx",
+    "title": "Controller Module",
+    "description": "Meraki + Fortinet — sync, events, incident correlation",
+    "speakerNotes": ""
+  },
+  {
+    "id": "a1b2c3d4-0001-0001-0001-000000000015",
+    "position": 15,
+    "filepath": "src/pages/slides/Slide15PartnerRbac.tsx",
+    "title": "Partner RBAC",
+    "description": "telecom_services_partner role — multi-customer scoping",
+    "speakerNotes": ""
+  },
+  {
+    "id": "a1b2c3d4-0001-0001-0001-000000000016",
+    "position": 16,
+    "filepath": "src/pages/slides/Slide16ScaleCeiling.tsx",
+    "title": "Scale Ceiling",
+    "description": "Device count bands — what breaks — what to fix",
+    "speakerNotes": ""
+  },
+  {
+    "id": "a1b2c3d4-0001-0001-0001-000000000017",
+    "position": 17,
+    "filepath": "src/pages/slides/Slide17Roadmap.tsx",
+    "title": "Engineering Roadmap",
+    "description": "8 prioritized items from quick wins to architectural upgrades",
+    "speakerNotes": ""
+  },
+  {
+    "id": "a1b2c3d4-0001-0001-0001-000000000018",
+    "position": 18,
+    "filepath": "src/pages/slides/Slide18GettingStarted.tsx",
+    "title": "Getting Started",
+    "description": "Run commands, key files, demo credentials",
+    "speakerNotes": ""
+  }
+]
