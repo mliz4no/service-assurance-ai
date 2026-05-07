@@ -308,6 +308,7 @@ function SalesforcePanel() {
     instanceUrl: "",
     username: "",
     password: "",
+    securityToken: "",
   });
 
   useEffect(() => {
@@ -332,7 +333,9 @@ function SalesforcePanel() {
     if (form.clientSecret && form.clientSecret !== MASKED) payload.clientSecret = form.clientSecret;
     if (form.instanceUrl  && form.instanceUrl  !== MASKED) payload.instanceUrl  = form.instanceUrl;
     if (form.username     && form.username     !== MASKED) payload.username     = form.username;
-    if (form.password     && form.password     !== MASKED) payload.password     = form.password;
+    if (form.password && form.password !== MASKED) {
+      payload.password = form.password + (form.securityToken.trim() ? form.securityToken.trim() : "");
+    }
 
     if (Object.keys(payload).length === 0) {
       toast({ title: "No changes to save." });
@@ -455,15 +458,13 @@ function SalesforcePanel() {
                   <p className="text-xs text-muted-foreground mt-0.5">{form.clientSecret.length} characters</p>
                 )}
               </div>
-              <div className="sm:col-span-2">
-                <label className="text-xs font-medium text-muted-foreground mb-1 block">
-                  Password <span className="font-normal text-muted-foreground">(append your security token with no space if required)</span>
-                </label>
+              <div>
+                <label className="text-xs font-medium text-muted-foreground mb-1 block">Password</label>
                 <textarea
                   value={form.password}
                   onChange={e => setForm(f => ({ ...f, password: e.target.value }))}
                   onFocus={() => { if (form.password === MASKED) setForm(f => ({ ...f, password: "" })); }}
-                  placeholder={savedConfig?.hasPassword ? "Leave blank to keep existing" : "Password + security token"}
+                  placeholder={savedConfig?.hasPassword ? "Leave blank to keep existing" : "Salesforce password"}
                   rows={2}
                   className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm font-mono resize-none focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 placeholder:text-muted-foreground placeholder:font-sans"
                   autoComplete="off"
@@ -472,6 +473,21 @@ function SalesforcePanel() {
                 {form.password && form.password !== MASKED && (
                   <p className="text-xs text-muted-foreground mt-0.5">{form.password.length} characters</p>
                 )}
+              </div>
+              <div>
+                <label className="text-xs font-medium text-muted-foreground mb-1 block">
+                  Security Token <span className="font-normal">(optional — required if your org uses IP restrictions)</span>
+                </label>
+                <Input
+                  value={form.securityToken}
+                  onChange={set("securityToken")}
+                  placeholder="aBcDeFgH1234..."
+                  autoComplete="off"
+                  spellCheck={false}
+                />
+                <p className="text-xs text-muted-foreground mt-1">
+                  The token will be appended directly to your password before saving. Find it in Salesforce → Settings → My Personal Information → Reset My Security Token.
+                </p>
               </div>
             </div>
             <div className="flex gap-2 justify-end pt-1">
