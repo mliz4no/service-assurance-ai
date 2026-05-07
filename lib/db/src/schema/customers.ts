@@ -12,6 +12,10 @@ export const customersTable = pgTable("customers", {
   primaryContactPhone: text("primary_contact_phone"),
   notes: text("notes"),
   telecomServicesPartnerId: uuid("telecom_services_partner_id"),
+  externalSystem: text("external_system"),
+  externalId: text("external_id"),
+  externalSyncedAt: timestamp("external_synced_at", { withTimezone: true }),
+  externalSyncStatus: text("external_sync_status"),
   createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
   updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow().$onUpdate(() => new Date()),
 });

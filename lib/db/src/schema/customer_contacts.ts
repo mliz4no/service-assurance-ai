@@ -11,6 +11,10 @@ export const customerContactsTable = pgTable("customer_contacts", {
   notifyOnSeverity: text("notify_on_severity", { enum: ["low", "medium", "high", "critical"] }).notNull().default("high"),
   notifyOnDurationMinutes: integer("notify_on_duration_minutes"),
   notificationChannels: text("notification_channels").notNull().default("email"),
+  externalSystem: text("external_system"),
+  externalId: text("external_id"),
+  externalSyncedAt: timestamp("external_synced_at", { withTimezone: true }),
+  externalSyncStatus: text("external_sync_status"),
   createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
   updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow().$onUpdate(() => new Date()),
 });

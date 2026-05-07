@@ -1,0 +1,113 @@
+Add a Salesforce integration to the existing app. This is a read-only data source integration — we are pulling customer, contact, and location data from Salesforce into our internal models. We are NOT replacing Salesforce, just syncing context data.
+Important:
+
+Do not rebuild existing models
+Do not break existing functionality
+Extend the current architecture cleanly
+Store credentials in environment variables only, never in code
+
+
+1. ENVIRONMENT VARIABLES NEEDED
+Add support for these env vars:
+SALESFORCE_CLIENT_ID
+SALESFORCE_CLIENT_SECRET
+SALESFORCE_INSTANCE_URL
+SALESFORCE_USERNAME
+SALESFORCE_PASSWORD
+
+2. AUTHENTICATION
+Implement Salesforce OAuth 2.0 Username-Password flow for server-to-server integration.
+
+POST to {SALESFORCE_INSTANCE_URL}/services/oauth2/token
+Parameters: grant_type=password, client_id, client_secret, username, password
+Store the returned access_token and instance_url in memory
+Add token refresh logic if token expires
+Add a testConnection() function that verifies auth works
+Handle errors cleanly — if credentials are missing or wrong, fail gracefully with a clear error message
+
+
+3. SALESFORCE CONNECTOR SERVICE
+Create a connector service at:
+artifacts/api-server/src/connectors/salesforce.ts
+Implement these functions:
+testConnection()
+syncAccounts()
+syncContacts()
+fullSync()
+syncAccounts() should:
+
+Query Salesforce Accounts via REST API
+Endpoint: GET /services/data/v58.0/query?q=SELECT+Id,Name,BillingStreet,BillingCity,BillingState,BillingPostalCode,BillingCountry,Phone,Website+FROM+Account
+Map each Account to your internal Customer model
+Store externalSystem = 'salesforce'
+Store externalId = Salesforce Account Id
+Upsert by externalId — do not create duplicates
+Store lastSyncedAt and syncStatus
+
+syncContacts() should:
+
+Query Salesforce Contacts via REST API
+Endpoint: GET /services/data/v58.0/query?q=SELECT+Id,FirstName,LastName,Email,Phone,Title,AccountId+FROM+Contact
+Map each Contact to your internal customer_contacts model
+Link to the correct internal customer via the mapped AccountId
+Store externalSystem = 'salesforce' and externalId
+Upsert by externalId
+
+
+4. DATA MODEL UPDATES
+Add these fields to the customers table if not already present:
+
+externalSystem (text, nullable)
+externalId (text, nullable)
+externalSyncedAt (timestamp, nullable)
+externalSyncStatus (text, nullable)
+
+Add the same fields to customer_contacts if not already present.
+Add a unique index on (externalSystem, externalId) for both tables to prevent duplicates.
+
+5. API ENDPOINTS
+Add these endpoints under /api/salesforce/:
+
+POST /api/salesforce/test — test connection, return success/error
+POST /api/salesforce/sync/accounts — sync accounts only
+POST /api/salesforce/sync/contacts — sync contacts only
+POST /api/salesforce/sync/full — run full sync
+GET /api/salesforce/status — return last sync time, record counts, connection status
+
+
+6. ADMIN UI
+Add a Salesforce section to the existing Admin page with:
+
+Connection status indicator (green/red)
+Test connection button
+Last sync timestamp
+Record counts (accounts synced, contacts synced)
+Sync now button (triggers full sync)
+Simple sync log showing last 5 sync results
+
+
+7. CUSTOMER DETAIL UI UPDATE
+On the Customer detail page, if the customer has externalSystem = 'salesforce':
+
+Show a small Salesforce badge or indicator
+Show the external ID
+Show last synced timestamp
+
+
+8. IMPORTANT RULES
+
+All Salesforce API calls must be server-side only — never expose credentials to the frontend
+If SALESFORCE_CLIENT_ID is not set, disable the integration gracefully — do not crash
+Add proper error handling for API rate limits and network failures
+Log sync activity to the existing controller_sync_logs table if possible, or a similar logging pattern
+Keep the connector modular so other CRM connectors can follow the same pattern later
+
+
+9. AFTER IMPLEMENTATION
+Tell me:
+
+Where the Salesforce connector file lives
+How to add the env vars in Replit
+How to trigger a test sync
+What fields are mapped from Salesforce to your internal models
+What the next integration to add would be following this same pattern

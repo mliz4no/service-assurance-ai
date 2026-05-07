@@ -7,7 +7,7 @@ import { StatusBadge } from "@/components/status-badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Activity, Edit, Building2, MapPin, Globe2, Ticket, Mail, Phone, Users, Plus, Trash2, Pencil, Bell } from "lucide-react";
+import { Activity, Edit, Building2, MapPin, Globe2, Ticket, Mail, Phone, Users, Plus, Trash2, Pencil, Bell, Cloud } from "lucide-react";
 import { EscalationMatrixEditor } from "@/components/EscalationMatrixEditor";
 import { Link } from "wouter";
 import { useState } from "react";
@@ -319,11 +319,24 @@ export default function CustomerDetail() {
               <Building2 className="w-6 h-6" />
             </div>
             <div>
-              <h1 className="text-2xl font-bold text-foreground flex items-center gap-2">
+              <h1 className="text-2xl font-bold text-foreground flex items-center gap-2 flex-wrap">
                 {customer.name}
                 <StatusBadge status={customer.status} />
+                {(customer as any).externalSystem === "salesforce" && (
+                  <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded text-xs font-semibold bg-blue-100 text-blue-700 border border-blue-200">
+                    <Cloud className="w-3 h-3" /> Salesforce
+                  </span>
+                )}
               </h1>
               <p className="text-muted-foreground">Account #: {customer.accountNumber || "N/A"}</p>
+              {(customer as any).externalSystem === "salesforce" && (
+                <div className="flex items-center gap-4 mt-1 text-xs text-muted-foreground">
+                  <span>SF ID: <span className="font-mono">{(customer as any).externalId}</span></span>
+                  {(customer as any).externalSyncedAt && (
+                    <span>Last synced: {new Date((customer as any).externalSyncedAt).toLocaleString()}</span>
+                  )}
+                </div>
+              )}
             </div>
           </div>
           <Button onClick={() => setLocation(`/customers/${id}/edit`)} variant="outline">

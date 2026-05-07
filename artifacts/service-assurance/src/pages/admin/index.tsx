@@ -19,7 +19,7 @@ import {
 import { useQueryClient } from "@tanstack/react-query";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { CheckCircle2, XCircle, Activity, Server, ShieldCheck, Database, BrainCircuit, Play, Plus, Pencil, Trash2, Users, Grid3X3, Handshake } from "lucide-react";
+import { CheckCircle2, XCircle, Activity, Server, ShieldCheck, Database, BrainCircuit, Play, Plus, Pencil, Trash2, Users, Grid3X3, Handshake, Cloud, RefreshCw } from "lucide-react";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { getToken } from "@/lib/token";
 import { EscalationMatrixEditor } from "@/components/EscalationMatrixEditor";
@@ -246,6 +246,176 @@ async function apiFetch(path: string, options?: RequestInit) {
   }
   return res.json();
 }
+
+// ── Salesforce API hooks ────────────────────────────────────────────────
+
+function useSalesforceStatus() {
+  return useQuery({ queryKey: ["salesforce-status"], queryFn: () => apiFetch("/salesforce/status"), refetchInterval: 30_000 });
+}
+
+function useSalesforceTest() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: () => apiFetch("/salesforce/test", { method: "POST" }),
+    onSuccess: () => qc.invalidateQueries({ queryKey: ["salesforce-status"] }),
+  });
+}
+
+function useSalesforceSync(type: "accounts" | "contacts" | "full") {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: () => apiFetch(`/salesforce/sync/${type}`, { method: "POST" }),
+    onSuccess: () => qc.invalidateQueries({ queryKey: ["salesforce-status"] }),
+  });
+}
+
+// ── Salesforce Panel ──────────────────────────────────────────────────────
+
+function SalesforcePanel() {
+  const { toast } = useToast();
+  const { data: status, isLoading: loadingStatus } = useSalesforceStatus();
+  const testMutation = useSalesforceTest();
+  const syncMutation = useSalesforceSync("full");
+
+  function handleTest() {
+    testMutation.mutate(undefined, {
+      onSuccess: (data: any) => {
+        toast({
+          title: data.ok ? "Connection successful" : "Connection failed",
+          description: data.message,
+          variant: data.ok ? "default" : "destructive",
+        });
+      },
+      onError: (err: any) => toast({ title: "Test failed", description: err.message, variant: "destructive" }),
+    });
+  }
+
+  function handleSync() {
+    syncMutation.mutate(undefined, {
+      onSuccess: (data: any) => {
+        const accSynced = data?.accounts?.synced ?? 0;
+        const conSynced = data?.contacts?.synced ?? 0;
+        toast({ title: "Sync complete", description: `${accSynced} accounts, ${conSynced} contacts synced.` });
+      },
+      onError: (err: any) => toast({ title: "Sync failed", description: err.message, variant: "destructive" }),
+    });
+  }
+
+  const configured = status?.configured ?? false;
+
+  return (
+    <Card className="border-border/50 shadow-sm">
+      <CardHeader className="pb-3 border-b border-border/50">
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+          <div>
+            <CardTitle className="text-base font-semibold flex items-center gap-2">
+              <Cloud className="w-5 h-5 text-[#00A1E0]" /> Salesforce Integration
+            </CardTitle>
+            <CardDescription className="text-xs mt-0.5">
+              Read-only sync — pulls Accounts and Contacts into internal customer records
+            </CardDescription>
+          </div>
+          <div className="flex items-center gap-2">
+            <Button size="sm" variant="outline" onClick={handleTest} disabled={testMutation.isPending || !configured}>
+              {testMutation.isPending ? <Activity className="w-4 h-4 mr-1.5 animate-spin" /> : <CheckCircle2 className="w-4 h-4 mr-1.5" />}
+              Test Connection
+            </Button>
+            <Button size="sm" onClick={handleSync} disabled={syncMutation.isPending || !configured}>
+              {syncMutation.isPending ? <Activity className="w-4 h-4 mr-1.5 animate-spin" /> : <RefreshCw className="w-4 h-4 mr-1.5" />}
+              Sync Now
+            </Button>
+          </div>
+        </div>
+      </CardHeader>
+      <CardContent className="pt-4 space-y-4">
+        {/* Status row */}
+        <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+          <div className="p-3 bg-muted/30 rounded-md border border-border/50">
+            <p className="text-xs text-muted-foreground mb-1">Credentials</p>
+            <div className="flex items-center gap-1.5">
+              {configured ? (
+                <><CheckCircle2 className="w-4 h-4 text-green-500" /><span className="text-sm font-medium text-green-700">Configured</span></>
+              ) : (
+                <><XCircle className="w-4 h-4 text-amber-500" /><span className="text-sm font-medium text-amber-700">Not set</span></>
+              )}
+            </div>
+          </div>
+          <div className="p-3 bg-muted/30 rounded-md border border-border/50">
+            <p className="text-xs text-muted-foreground mb-1">Accounts synced</p>
+            <p className="text-lg font-bold">{loadingStatus ? "—" : (status?.accountsSynced ?? 0)}</p>
+          </div>
+          <div className="p-3 bg-muted/30 rounded-md border border-border/50">
+            <p className="text-xs text-muted-foreground mb-1">Contacts synced</p>
+            <p className="text-lg font-bold">{loadingStatus ? "—" : (status?.contactsSynced ?? 0)}</p>
+          </div>
+          <div className="p-3 bg-muted/30 rounded-md border border-border/50">
+            <p className="text-xs text-muted-foreground mb-1">Last sync</p>
+            <p className="text-sm font-medium">
+              {loadingStatus ? "—" : status?.lastSyncAt ? new Date(status.lastSyncAt).toLocaleString(undefined, { month: "short", day: "numeric", hour: "2-digit", minute: "2-digit" }) : "Never"}
+            </p>
+          </div>
+        </div>
+
+        {/* Credentials hint when not configured */}
+        {!configured && (
+          <div className="flex items-start gap-2 p-3 bg-amber-50 border border-amber-200 rounded-md text-xs text-amber-800">
+            <XCircle className="w-4 h-4 shrink-0 mt-0.5 text-amber-500" />
+            <span>
+              Add these environment secrets to enable the integration:{" "}
+              <code className="font-mono font-semibold">SALESFORCE_CLIENT_ID</code>,{" "}
+              <code className="font-mono font-semibold">SALESFORCE_CLIENT_SECRET</code>,{" "}
+              <code className="font-mono font-semibold">SALESFORCE_INSTANCE_URL</code>,{" "}
+              <code className="font-mono font-semibold">SALESFORCE_USERNAME</code>,{" "}
+              <code className="font-mono font-semibold">SALESFORCE_PASSWORD</code>.
+            </span>
+          </div>
+        )}
+
+        {/* Test connection result */}
+        {testMutation.data && (
+          <div className={`flex items-start gap-2 p-3 rounded-md text-xs border ${testMutation.data.ok ? "bg-green-50 border-green-200 text-green-800" : "bg-red-50 border-red-200 text-red-800"}`}>
+            {testMutation.data.ok ? <CheckCircle2 className="w-4 h-4 shrink-0 mt-0.5" /> : <XCircle className="w-4 h-4 shrink-0 mt-0.5" />}
+            <span>{testMutation.data.message}</span>
+          </div>
+        )}
+
+        {/* Sync result */}
+        {syncMutation.data && (
+          <div className="p-3 bg-green-50 border border-green-200 rounded-md text-xs text-green-800">
+            Sync complete — {syncMutation.data.accounts?.synced ?? 0} accounts, {syncMutation.data.contacts?.synced ?? 0} contacts processed.
+            {(syncMutation.data.accounts?.errors?.length > 0 || syncMutation.data.contacts?.errors?.length > 0) && (
+              <span className="text-amber-700"> Some rows had errors — check sync log below.</span>
+            )}
+          </div>
+        )}
+
+        {/* Sync log */}
+        {status?.recentLogs?.length > 0 && (
+          <div>
+            <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide mb-2">Recent Sync Log</p>
+            <div className="space-y-1.5">
+              {status.recentLogs.map((log: any) => (
+                <div key={log.id} className="flex items-center gap-3 px-3 py-2 bg-muted/20 rounded border border-border/40 text-xs">
+                  <span className={`inline-flex items-center px-1.5 py-0.5 rounded font-semibold capitalize ${
+                    log.status === "success" ? "bg-green-100 text-green-700"
+                    : log.status === "failed" ? "bg-red-100 text-red-700"
+                    : "bg-blue-100 text-blue-700"
+                  }`}>{log.status}</span>
+                  <span className="text-muted-foreground capitalize">{log.syncType}</span>
+                  <span className="font-medium">{log.recordsProcessed ?? 0} records</span>
+                  <span className="text-muted-foreground ml-auto">{new Date(log.startedAt).toLocaleString(undefined, { month: "short", day: "numeric", hour: "2-digit", minute: "2-digit" })}</span>
+                  {log.message && <span className="text-muted-foreground truncate max-w-[200px]" title={log.message}>{log.message}</span>}
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+      </CardContent>
+    </Card>
+  );
+}
+
+// ── Partners API hooks ──────────────────────────────────────────────────
 
 function usePartners() {
   return useQuery({ queryKey: ["partners"], queryFn: () => apiFetch("/partners") });
@@ -929,6 +1099,9 @@ export default function AdminPanel() {
             </Table>
           </CardContent>
         </Card>
+
+        {/* Salesforce Integration */}
+        <SalesforcePanel />
 
         {/* Global Escalation Matrix */}
         <div>

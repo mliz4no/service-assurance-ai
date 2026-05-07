@@ -6,3 +6,9 @@ id = "JDhcUl29IfW3GkAZqwcyt"
 uri = "file://schema.txt"
 type = "text"
 title = "Drizzle Schema — index.ts"
+
+[[outputs]]
+id = "gtf2TfE2_xB5iPTuXKp4Y"
+uri = "file://.local/outputs/Service-Assurance.pdf"
+type = "pdf"
+title = "Service Assurance.pdf"
