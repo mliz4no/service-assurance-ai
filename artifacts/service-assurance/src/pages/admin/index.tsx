@@ -253,6 +253,21 @@ function useSalesforceStatus() {
   return useQuery({ queryKey: ["salesforce-status"], queryFn: () => apiFetch("/salesforce/status"), refetchInterval: 30_000 });
 }
 
+function useSalesforceConfig() {
+  return useQuery({ queryKey: ["salesforce-config"], queryFn: () => apiFetch("/salesforce/config") });
+}
+
+function useSaveConfig() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (data: any) => apiFetch("/salesforce/config", { method: "PUT", body: JSON.stringify(data) }),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ["salesforce-config"] });
+      qc.invalidateQueries({ queryKey: ["salesforce-status"] });
+    },
+  });
+}
+
 function useSalesforceTest() {
   const qc = useQueryClient();
   return useMutation({
@@ -271,11 +286,66 @@ function useSalesforceSync(type: "accounts" | "contacts" | "full") {
 
 // ── Salesforce Panel ──────────────────────────────────────────────────────
 
+const MASKED = "••••••••";
+
 function SalesforcePanel() {
   const { toast } = useToast();
   const { data: status, isLoading: loadingStatus } = useSalesforceStatus();
+  const { data: savedConfig, isLoading: loadingConfig } = useSalesforceConfig();
+  const saveConfigMutation = useSaveConfig();
   const testMutation = useSalesforceTest();
   const syncMutation = useSalesforceSync("full");
+
+  const [showForm, setShowForm] = useState(false);
+  const [showPassword, setShowPassword] = useState(false);
+  const [showSecret, setShowSecret] = useState(false);
+  const [form, setForm] = useState({
+    clientId: "",
+    clientSecret: "",
+    instanceUrl: "",
+    username: "",
+    password: "",
+  });
+
+  useEffect(() => {
+    if (savedConfig && showForm) {
+      setForm({
+        clientId:     savedConfig.clientId     || "",
+        clientSecret: savedConfig.hasClientSecret ? MASKED : "",
+        instanceUrl:  savedConfig.instanceUrl  || "",
+        username:     savedConfig.username     || "",
+        password:     savedConfig.hasPassword  ? MASKED : "",
+      });
+    }
+  }, [savedConfig, showForm]);
+
+  function handleOpenForm() {
+    setShowForm(true);
+    setShowPassword(false);
+    setShowSecret(false);
+  }
+
+  function handleSave() {
+    const payload: Record<string, string> = {};
+    if (form.clientId     && form.clientId     !== MASKED) payload.clientId     = form.clientId;
+    if (form.clientSecret && form.clientSecret !== MASKED) payload.clientSecret = form.clientSecret;
+    if (form.instanceUrl  && form.instanceUrl  !== MASKED) payload.instanceUrl  = form.instanceUrl;
+    if (form.username     && form.username     !== MASKED) payload.username     = form.username;
+    if (form.password     && form.password     !== MASKED) payload.password     = form.password;
+
+    if (Object.keys(payload).length === 0) {
+      toast({ title: "No changes to save." });
+      return;
+    }
+
+    saveConfigMutation.mutate(payload, {
+      onSuccess: () => {
+        toast({ title: "Credentials saved" });
+        setShowForm(false);
+      },
+      onError: (err: any) => toast({ title: "Save failed", description: err.message, variant: "destructive" }),
+    });
+  }
 
   function handleTest() {
     testMutation.mutate(undefined, {
@@ -302,6 +372,7 @@ function SalesforcePanel() {
   }
 
   const configured = status?.configured ?? false;
+  const set = (k: string) => (e: React.ChangeEvent<HTMLInputElement>) => setForm(f => ({ ...f, [k]: e.target.value }));
 
   return (
     <Card className="border-border/50 shadow-sm">
@@ -315,7 +386,13 @@ function SalesforcePanel() {
               Read-only sync — pulls Accounts and Contacts into internal customer records
             </CardDescription>
           </div>
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-2 flex-wrap">
+            {!showForm && (
+              <Button size="sm" variant="outline" onClick={handleOpenForm} disabled={loadingConfig}>
+                <Pencil className="w-4 h-4 mr-1.5" />
+                {configured ? "Edit Credentials" : "Add Credentials"}
+              </Button>
+            )}
             <Button size="sm" variant="outline" onClick={handleTest} disabled={testMutation.isPending || !configured}>
               {testMutation.isPending ? <Activity className="w-4 h-4 mr-1.5 animate-spin" /> : <CheckCircle2 className="w-4 h-4 mr-1.5" />}
               Test Connection
@@ -328,6 +405,83 @@ function SalesforcePanel() {
         </div>
       </CardHeader>
       <CardContent className="pt-4 space-y-4">
+
+        {/* Credentials form */}
+        {showForm && (
+          <div className="p-4 bg-muted/20 rounded-lg border border-border/60 space-y-3">
+            <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">Salesforce Credentials</p>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+              <div>
+                <label className="text-xs font-medium text-muted-foreground mb-1 block">Instance URL</label>
+                <Input
+                  value={form.instanceUrl}
+                  onChange={set("instanceUrl")}
+                  placeholder="https://yourorg.my.salesforce.com"
+                  onFocus={() => { if (form.instanceUrl === MASKED) setForm(f => ({ ...f, instanceUrl: "" })); }}
+                />
+              </div>
+              <div>
+                <label className="text-xs font-medium text-muted-foreground mb-1 block">Username</label>
+                <Input
+                  value={form.username}
+                  onChange={set("username")}
+                  placeholder="user@yourorg.com"
+                  onFocus={() => { if (form.username === MASKED) setForm(f => ({ ...f, username: "" })); }}
+                />
+              </div>
+              <div>
+                <label className="text-xs font-medium text-muted-foreground mb-1 block">Consumer Key (Client ID)</label>
+                <Input
+                  value={form.clientId}
+                  onChange={set("clientId")}
+                  placeholder="3MVG9..."
+                  onFocus={() => { if (form.clientId === MASKED) setForm(f => ({ ...f, clientId: "" })); }}
+                />
+              </div>
+              <div>
+                <label className="text-xs font-medium text-muted-foreground mb-1 block">Consumer Secret</label>
+                <div className="relative">
+                  <Input
+                    type={showSecret ? "text" : "password"}
+                    value={form.clientSecret}
+                    onChange={set("clientSecret")}
+                    placeholder={savedConfig?.hasClientSecret ? "Leave blank to keep existing" : "Consumer Secret"}
+                    onFocus={() => { if (form.clientSecret === MASKED) setForm(f => ({ ...f, clientSecret: "" })); }}
+                    className="pr-9"
+                  />
+                  <button type="button" onClick={() => setShowSecret(s => !s)} className="absolute right-2.5 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground">
+                    <span className="text-xs">{showSecret ? "hide" : "show"}</span>
+                  </button>
+                </div>
+              </div>
+              <div className="sm:col-span-2">
+                <label className="text-xs font-medium text-muted-foreground mb-1 block">
+                  Password <span className="font-normal text-muted-foreground">(append your security token with no space if required)</span>
+                </label>
+                <div className="relative">
+                  <Input
+                    type={showPassword ? "text" : "password"}
+                    value={form.password}
+                    onChange={set("password")}
+                    placeholder={savedConfig?.hasPassword ? "Leave blank to keep existing" : "Password + security token"}
+                    onFocus={() => { if (form.password === MASKED) setForm(f => ({ ...f, password: "" })); }}
+                    className="pr-9"
+                  />
+                  <button type="button" onClick={() => setShowPassword(s => !s)} className="absolute right-2.5 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground">
+                    <span className="text-xs">{showPassword ? "hide" : "show"}</span>
+                  </button>
+                </div>
+              </div>
+            </div>
+            <div className="flex gap-2 justify-end pt-1">
+              <Button size="sm" variant="outline" onClick={() => setShowForm(false)}>Cancel</Button>
+              <Button size="sm" onClick={handleSave} disabled={saveConfigMutation.isPending}>
+                {saveConfigMutation.isPending ? "Saving..." : "Save Credentials"}
+              </Button>
+            </div>
+          </div>
+        )}
+
         {/* Status row */}
         <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
           <div className="p-3 bg-muted/30 rounded-md border border-border/50">
@@ -351,25 +505,12 @@ function SalesforcePanel() {
           <div className="p-3 bg-muted/30 rounded-md border border-border/50">
             <p className="text-xs text-muted-foreground mb-1">Last sync</p>
             <p className="text-sm font-medium">
-              {loadingStatus ? "—" : status?.lastSyncAt ? new Date(status.lastSyncAt).toLocaleString(undefined, { month: "short", day: "numeric", hour: "2-digit", minute: "2-digit" }) : "Never"}
+              {loadingStatus ? "—" : status?.lastSyncAt
+                ? new Date(status.lastSyncAt).toLocaleString(undefined, { month: "short", day: "numeric", hour: "2-digit", minute: "2-digit" })
+                : "Never"}
             </p>
           </div>
         </div>
-
-        {/* Credentials hint when not configured */}
-        {!configured && (
-          <div className="flex items-start gap-2 p-3 bg-amber-50 border border-amber-200 rounded-md text-xs text-amber-800">
-            <XCircle className="w-4 h-4 shrink-0 mt-0.5 text-amber-500" />
-            <span>
-              Add these environment secrets to enable the integration:{" "}
-              <code className="font-mono font-semibold">SALESFORCE_CLIENT_ID</code>,{" "}
-              <code className="font-mono font-semibold">SALESFORCE_CLIENT_SECRET</code>,{" "}
-              <code className="font-mono font-semibold">SALESFORCE_INSTANCE_URL</code>,{" "}
-              <code className="font-mono font-semibold">SALESFORCE_USERNAME</code>,{" "}
-              <code className="font-mono font-semibold">SALESFORCE_PASSWORD</code>.
-            </span>
-          </div>
-        )}
 
         {/* Test connection result */}
         {testMutation.data && (

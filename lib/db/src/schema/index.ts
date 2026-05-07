@@ -16,3 +16,4 @@ export * from "./escalation_notifications";
 export * from "./escalation_matrix_overrides";
 export * from "./telecom_services_partners";
 export * from "./crm_sync_logs";
+export * from "./salesforce_config";

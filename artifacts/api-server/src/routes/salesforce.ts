@@ -1,12 +1,55 @@
 import { Router, type IRouter } from "express";
-import { db, customersTable, customerContactsTable, crmSyncLogsTable } from "@workspace/db";
-import { eq, desc, count, and } from "drizzle-orm";
+import { db, customersTable, customerContactsTable, crmSyncLogsTable, salesforceConfigTable } from "@workspace/db";
+import { eq, desc, count } from "drizzle-orm";
 import { requireAuth, requireRole } from "../middlewares/auth";
 import * as sf from "../connectors/salesforce";
 
 const router: IRouter = Router();
 
 const adminOnly = [requireAuth, requireRole("admin")];
+
+// ── Get saved config (masks sensitive fields) ─────────────────────────────────
+
+router.get("/salesforce/config", ...adminOnly, async (req, res): Promise<void> => {
+  const rows = await db.select().from(salesforceConfigTable);
+  const cfg: Record<string, string> = {};
+  for (const row of rows) {
+    cfg[row.key] = row.value;
+  }
+
+  // Return non-sensitive fields in plain text; mask secrets
+  res.json({
+    clientId:     cfg["clientId"]     ? cfg["clientId"]     : "",
+    clientSecret: cfg["clientSecret"] ? "••••••••"          : "",
+    instanceUrl:  cfg["instanceUrl"]  ? cfg["instanceUrl"]  : "",
+    username:     cfg["username"]     ? cfg["username"]      : "",
+    password:     cfg["password"]     ? "••••••••"           : "",
+    hasClientSecret: !!cfg["clientSecret"],
+    hasPassword:     !!cfg["password"],
+  });
+});
+
+// ── Save config ───────────────────────────────────────────────────────────────
+
+router.put("/salesforce/config", ...adminOnly, async (req, res): Promise<void> => {
+  const { clientId, clientSecret, instanceUrl, username, password } = req.body as Record<string, string>;
+
+  // Only save fields that are non-empty and not the masked placeholder
+  const toSave: Partial<sf.SalesforceCredentials> = {};
+  if (clientId     && clientId     !== "••••••••") toSave.clientId     = clientId.trim();
+  if (clientSecret && clientSecret !== "••••••••") toSave.clientSecret = clientSecret.trim();
+  if (instanceUrl  && instanceUrl  !== "••••••••") toSave.instanceUrl  = instanceUrl.trim().replace(/\/$/, "");
+  if (username     && username     !== "••••••••") toSave.username     = username.trim();
+  if (password     && password     !== "••••••••") toSave.password     = password.trim();
+
+  if (Object.keys(toSave).length === 0) {
+    res.status(400).json({ error: "No fields to save." });
+    return;
+  }
+
+  await sf.saveCredentials(toSave);
+  res.json({ success: true });
+});
 
 // ── Test connection ───────────────────────────────────────────────────────────
 
@@ -73,17 +116,10 @@ router.get("/salesforce/status", ...adminOnly, async (req, res): Promise<void> =
     .limit(5);
 
   const lastSuccessLog = recentLogs.find(l => l.status === "success");
-
-  const configured = !!(
-    process.env.SALESFORCE_CLIENT_ID &&
-    process.env.SALESFORCE_CLIENT_SECRET &&
-    process.env.SALESFORCE_INSTANCE_URL &&
-    process.env.SALESFORCE_USERNAME &&
-    process.env.SALESFORCE_PASSWORD
-  );
+  const creds = await sf.getCredentials();
 
   res.json({
-    configured,
+    configured: !!creds,
     accountsSynced: Number(accountCount?.count ?? 0),
     contactsSynced: Number(contactCount?.count ?? 0),
     lastSyncAt: lastSuccessLog?.completedAt ?? null,

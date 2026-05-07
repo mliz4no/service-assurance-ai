@@ -1,16 +1,23 @@
 /**
  * Salesforce CRM connector — read-only data sync.
  *
- * Pulls Accounts → customers and Contacts → customer_contacts.
- * Uses the OAuth 2.0 Username-Password flow for server-to-server auth.
- * Gracefully disabled when SALESFORCE_CLIENT_ID is not set.
+ * Credential priority: DB (salesforce_config table) → environment variables.
+ * Gracefully disabled when no credentials are present from either source.
  */
 
-import { db, customersTable, customerContactsTable, crmSyncLogsTable } from "@workspace/db";
+import { db, customersTable, customerContactsTable, crmSyncLogsTable, salesforceConfigTable } from "@workspace/db";
 import { eq, and } from "drizzle-orm";
 import { logger } from "../lib/logger";
 
 // ── Types ────────────────────────────────────────────────────────────────────
+
+export interface SalesforceCredentials {
+  clientId: string;
+  clientSecret: string;
+  instanceUrl: string;
+  username: string;
+  password: string;
+}
 
 export interface SalesforceAccount {
   Id: string;
@@ -54,33 +61,71 @@ interface TokenCache {
 
 let tokenCache: TokenCache | null = null;
 
-// ── Helpers ──────────────────────────────────────────────────────────────────
+// ── Credential resolution ─────────────────────────────────────────────────────
 
-export function isConfigured(): boolean {
-  return !!(
-    process.env.SALESFORCE_CLIENT_ID &&
-    process.env.SALESFORCE_CLIENT_SECRET &&
-    process.env.SALESFORCE_INSTANCE_URL &&
-    process.env.SALESFORCE_USERNAME &&
-    process.env.SALESFORCE_PASSWORD
-  );
+export async function getCredentials(): Promise<SalesforceCredentials | null> {
+  // Load all rows from salesforce_config
+  const rows = await db.select().from(salesforceConfigTable);
+  const cfg: Record<string, string> = {};
+  for (const row of rows) {
+    cfg[row.key] = row.value;
+  }
+
+  const clientId     = cfg["clientId"]     || process.env.SALESFORCE_CLIENT_ID     || "";
+  const clientSecret = cfg["clientSecret"] || process.env.SALESFORCE_CLIENT_SECRET || "";
+  const instanceUrl  = cfg["instanceUrl"]  || process.env.SALESFORCE_INSTANCE_URL  || "";
+  const username     = cfg["username"]     || process.env.SALESFORCE_USERNAME       || "";
+  const password     = cfg["password"]     || process.env.SALESFORCE_PASSWORD       || "";
+
+  if (!clientId || !clientSecret || !instanceUrl || !username || !password) return null;
+  return { clientId, clientSecret, instanceUrl, username, password };
 }
+
+export async function saveCredentials(creds: Partial<SalesforceCredentials>): Promise<void> {
+  const entries: Array<[string, string]> = [
+    ["clientId",     creds.clientId     ?? ""],
+    ["clientSecret", creds.clientSecret ?? ""],
+    ["instanceUrl",  creds.instanceUrl  ?? ""],
+    ["username",     creds.username     ?? ""],
+    ["password",     creds.password     ?? ""],
+  ];
+
+  for (const [key, value] of entries) {
+    if (value === "") continue; // don't overwrite with empty string
+    await db
+      .insert(salesforceConfigTable)
+      .values({ key, value })
+      .onConflictDoUpdate({ target: salesforceConfigTable.key, set: { value, updatedAt: new Date() } });
+  }
+
+  // Invalidate token cache when credentials change
+  tokenCache = null;
+}
+
+export async function clearCredential(key: string): Promise<void> {
+  await db.delete(salesforceConfigTable).where(eq(salesforceConfigTable.key, key));
+  tokenCache = null;
+}
+
+// ── Helpers ───────────────────────────────────────────────────────────────────
 
 async function authenticate(): Promise<TokenCache> {
   if (tokenCache && tokenCache.expiresAt > Date.now() + 60_000) {
     return tokenCache;
   }
 
-  const instanceUrl = process.env.SALESFORCE_INSTANCE_URL!;
+  const creds = await getCredentials();
+  if (!creds) throw new Error("Salesforce credentials not configured.");
+
   const params = new URLSearchParams({
     grant_type: "password",
-    client_id: process.env.SALESFORCE_CLIENT_ID!,
-    client_secret: process.env.SALESFORCE_CLIENT_SECRET!,
-    username: process.env.SALESFORCE_USERNAME!,
-    password: process.env.SALESFORCE_PASSWORD!,
+    client_id: creds.clientId,
+    client_secret: creds.clientSecret,
+    username: creds.username,
+    password: creds.password,
   });
 
-  const res = await fetch(`${instanceUrl}/services/oauth2/token`, {
+  const res = await fetch(`${creds.instanceUrl}/services/oauth2/token`, {
     method: "POST",
     headers: { "Content-Type": "application/x-www-form-urlencoded" },
     body: params.toString(),
@@ -136,13 +181,14 @@ function mapTitleToRole(title?: string): "noc" | "manager" | "director" | "execu
   return "noc";
 }
 
-// ── Public API ───────────────────────────────────────────────────────────────
+// ── Public API ────────────────────────────────────────────────────────────────
 
 export async function testConnection(): Promise<{ ok: boolean; message: string }> {
-  if (!isConfigured()) {
+  const creds = await getCredentials();
+  if (!creds) {
     return {
       ok: false,
-      message: "Salesforce credentials not configured. Set SALESFORCE_CLIENT_ID, SALESFORCE_CLIENT_SECRET, SALESFORCE_INSTANCE_URL, SALESFORCE_USERNAME, and SALESFORCE_PASSWORD.",
+      message: "Credentials incomplete. Fill in all 5 fields and save.",
     };
   }
   try {
@@ -155,9 +201,8 @@ export async function testConnection(): Promise<{ ok: boolean; message: string }
 }
 
 export async function syncAccounts(): Promise<SalesforceSyncResult> {
-  if (!isConfigured()) {
-    throw new Error("Salesforce credentials not configured.");
-  }
+  const creds = await getCredentials();
+  if (!creds) throw new Error("Salesforce credentials not configured.");
 
   const [logRow] = await db.insert(crmSyncLogsTable).values({
     connector: "salesforce",
@@ -175,67 +220,34 @@ export async function syncAccounts(): Promise<SalesforceSyncResult> {
 
     for (const acct of accounts) {
       try {
-        const billingParts = [
-          acct.BillingStreet,
-          acct.BillingCity,
-          acct.BillingState,
-          acct.BillingPostalCode,
-          acct.BillingCountry,
-        ].filter(Boolean);
+        const billingParts = [acct.BillingStreet, acct.BillingCity, acct.BillingState, acct.BillingPostalCode, acct.BillingCountry].filter(Boolean);
         const notes = billingParts.length > 0 ? `Billing: ${billingParts.join(", ")}` : null;
 
         const [existing] = await db
           .select({ id: customersTable.id })
           .from(customersTable)
-          .where(and(
-            eq(customersTable.externalSystem, "salesforce"),
-            eq(customersTable.externalId, acct.Id)
-          ));
+          .where(and(eq(customersTable.externalSystem, "salesforce"), eq(customersTable.externalId, acct.Id)));
 
         if (existing) {
           await db.update(customersTable)
-            .set({
-              name: acct.Name,
-              primaryContactPhone: acct.Phone ?? null,
-              notes,
-              externalSyncedAt: new Date(),
-              externalSyncStatus: "synced",
-              updatedAt: new Date(),
-            })
+            .set({ name: acct.Name, primaryContactPhone: acct.Phone ?? null, notes, externalSyncedAt: new Date(), externalSyncStatus: "synced", updatedAt: new Date() })
             .where(eq(customersTable.id, existing.id));
         } else {
           await db.insert(customersTable).values({
-            name: acct.Name,
-            status: "active",
-            primaryContactPhone: acct.Phone ?? null,
-            notes,
-            externalSystem: "salesforce",
-            externalId: acct.Id,
-            externalSyncedAt: new Date(),
-            externalSyncStatus: "synced",
+            name: acct.Name, status: "active", primaryContactPhone: acct.Phone ?? null, notes,
+            externalSystem: "salesforce", externalId: acct.Id, externalSyncedAt: new Date(), externalSyncStatus: "synced",
           });
         }
-
         synced++;
       } catch (rowErr: any) {
         errors.push(`Account ${acct.Id}: ${rowErr.message}`);
       }
     }
 
-    await db.update(crmSyncLogsTable).set({
-      status: "success",
-      completedAt: new Date(),
-      recordsProcessed: synced,
-      message: errors.length ? errors.slice(0, 3).join("; ") : null,
-    }).where(eq(crmSyncLogsTable.id, logRow.id));
-
+    await db.update(crmSyncLogsTable).set({ status: "success", completedAt: new Date(), recordsProcessed: synced, message: errors.length ? errors.slice(0, 3).join("; ") : null }).where(eq(crmSyncLogsTable.id, logRow.id));
   } catch (err: any) {
     logger.error({ err }, "salesforce syncAccounts failed");
-    await db.update(crmSyncLogsTable).set({
-      status: "failed",
-      completedAt: new Date(),
-      message: err.message,
-    }).where(eq(crmSyncLogsTable.id, logRow.id));
+    await db.update(crmSyncLogsTable).set({ status: "failed", completedAt: new Date(), message: err.message }).where(eq(crmSyncLogsTable.id, logRow.id));
     throw err;
   }
 
@@ -243,9 +255,8 @@ export async function syncAccounts(): Promise<SalesforceSyncResult> {
 }
 
 export async function syncContacts(): Promise<SalesforceSyncResult> {
-  if (!isConfigured()) {
-    throw new Error("Salesforce credentials not configured.");
-  }
+  const creds = await getCredentials();
+  if (!creds) throw new Error("Salesforce credentials not configured.");
 
   const [logRow] = await db.insert(crmSyncLogsTable).values({
     connector: "salesforce",
@@ -270,13 +281,9 @@ export async function syncContacts(): Promise<SalesforceSyncResult> {
           const [customer] = await db
             .select({ id: customersTable.id })
             .from(customersTable)
-            .where(and(
-              eq(customersTable.externalSystem, "salesforce"),
-              eq(customersTable.externalId, contact.AccountId)
-            ));
+            .where(and(eq(customersTable.externalSystem, "salesforce"), eq(customersTable.externalId, contact.AccountId)));
           customerId = customer?.id ?? null;
         }
-
         if (!customerId) continue;
 
         const fullName = [contact.FirstName, contact.LastName].filter(Boolean).join(" ");
@@ -285,59 +292,29 @@ export async function syncContacts(): Promise<SalesforceSyncResult> {
         const [existing] = await db
           .select({ id: customerContactsTable.id })
           .from(customerContactsTable)
-          .where(and(
-            eq(customerContactsTable.externalSystem, "salesforce"),
-            eq(customerContactsTable.externalId, contact.Id)
-          ));
+          .where(and(eq(customerContactsTable.externalSystem, "salesforce"), eq(customerContactsTable.externalId, contact.Id)));
 
         if (existing) {
           await db.update(customerContactsTable)
-            .set({
-              name: fullName || contact.LastName,
-              email: contact.Email,
-              phone: contact.Phone ?? null,
-              role,
-              externalSyncedAt: new Date(),
-              externalSyncStatus: "synced",
-              updatedAt: new Date(),
-            })
+            .set({ name: fullName || contact.LastName, email: contact.Email, phone: contact.Phone ?? null, role, externalSyncedAt: new Date(), externalSyncStatus: "synced", updatedAt: new Date() })
             .where(eq(customerContactsTable.id, existing.id));
         } else {
           await db.insert(customerContactsTable).values({
-            customerId,
-            name: fullName || contact.LastName,
-            email: contact.Email,
-            phone: contact.Phone ?? null,
-            role,
-            notifyOnSeverity: "high",
-            notificationChannels: "email",
-            externalSystem: "salesforce",
-            externalId: contact.Id,
-            externalSyncedAt: new Date(),
-            externalSyncStatus: "synced",
+            customerId, name: fullName || contact.LastName, email: contact.Email, phone: contact.Phone ?? null, role,
+            notifyOnSeverity: "high", notificationChannels: "email",
+            externalSystem: "salesforce", externalId: contact.Id, externalSyncedAt: new Date(), externalSyncStatus: "synced",
           });
         }
-
         synced++;
       } catch (rowErr: any) {
         errors.push(`Contact ${contact.Id}: ${rowErr.message}`);
       }
     }
 
-    await db.update(crmSyncLogsTable).set({
-      status: "success",
-      completedAt: new Date(),
-      recordsProcessed: synced,
-      message: errors.length ? errors.slice(0, 3).join("; ") : null,
-    }).where(eq(crmSyncLogsTable.id, logRow.id));
-
+    await db.update(crmSyncLogsTable).set({ status: "success", completedAt: new Date(), recordsProcessed: synced, message: errors.length ? errors.slice(0, 3).join("; ") : null }).where(eq(crmSyncLogsTable.id, logRow.id));
   } catch (err: any) {
     logger.error({ err }, "salesforce syncContacts failed");
-    await db.update(crmSyncLogsTable).set({
-      status: "failed",
-      completedAt: new Date(),
-      message: err.message,
-    }).where(eq(crmSyncLogsTable.id, logRow.id));
+    await db.update(crmSyncLogsTable).set({ status: "failed", completedAt: new Date(), message: err.message }).where(eq(crmSyncLogsTable.id, logRow.id));
     throw err;
   }
 
