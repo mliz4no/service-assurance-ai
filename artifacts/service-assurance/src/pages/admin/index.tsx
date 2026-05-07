@@ -302,8 +302,6 @@ function SalesforcePanel() {
   const syncMutation = useSalesforceSync("full");
 
   const [showForm, setShowForm] = useState(false);
-  const [showPassword, setShowPassword] = useState(false);
-  const [showSecret, setShowSecret] = useState(false);
   const [form, setForm] = useState({
     clientId: "",
     clientSecret: "",
@@ -326,8 +324,6 @@ function SalesforcePanel() {
 
   function handleOpenForm() {
     setShowForm(true);
-    setShowPassword(false);
-    setShowSecret(false);
   }
 
   function handleSave() {
@@ -445,37 +441,37 @@ function SalesforcePanel() {
               </div>
               <div>
                 <label className="text-xs font-medium text-muted-foreground mb-1 block">Consumer Secret</label>
-                <div className="relative">
-                  <Input
-                    type={showSecret ? "text" : "password"}
-                    value={form.clientSecret}
-                    onChange={set("clientSecret")}
-                    placeholder={savedConfig?.hasClientSecret ? "Leave blank to keep existing" : "Consumer Secret"}
-                    onFocus={() => { if (form.clientSecret === MASKED) setForm(f => ({ ...f, clientSecret: "" })); }}
-                    className="pr-9"
-                  />
-                  <button type="button" onClick={() => setShowSecret(s => !s)} className="absolute right-2.5 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground">
-                    <span className="text-xs">{showSecret ? "hide" : "show"}</span>
-                  </button>
-                </div>
+                <textarea
+                  value={form.clientSecret}
+                  onChange={e => setForm(f => ({ ...f, clientSecret: e.target.value }))}
+                  onFocus={() => { if (form.clientSecret === MASKED) setForm(f => ({ ...f, clientSecret: "" })); }}
+                  placeholder={savedConfig?.hasClientSecret ? "Leave blank to keep existing" : "Consumer Secret"}
+                  rows={2}
+                  className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm font-mono resize-none focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 placeholder:text-muted-foreground placeholder:font-sans"
+                  autoComplete="off"
+                  spellCheck={false}
+                />
+                {form.clientSecret && form.clientSecret !== MASKED && (
+                  <p className="text-xs text-muted-foreground mt-0.5">{form.clientSecret.length} characters</p>
+                )}
               </div>
               <div className="sm:col-span-2">
                 <label className="text-xs font-medium text-muted-foreground mb-1 block">
                   Password <span className="font-normal text-muted-foreground">(append your security token with no space if required)</span>
                 </label>
-                <div className="relative">
-                  <Input
-                    type={showPassword ? "text" : "password"}
-                    value={form.password}
-                    onChange={set("password")}
-                    placeholder={savedConfig?.hasPassword ? "Leave blank to keep existing" : "Password + security token"}
-                    onFocus={() => { if (form.password === MASKED) setForm(f => ({ ...f, password: "" })); }}
-                    className="pr-9"
-                  />
-                  <button type="button" onClick={() => setShowPassword(s => !s)} className="absolute right-2.5 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground">
-                    <span className="text-xs">{showPassword ? "hide" : "show"}</span>
-                  </button>
-                </div>
+                <textarea
+                  value={form.password}
+                  onChange={e => setForm(f => ({ ...f, password: e.target.value }))}
+                  onFocus={() => { if (form.password === MASKED) setForm(f => ({ ...f, password: "" })); }}
+                  placeholder={savedConfig?.hasPassword ? "Leave blank to keep existing" : "Password + security token"}
+                  rows={2}
+                  className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm font-mono resize-none focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 placeholder:text-muted-foreground placeholder:font-sans"
+                  autoComplete="off"
+                  spellCheck={false}
+                />
+                {form.password && form.password !== MASKED && (
+                  <p className="text-xs text-muted-foreground mt-0.5">{form.password.length} characters</p>
+                )}
               </div>
             </div>
             <div className="flex gap-2 justify-end pt-1">
