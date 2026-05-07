@@ -1,0 +1,8 @@
+uploads = []
+generated = []
+
+[[outputs]]
+id = "JDhcUl29IfW3GkAZqwcyt"
+uri = "file://schema.txt"
+type = "text"
+title = "Drizzle Schema — index.ts"
