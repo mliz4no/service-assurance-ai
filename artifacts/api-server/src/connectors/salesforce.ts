@@ -14,6 +14,7 @@ import { logger } from "../lib/logger";
 export interface SalesforceCredentials {
   clientId: string;
   clientSecret: string;
+  loginUrl: string;
   instanceUrl: string;
   username: string;
   password: string;
@@ -73,18 +74,20 @@ export async function getCredentials(): Promise<SalesforceCredentials | null> {
 
   const clientId     = cfg["clientId"]     || process.env.SALESFORCE_CLIENT_ID     || "";
   const clientSecret = cfg["clientSecret"] || process.env.SALESFORCE_CLIENT_SECRET || "";
+  const loginUrl     = cfg["loginUrl"]     || process.env.SALESFORCE_LOGIN_URL     || "https://login.salesforce.com";
   const instanceUrl  = cfg["instanceUrl"]  || process.env.SALESFORCE_INSTANCE_URL  || "";
   const username     = cfg["username"]     || process.env.SALESFORCE_USERNAME       || "";
   const password     = cfg["password"]     || process.env.SALESFORCE_PASSWORD       || "";
 
   if (!clientId || !clientSecret || !instanceUrl || !username || !password) return null;
-  return { clientId, clientSecret, instanceUrl, username, password };
+  return { clientId, clientSecret, loginUrl, instanceUrl, username, password };
 }
 
 export async function saveCredentials(creds: Partial<SalesforceCredentials>): Promise<void> {
   const entries: Array<[string, string]> = [
     ["clientId",     creds.clientId     ?? ""],
     ["clientSecret", creds.clientSecret ?? ""],
+    ["loginUrl",     creds.loginUrl     ?? ""],
     ["instanceUrl",  creds.instanceUrl  ?? ""],
     ["username",     creds.username     ?? ""],
     ["password",     creds.password     ?? ""],
@@ -125,7 +128,8 @@ async function authenticate(): Promise<TokenCache> {
     password: creds.password,
   });
 
-  const res = await fetch(`${creds.instanceUrl}/services/oauth2/token`, {
+  const tokenEndpoint = creds.loginUrl.replace(/\/$/, "") + "/services/oauth2/token";
+  const res = await fetch(tokenEndpoint, {
     method: "POST",
     headers: { "Content-Type": "application/x-www-form-urlencoded" },
     body: params.toString(),

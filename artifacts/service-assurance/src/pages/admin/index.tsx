@@ -305,6 +305,7 @@ function SalesforcePanel() {
   const [form, setForm] = useState({
     clientId: "",
     clientSecret: "",
+    loginUrl: "",
     instanceUrl: "",
     username: "",
     password: "",
@@ -314,11 +315,13 @@ function SalesforcePanel() {
   useEffect(() => {
     if (savedConfig && showForm) {
       setForm({
-        clientId:     savedConfig.clientId     || "",
-        clientSecret: savedConfig.hasClientSecret ? MASKED : "",
-        instanceUrl:  savedConfig.instanceUrl  || "",
-        username:     savedConfig.username     || "",
-        password:     savedConfig.hasPassword  ? MASKED : "",
+        clientId:      savedConfig.clientId     || "",
+        clientSecret:  savedConfig.hasClientSecret ? MASKED : "",
+        loginUrl:      savedConfig.loginUrl     || "",
+        instanceUrl:   savedConfig.instanceUrl  || "",
+        username:      savedConfig.username     || "",
+        password:      savedConfig.hasPassword  ? MASKED : "",
+        securityToken: "",
       });
     }
   }, [savedConfig, showForm]);
@@ -331,6 +334,7 @@ function SalesforcePanel() {
     const payload: Record<string, string> = {};
     if (form.clientId     && form.clientId     !== MASKED) payload.clientId     = form.clientId;
     if (form.clientSecret && form.clientSecret !== MASKED) payload.clientSecret = form.clientSecret;
+    if (form.loginUrl     && form.loginUrl     !== MASKED) payload.loginUrl     = form.loginUrl;
     if (form.instanceUrl  && form.instanceUrl  !== MASKED) payload.instanceUrl  = form.instanceUrl;
     if (form.username     && form.username     !== MASKED) payload.username     = form.username;
     if (form.password && form.password !== MASKED) {
@@ -416,6 +420,20 @@ function SalesforcePanel() {
             <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">Salesforce Credentials</p>
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
               <div>
+                <label className="text-xs font-medium text-muted-foreground mb-1 block">
+                  Login URL <span className="font-normal text-muted-foreground">(for OAuth — not your org URL)</span>
+                </label>
+                <Input
+                  value={form.loginUrl}
+                  onChange={set("loginUrl")}
+                  placeholder="https://login.salesforce.com"
+                  onFocus={() => { if (form.loginUrl === MASKED) setForm(f => ({ ...f, loginUrl: "" })); }}
+                />
+                <p className="text-xs text-muted-foreground mt-1">
+                  Production: <code className="font-mono">https://login.salesforce.com</code> · Sandbox: <code className="font-mono">https://test.salesforce.com</code>
+                </p>
+              </div>
+              <div>
                 <label className="text-xs font-medium text-muted-foreground mb-1 block">Instance URL</label>
                 <Input
                   value={form.instanceUrl}
@@ -423,6 +441,7 @@ function SalesforcePanel() {
                   placeholder="https://yourorg.my.salesforce.com"
                   onFocus={() => { if (form.instanceUrl === MASKED) setForm(f => ({ ...f, instanceUrl: "" })); }}
                 />
+                <p className="text-xs text-muted-foreground mt-1">Your org's My Domain URL — used for API calls after login.</p>
               </div>
               <div>
                 <label className="text-xs font-medium text-muted-foreground mb-1 block">Username</label>

@@ -19,11 +19,12 @@ router.get("/salesforce/config", ...adminOnly, async (req, res): Promise<void> =
 
   // Return non-sensitive fields in plain text; mask secrets
   res.json({
-    clientId:     cfg["clientId"]     ? cfg["clientId"]     : "",
-    clientSecret: cfg["clientSecret"] ? "••••••••"          : "",
-    instanceUrl:  cfg["instanceUrl"]  ? cfg["instanceUrl"]  : "",
-    username:     cfg["username"]     ? cfg["username"]      : "",
-    password:     cfg["password"]     ? "••••••••"           : "",
+    clientId:     cfg["clientId"]     || "",
+    clientSecret: cfg["clientSecret"] ? "••••••••" : "",
+    loginUrl:     cfg["loginUrl"]     || "https://login.salesforce.com",
+    instanceUrl:  cfg["instanceUrl"]  || "",
+    username:     cfg["username"]     || "",
+    password:     cfg["password"]     ? "••••••••" : "",
     hasClientSecret: !!cfg["clientSecret"],
     hasPassword:     !!cfg["password"],
   });
@@ -32,12 +33,13 @@ router.get("/salesforce/config", ...adminOnly, async (req, res): Promise<void> =
 // ── Save config ───────────────────────────────────────────────────────────────
 
 router.put("/salesforce/config", ...adminOnly, async (req, res): Promise<void> => {
-  const { clientId, clientSecret, instanceUrl, username, password } = req.body as Record<string, string>;
+  const { clientId, clientSecret, loginUrl, instanceUrl, username, password } = req.body as Record<string, string>;
 
   // Only save fields that are non-empty and not the masked placeholder
   const toSave: Partial<sf.SalesforceCredentials> = {};
   if (clientId     && clientId     !== "••••••••") toSave.clientId     = clientId.trim();
   if (clientSecret && clientSecret !== "••••••••") toSave.clientSecret = clientSecret.trim();
+  if (loginUrl     && loginUrl     !== "••••••••") toSave.loginUrl     = loginUrl.trim().replace(/\/$/, "");
   if (instanceUrl  && instanceUrl  !== "••••••••") toSave.instanceUrl  = instanceUrl.trim().replace(/\/$/, "");
   if (username     && username     !== "••••••••") toSave.username     = username.trim();
   if (password     && password     !== "••••••••") toSave.password     = password.trim();
