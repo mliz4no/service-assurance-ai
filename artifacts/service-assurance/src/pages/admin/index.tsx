@@ -21,7 +21,7 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/com
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { CheckCircle2, XCircle, Activity, Server, ShieldCheck, Database, BrainCircuit, Play, Plus, Pencil, Trash2, Users, Grid3X3, Handshake, Cloud, RefreshCw } from "lucide-react";
 import { useQuery, useMutation } from "@tanstack/react-query";
-import { getToken } from "@/lib/token";
+import { getToken, clearToken } from "@/lib/token";
 import { EscalationMatrixEditor } from "@/components/EscalationMatrixEditor";
 import { SeverityBadge } from "@/components/severity-badge";
 import { Badge } from "@/components/ui/badge";
@@ -240,6 +240,11 @@ async function apiFetch(path: string, options?: RequestInit) {
       ...options?.headers,
     },
   });
+  if (res.status === 401) {
+    clearToken();
+    window.location.href = "/";
+    throw new Error("Session expired — redirecting to login…");
+  }
   if (!res.ok) {
     const err = await res.json().catch(() => ({ message: res.statusText }));
     throw new Error(err.message || res.statusText);
