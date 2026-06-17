@@ -9,7 +9,12 @@
       "runtimeArgs": ["--filter", "@workspace/api-server", "run", "dev"],
       "cwd": "${workspaceFolder}",
       "console": "integratedTerminal",
-      "internalConsoleOptions": "neverOpen"
+      "internalConsoleOptions": "neverOpen",
+      "preLaunchTask": "db:up",
+      "env": {
+        "DATABASE_URL": "postgresql://service_assurance:service_assurance@localhost:5432/service_assurance",
+        "PORT": "8080"
+      }
     },
     {
       "name": "Start: API Server (production)",
@@ -19,7 +24,11 @@
       "runtimeArgs": ["--filter", "@workspace/api-server", "run", "start"],
       "cwd": "${workspaceFolder}",
       "console": "integratedTerminal",
-      "internalConsoleOptions": "neverOpen"
+      "internalConsoleOptions": "neverOpen",
+      "env": {
+        "DATABASE_URL": "postgresql://service_assurance:service_assurance@localhost:5432/service_assurance",
+        "PORT": "8080"
+      }
     },
     {
       "name": "Dev: service-assurance (Vite)",
@@ -30,8 +39,7 @@
       "cwd": "${workspaceFolder}",
       "console": "integratedTerminal",
       "internalConsoleOptions": "neverOpen"
-    }
-    ,
+    },
     {
       "name": "Dev: All (API + Frontend)",
       "type": "compound",
