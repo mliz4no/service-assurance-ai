@@ -65,15 +65,85 @@ export class FortinetConnector implements BaseConnector {
    * Returns: { "results": { "hostname": "...", "serial": "...", "version": "..." } }
    */
   async testConnection(): Promise<{ ok: boolean; message: string }> {
+    if (!this.config.baseUrl) {
+      return { ok: false, message: 'Fortinet baseUrl is not configured.' };
+    }
+
     if (!this.config.apiKey || this.config.apiKey === 'placeholder') {
       return { ok: true, message: 'Demo mode: Fortinet connection simulated (no real API key)' };
     }
 
-    // TODO: Implement real FortiManager/FortiGate connection test here
-    return {
-      ok: true,
-      message: `Fortinet ${this.config.managerType} API key present — configure live URL to enable real polling`,
-    };
+    const baseUrl = this.config.baseUrl.replace(/\/+$/, '');
+
+    try {
+      if (this.config.managerType === 'fortimanager') {
+        const loginUrl = `${baseUrl}/sys/login/user`;
+        const response = await fetch(loginUrl, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            id: 1,
+            method: 'exec',
+            params: [
+              {
+                url: 'sys/login/user',
+                data: { user: 'admin', passwd: this.config.apiKey },
+              },
+            ],
+          }),
+        });
+
+        if (!response.ok) {
+          return {
+            ok: false,
+            message: `FortiManager connection failed: ${response.status} ${response.statusText}`,
+          };
+        }
+
+        const json = (await response.json()) as unknown;
+        const status = (json as any)?.result?.[0]?.status;
+        if (!status || status.code !== 0) {
+          return {
+            ok: false,
+            message: `FortiManager login failed: ${status?.message ?? JSON.stringify(json)}`,
+          };
+        }
+
+        return {
+          ok: true,
+          message: `FortiManager connection successful: ${baseUrl}`,
+        };
+      }
+
+      const statusUrl = `${baseUrl}/api/v2/monitor/system/status?access_token=${encodeURIComponent(
+        this.config.apiKey,
+      )}`;
+      const response = await fetch(statusUrl, { method: 'GET' });
+      if (!response.ok) {
+        return {
+          ok: false,
+          message: `FortiGate connection failed: ${response.status} ${response.statusText}`,
+        };
+      }
+
+      const json = (await response.json()) as any;
+      if (!json?.results?.hostname) {
+        return {
+          ok: false,
+          message: 'FortiGate status returned an unexpected payload.',
+        };
+      }
+
+      return {
+        ok: true,
+        message: `FortiGate connection successful: ${json.results.hostname} (${json.results.version ?? 'unknown version'})`,
+      };
+    } catch (error: any) {
+      return {
+        ok: false,
+        message: `Fortinet connection failed: ${error?.message ?? String(error)}`,
+      };
+    }
   }
 
   /**

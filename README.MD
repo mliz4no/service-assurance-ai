@@ -9,17 +9,21 @@ Top-level folders:
 - `service-assurance/`, `mockup-sandbox/`, `engineering-deck/` — frontend apps and demos
 - `scripts/` — utility scripts and seeders
 
-Pending issues (collected from codebase):
+Resolved issues
 
-1. Implement Fortinet connection test
+1. Implemented Fortinet connection test
 
-   - File: [artifacts/api-server/src/connectors/fortinet.ts](artifacts/api-server/src/connectors/fortinet.ts#L72)
-   - Note: currently contains a `TODO` placeholder and needs a real FortiManager/FortiGate connection test to validate credentials and connectivity.
+   - File: [artifacts/api-server/src/connectors/fortinet.ts](artifacts/api-server/src/connectors/fortinet.ts)
+   - Note: `FortinetConnector.testConnection()` now performs a live FortiManager login or FortiGate system status request instead of returning a placeholder success message.
 
-2. Exclude previewPath from Replit preview (artifact config)
+2. Removed Replit previewPath from artifact config
 
-   - File: [artifacts/api-server/.replit-artifact/artifact.toml](artifacts/api-server/.replit-artifact/artifact.toml#L2)
-   - Note: comment indicates `previewPath = "/api"` should be excluded from preview; confirm intended behavior and update artifact configuration.
+   - File: [artifacts/api-server/.replit-artifact/artifact.toml](artifacts/api-server/.replit-artifact/artifact.toml)
+   - Note: `previewPath` has been removed so the Replit artifact is not forced to preview `/api`.
+
+Validation
+
+- No remaining `TODO` or `FIXME` markers were found in the inspected files related to these issues.
 
 How to help
 
@@ -29,6 +33,4 @@ How to help
   grep -RIn "\bTODO\b\|\bFIXME\b" .
   ```
 
-- After fixing an item, remove or update the `TODO` comment and add a short changelog entry.
-
-If you want, I can open PRs for fixes or expand each pending issue into individual tracked tickets.
+- After fixing an item, remove or update the comment and add a short changelog entry.
