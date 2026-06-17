@@ -1,21 +1,34 @@
-import { useLocation } from "wouter";
-import { useForm } from "react-hook-form";
-import { zodResolver } from "@hookform/resolvers/zod";
-import { z } from "zod";
-import { useCreateSite, getGetSitesQueryKey, useGetCustomers } from "@workspace/api-client-react";
-import { useQueryClient } from "@tanstack/react-query";
-import { AppLayout } from "@/components/layout/app-layout";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Textarea } from "@/components/ui/textarea";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { useToast } from "@/hooks/use-toast";
+import { useLocation } from 'wouter';
+import { useForm } from 'react-hook-form';
+import { zodResolver } from '@hookform/resolvers/zod';
+import { z } from 'zod';
+import { useCreateSite, getGetSitesQueryKey, useGetCustomers } from '@workspace/api-client-react';
+import { useQueryClient } from '@tanstack/react-query';
+import { AppLayout } from '@/components/layout/app-layout';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import {
+  Form,
+  FormControl,
+  FormField,
+  FormItem,
+  FormLabel,
+  FormMessage,
+} from '@/components/ui/form';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
+import { Textarea } from '@/components/ui/textarea';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { useToast } from '@/hooks/use-toast';
 
 const formSchema = z.object({
-  customerId: z.string().min(1, "Customer is required"),
-  siteName: z.string().min(1, "Site Name is required"),
+  customerId: z.string().min(1, 'Customer is required'),
+  siteName: z.string().min(1, 'Site Name is required'),
   siteCode: z.string().optional(),
   address1: z.string().optional(),
   address2: z.string().optional(),
@@ -26,7 +39,7 @@ const formSchema = z.object({
   timezone: z.string().optional(),
   lconName: z.string().optional(),
   lconPhone: z.string().optional(),
-  lconEmail: z.string().email("Invalid email address").optional().or(z.literal("")),
+  lconEmail: z.string().email('Invalid email address').optional().or(z.literal('')),
   notes: z.string().optional(),
 });
 
@@ -35,54 +48,63 @@ export default function SiteNew() {
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const createMutation = useCreateSite();
-  const { data: customers } = useGetCustomers({ status: "active" });
+  const { data: customers } = useGetCustomers({ status: 'active' });
 
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
     defaultValues: {
-      customerId: "",
-      siteName: "",
-      siteCode: "",
-      address1: "",
-      address2: "",
-      city: "",
-      state: "",
-      postalCode: "",
-      country: "",
-      timezone: "",
-      lconName: "",
-      lconPhone: "",
-      lconEmail: "",
-      notes: "",
+      customerId: '',
+      siteName: '',
+      siteCode: '',
+      address1: '',
+      address2: '',
+      city: '',
+      state: '',
+      postalCode: '',
+      country: '',
+      timezone: '',
+      lconName: '',
+      lconPhone: '',
+      lconEmail: '',
+      notes: '',
     },
   });
 
   function onSubmit(values: z.infer<typeof formSchema>) {
-    createMutation.mutate({ data: {
-      customerId: values.customerId,
-      siteName: values.siteName,
-      siteCode: values.siteCode || null,
-      address1: values.address1 || null,
-      address2: values.address2 || null,
-      city: values.city || null,
-      state: values.state || null,
-      postalCode: values.postalCode || null,
-      country: values.country || null,
-      timezone: values.timezone || null,
-      lconName: values.lconName || null,
-      lconPhone: values.lconPhone || null,
-      lconEmail: values.lconEmail || null,
-      notes: values.notes || null,
-    } }, {
-      onSuccess: (site) => {
-        toast({ title: "Site created successfully" });
-        queryClient.invalidateQueries({ queryKey: getGetSitesQueryKey() });
-        setLocation(`/sites/${site.id}`);
+    createMutation.mutate(
+      {
+        data: {
+          customerId: values.customerId,
+          siteName: values.siteName,
+          siteCode: values.siteCode || null,
+          address1: values.address1 || null,
+          address2: values.address2 || null,
+          city: values.city || null,
+          state: values.state || null,
+          postalCode: values.postalCode || null,
+          country: values.country || null,
+          timezone: values.timezone || null,
+          lconName: values.lconName || null,
+          lconPhone: values.lconPhone || null,
+          lconEmail: values.lconEmail || null,
+          notes: values.notes || null,
+        },
       },
-      onError: (err: any) => {
-        toast({ title: "Error creating site", description: err.response?.data?.message || err.message, variant: "destructive" });
-      }
-    });
+      {
+        onSuccess: (site) => {
+          toast({ title: 'Site created successfully' });
+          queryClient.invalidateQueries({ queryKey: getGetSitesQueryKey() });
+          setLocation(`/sites/${site.id}`);
+        },
+        onError: (err: any) => {
+          toast({
+            title: 'Error creating site',
+            description: err.response?.data?.message || err.message,
+            variant: 'destructive',
+          });
+        },
+      },
+    );
   }
 
   return (
@@ -100,133 +122,245 @@ export default function SiteNew() {
             <Form {...form}>
               <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <FormField control={form.control} name="customerId" render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Customer *</FormLabel>
-                      <Select onValueChange={field.onChange} defaultValue={field.value}>
-                        <FormControl><SelectTrigger data-testid="site-customer-select"><SelectValue placeholder="Select a customer" /></SelectTrigger></FormControl>
-                        <SelectContent>
-                          {customers?.map(c => (
-                            <SelectItem key={c.id} value={c.id}>{c.name}</SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
-                      <FormMessage />
-                    </FormItem>
-                  )} />
-                  <FormField control={form.control} name="siteName" render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Site Name *</FormLabel>
-                      <FormControl><Input data-testid="site-name-input" {...field} /></FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )} />
-                  <FormField control={form.control} name="siteCode" render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Site Code</FormLabel>
-                      <FormControl><Input {...field} /></FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )} />
-                  <FormField control={form.control} name="timezone" render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Timezone</FormLabel>
-                      <FormControl><Input placeholder="America/New_York" {...field} /></FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )} />
+                  <FormField
+                    control={form.control}
+                    name="customerId"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Customer *</FormLabel>
+                        <Select onValueChange={field.onChange} defaultValue={field.value}>
+                          <FormControl>
+                            <SelectTrigger data-testid="site-customer-select">
+                              <SelectValue placeholder="Select a customer" />
+                            </SelectTrigger>
+                          </FormControl>
+                          <SelectContent>
+                            {customers?.map((c) => (
+                              <SelectItem key={c.id} value={c.id}>
+                                {c.name}
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                  <FormField
+                    control={form.control}
+                    name="siteName"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Site Name *</FormLabel>
+                        <FormControl>
+                          <Input data-testid="site-name-input" {...field} />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                  <FormField
+                    control={form.control}
+                    name="siteCode"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Site Code</FormLabel>
+                        <FormControl>
+                          <Input {...field} />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                  <FormField
+                    control={form.control}
+                    name="timezone"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Timezone</FormLabel>
+                        <FormControl>
+                          <Input placeholder="America/New_York" {...field} />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
                 </div>
 
                 <div className="pt-4 border-t border-border/50">
                   <h3 className="text-sm font-semibold mb-4 text-muted-foreground">Address</h3>
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <FormField control={form.control} name="address1" render={({ field }) => (
-                      <FormItem className="md:col-span-2">
-                        <FormLabel>Address Line 1</FormLabel>
-                        <FormControl><Input {...field} /></FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )} />
-                    <FormField control={form.control} name="address2" render={({ field }) => (
-                      <FormItem className="md:col-span-2">
-                        <FormLabel>Address Line 2</FormLabel>
-                        <FormControl><Input {...field} /></FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )} />
-                    <FormField control={form.control} name="city" render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>City</FormLabel>
-                        <FormControl><Input {...field} /></FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )} />
-                    <FormField control={form.control} name="state" render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>State/Province</FormLabel>
-                        <FormControl><Input {...field} /></FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )} />
-                    <FormField control={form.control} name="postalCode" render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>ZIP/Postal Code</FormLabel>
-                        <FormControl><Input {...field} /></FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )} />
-                    <FormField control={form.control} name="country" render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Country</FormLabel>
-                        <FormControl><Input {...field} /></FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )} />
+                    <FormField
+                      control={form.control}
+                      name="address1"
+                      render={({ field }) => (
+                        <FormItem className="md:col-span-2">
+                          <FormLabel>Address Line 1</FormLabel>
+                          <FormControl>
+                            <Input {...field} />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                    <FormField
+                      control={form.control}
+                      name="address2"
+                      render={({ field }) => (
+                        <FormItem className="md:col-span-2">
+                          <FormLabel>Address Line 2</FormLabel>
+                          <FormControl>
+                            <Input {...field} />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                    <FormField
+                      control={form.control}
+                      name="city"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>City</FormLabel>
+                          <FormControl>
+                            <Input {...field} />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                    <FormField
+                      control={form.control}
+                      name="state"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>State/Province</FormLabel>
+                          <FormControl>
+                            <Input {...field} />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                    <FormField
+                      control={form.control}
+                      name="postalCode"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>ZIP/Postal Code</FormLabel>
+                          <FormControl>
+                            <Input {...field} />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                    <FormField
+                      control={form.control}
+                      name="country"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Country</FormLabel>
+                          <FormControl>
+                            <Input {...field} />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
                   </div>
                 </div>
 
                 <div className="pt-4 border-t border-border/50">
-                  <h3 className="text-sm font-semibold mb-1 text-muted-foreground">Local Contact (LCON)</h3>
-                  <p className="text-xs text-muted-foreground mb-4">On-site point of contact for dispatch, physical access, and field coordination.</p>
+                  <h3 className="text-sm font-semibold mb-1 text-muted-foreground">
+                    Local Contact (LCON)
+                  </h3>
+                  <p className="text-xs text-muted-foreground mb-4">
+                    On-site point of contact for dispatch, physical access, and field coordination.
+                  </p>
                   <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                    <FormField control={form.control} name="lconName" render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>LCON Name</FormLabel>
-                        <FormControl><Input placeholder="Full name" data-testid="site-lcon-name" {...field} /></FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )} />
-                    <FormField control={form.control} name="lconPhone" render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>LCON Phone</FormLabel>
-                        <FormControl><Input type="tel" placeholder="+1 555-000-0000" data-testid="site-lcon-phone" {...field} /></FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )} />
-                    <FormField control={form.control} name="lconEmail" render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>LCON Email</FormLabel>
-                        <FormControl><Input type="email" placeholder="lcon@company.com" data-testid="site-lcon-email" {...field} /></FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )} />
+                    <FormField
+                      control={form.control}
+                      name="lconName"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>LCON Name</FormLabel>
+                          <FormControl>
+                            <Input
+                              placeholder="Full name"
+                              data-testid="site-lcon-name"
+                              {...field}
+                            />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                    <FormField
+                      control={form.control}
+                      name="lconPhone"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>LCON Phone</FormLabel>
+                          <FormControl>
+                            <Input
+                              type="tel"
+                              placeholder="+1 555-000-0000"
+                              data-testid="site-lcon-phone"
+                              {...field}
+                            />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                    <FormField
+                      control={form.control}
+                      name="lconEmail"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>LCON Email</FormLabel>
+                          <FormControl>
+                            <Input
+                              type="email"
+                              placeholder="lcon@company.com"
+                              data-testid="site-lcon-email"
+                              {...field}
+                            />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
                   </div>
                 </div>
 
                 <div className="pt-4 border-t border-border/50">
-                  <FormField control={form.control} name="notes" render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Notes</FormLabel>
-                      <FormControl><Textarea className="min-h-[100px]" {...field} /></FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )} />
+                  <FormField
+                    control={form.control}
+                    name="notes"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Notes</FormLabel>
+                        <FormControl>
+                          <Textarea className="min-h-[100px]" {...field} />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
                 </div>
 
                 <div className="flex justify-end gap-2 pt-2">
-                  <Button type="button" variant="outline" onClick={() => setLocation("/sites")}>Cancel</Button>
-                  <Button type="submit" disabled={createMutation.isPending} data-testid="site-submit-btn">
-                    {createMutation.isPending ? "Creating..." : "Create Site"}
+                  <Button type="button" variant="outline" onClick={() => setLocation('/sites')}>
+                    Cancel
+                  </Button>
+                  <Button
+                    type="submit"
+                    disabled={createMutation.isPending}
+                    data-testid="site-submit-btn"
+                  >
+                    {createMutation.isPending ? 'Creating...' : 'Create Site'}
                   </Button>
                 </div>
               </form>

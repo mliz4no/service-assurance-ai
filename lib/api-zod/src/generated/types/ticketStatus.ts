@@ -9,11 +9,11 @@
 export type TicketStatus = (typeof TicketStatus)[keyof typeof TicketStatus];
 
 export const TicketStatus = {
-  new: "new",
-  investigating: "investigating",
-  vendor_engaged: "vendor_engaged",
-  dispatch_scheduled: "dispatch_scheduled",
-  monitoring: "monitoring",
-  resolved: "resolved",
-  closed: "closed",
+  new: 'new',
+  investigating: 'investigating',
+  vendor_engaged: 'vendor_engaged',
+  dispatch_scheduled: 'dispatch_scheduled',
+  monitoring: 'monitoring',
+  resolved: 'resolved',
+  closed: 'closed',
 } as const;

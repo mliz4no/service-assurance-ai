@@ -10,7 +10,7 @@ export type CreateTicketRequestSource =
   (typeof CreateTicketRequestSource)[keyof typeof CreateTicketRequestSource];
 
 export const CreateTicketRequestSource = {
-  manual: "manual",
-  email: "email",
-  api: "api",
+  manual: 'manual',
+  email: 'email',
+  api: 'api',
 } as const;

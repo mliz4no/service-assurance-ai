@@ -1,61 +1,95 @@
-import { useState, useEffect } from "react";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Badge } from "@/components/ui/badge";
-import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
-import { useToast } from "@/hooks/use-toast";
-import { RotateCcw, Save, Grid3X3, Info, HelpCircle } from "lucide-react";
+import { useState, useEffect } from 'react';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
+import { Badge } from '@/components/ui/badge';
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
+import { useToast } from '@/hooks/use-toast';
+import { RotateCcw, Save, Grid3X3, Info, HelpCircle } from 'lucide-react';
 import {
   useGetEscalationMatrix,
   useUpsertEscalationMatrix,
   getEscalationMatrixQueryKey,
-} from "@workspace/api-client-react";
-import type { MatrixScopeType, MatrixSeverityLevel, MatrixImpactLevel, MatrixUrgencyLevel, MatrixCell } from "@workspace/api-client-react";
-import { useQueryClient } from "@tanstack/react-query";
-import { cn } from "@/lib/utils";
+} from '@workspace/api-client-react';
+import type {
+  MatrixScopeType,
+  MatrixSeverityLevel,
+  MatrixImpactLevel,
+  MatrixUrgencyLevel,
+  MatrixCell,
+} from '@workspace/api-client-react';
+import { useQueryClient } from '@tanstack/react-query';
+import { cn } from '@/lib/utils';
 
-const IMPACTS: MatrixImpactLevel[] = ["high", "medium", "low"];
-const URGENCIES: MatrixUrgencyLevel[] = ["high", "medium", "low"];
-const SEVERITIES: MatrixSeverityLevel[] = ["critical", "high", "medium", "low"];
+const IMPACTS: MatrixImpactLevel[] = ['high', 'medium', 'low'];
+const URGENCIES: MatrixUrgencyLevel[] = ['high', 'medium', 'low'];
+const SEVERITIES: MatrixSeverityLevel[] = ['critical', 'high', 'medium', 'low'];
 
 const DEFAULT_MATRIX: Record<MatrixImpactLevel, Record<MatrixUrgencyLevel, MatrixSeverityLevel>> = {
-  high: { high: "critical", medium: "high", low: "medium" },
-  medium: { high: "high", medium: "medium", low: "low" },
-  low: { high: "medium", medium: "low", low: "low" },
+  high: { high: 'critical', medium: 'high', low: 'medium' },
+  medium: { high: 'high', medium: 'medium', low: 'low' },
+  low: { high: 'medium', medium: 'low', low: 'low' },
 };
 
 const SEVERITY_COLORS: Record<MatrixSeverityLevel, string> = {
-  critical: "bg-red-100 text-red-800 border-red-200",
-  high: "bg-orange-100 text-orange-800 border-orange-200",
-  medium: "bg-yellow-100 text-yellow-800 border-yellow-200",
-  low: "bg-slate-100 text-slate-700 border-slate-200",
+  critical: 'bg-red-100 text-red-800 border-red-200',
+  high: 'bg-orange-100 text-orange-800 border-orange-200',
+  medium: 'bg-yellow-100 text-yellow-800 border-yellow-200',
+  low: 'bg-slate-100 text-slate-700 border-slate-200',
 };
 
 const SEVERITY_TRIGGER_COLORS: Record<MatrixSeverityLevel, string> = {
-  critical: "border-red-300 bg-red-50 text-red-900 hover:bg-red-100 focus:ring-red-200",
-  high: "border-orange-300 bg-orange-50 text-orange-900 hover:bg-orange-100 focus:ring-orange-200",
-  medium: "border-yellow-300 bg-yellow-50 text-yellow-900 hover:bg-yellow-100 focus:ring-yellow-200",
-  low: "border-slate-300 bg-slate-50 text-slate-700 hover:bg-slate-100 focus:ring-slate-200",
+  critical: 'border-red-300 bg-red-50 text-red-900 hover:bg-red-100 focus:ring-red-200',
+  high: 'border-orange-300 bg-orange-50 text-orange-900 hover:bg-orange-100 focus:ring-orange-200',
+  medium:
+    'border-yellow-300 bg-yellow-50 text-yellow-900 hover:bg-yellow-100 focus:ring-yellow-200',
+  low: 'border-slate-300 bg-slate-50 text-slate-700 hover:bg-slate-100 focus:ring-slate-200',
 };
 
 const LEVEL_LABELS: Record<string, string> = {
-  high: "High",
-  medium: "Medium",
-  low: "Low",
+  high: 'High',
+  medium: 'Medium',
+  low: 'Low',
 };
 
 const SEVERITY_DEFINITIONS: { level: MatrixSeverityLevel; text: string }[] = [
-  { level: "critical", text: "Major business outage or severe service disruption requiring immediate attention." },
-  { level: "high", text: "Significant impact to business operations requiring urgent response." },
-  { level: "medium", text: "Noticeable service impact that should be addressed promptly but is not a major outage." },
-  { level: "low", text: "Limited business impact or minor issue that can be handled in normal workflow." },
+  {
+    level: 'critical',
+    text: 'Major business outage or severe service disruption requiring immediate attention.',
+  },
+  { level: 'high', text: 'Significant impact to business operations requiring urgent response.' },
+  {
+    level: 'medium',
+    text: 'Noticeable service impact that should be addressed promptly but is not a major outage.',
+  },
+  {
+    level: 'low',
+    text: 'Limited business impact or minor issue that can be handled in normal workflow.',
+  },
 ];
 
 const URGENCY_DEFINITIONS: { label: string; color: string; text: string }[] = [
-  { label: "High", color: "bg-orange-100 text-orange-800 border-orange-200", text: "Immediate action is required because the issue is causing or is likely to cause serious business disruption." },
-  { label: "Medium", color: "bg-yellow-100 text-yellow-800 border-yellow-200", text: "Action is needed soon, but the issue is not yet causing severe business disruption." },
-  { label: "Low", color: "bg-slate-100 text-slate-700 border-slate-200", text: "Action is needed, but the issue can be handled through normal operational workflow." },
+  {
+    label: 'High',
+    color: 'bg-orange-100 text-orange-800 border-orange-200',
+    text: 'Immediate action is required because the issue is causing or is likely to cause serious business disruption.',
+  },
+  {
+    label: 'Medium',
+    color: 'bg-yellow-100 text-yellow-800 border-yellow-200',
+    text: 'Action is needed soon, but the issue is not yet causing severe business disruption.',
+  },
+  {
+    label: 'Low',
+    color: 'bg-slate-100 text-slate-700 border-slate-200',
+    text: 'Action is needed, but the issue can be handled through normal operational workflow.',
+  },
 ];
 
 function HelpTip({ children }: { children: React.ReactNode }) {
@@ -78,9 +112,21 @@ type EditableMatrix = Record<MatrixImpactLevel, Record<MatrixUrgencyLevel, CellS
 
 function buildEditableMatrix(cells: MatrixCell[]): EditableMatrix {
   const m: EditableMatrix = {
-    high: { high: { severity: "critical", isOverride: false, overrideId: null }, medium: { severity: "high", isOverride: false, overrideId: null }, low: { severity: "medium", isOverride: false, overrideId: null } },
-    medium: { high: { severity: "high", isOverride: false, overrideId: null }, medium: { severity: "medium", isOverride: false, overrideId: null }, low: { severity: "low", isOverride: false, overrideId: null } },
-    low: { high: { severity: "medium", isOverride: false, overrideId: null }, medium: { severity: "low", isOverride: false, overrideId: null }, low: { severity: "low", isOverride: false, overrideId: null } },
+    high: {
+      high: { severity: 'critical', isOverride: false, overrideId: null },
+      medium: { severity: 'high', isOverride: false, overrideId: null },
+      low: { severity: 'medium', isOverride: false, overrideId: null },
+    },
+    medium: {
+      high: { severity: 'high', isOverride: false, overrideId: null },
+      medium: { severity: 'medium', isOverride: false, overrideId: null },
+      low: { severity: 'low', isOverride: false, overrideId: null },
+    },
+    low: {
+      high: { severity: 'medium', isOverride: false, overrideId: null },
+      medium: { severity: 'low', isOverride: false, overrideId: null },
+      low: { severity: 'low', isOverride: false, overrideId: null },
+    },
   };
   for (const cell of cells) {
     m[cell.impactLevel as MatrixImpactLevel][cell.urgencyLevel as MatrixUrgencyLevel] = {
@@ -100,7 +146,13 @@ interface Props {
   readOnly?: boolean;
 }
 
-export function EscalationMatrixEditor({ scopeType, scopeId, scopeLabel, defaultExpanded = true, readOnly = false }: Props) {
+export function EscalationMatrixEditor({
+  scopeType,
+  scopeId,
+  scopeLabel,
+  defaultExpanded = true,
+  readOnly = false,
+}: Props) {
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const { data, isLoading } = useGetEscalationMatrix(scopeType, scopeId);
@@ -116,7 +168,11 @@ export function EscalationMatrixEditor({ scopeType, scopeId, scopeLabel, default
     }
   }, [data]);
 
-  const handleCellChange = (impact: MatrixImpactLevel, urgency: MatrixUrgencyLevel, severity: MatrixSeverityLevel) => {
+  const handleCellChange = (
+    impact: MatrixImpactLevel,
+    urgency: MatrixUrgencyLevel,
+    severity: MatrixSeverityLevel,
+  ) => {
     setMatrix((prev) => {
       if (!prev) return prev;
       const isOverride = severity !== DEFAULT_MATRIX[impact][urgency];
@@ -143,7 +199,11 @@ export function EscalationMatrixEditor({ scopeType, scopeId, scopeLabel, default
       for (const imp of IMPACTS) {
         next[imp] = { ...prev[imp] };
         for (const urg of URGENCIES) {
-          next[imp][urg] = { severity: DEFAULT_MATRIX[imp][urg], isOverride: false, overrideId: prev[imp][urg].overrideId };
+          next[imp][urg] = {
+            severity: DEFAULT_MATRIX[imp][urg],
+            isOverride: false,
+            overrideId: prev[imp][urg].overrideId,
+          };
         }
       }
       return next;
@@ -153,10 +213,18 @@ export function EscalationMatrixEditor({ scopeType, scopeId, scopeLabel, default
 
   const handleSave = () => {
     if (!matrix) return;
-    const cells: Array<{ impactLevel: MatrixImpactLevel; urgencyLevel: MatrixUrgencyLevel; derivedSeverity: MatrixSeverityLevel }> = [];
+    const cells: Array<{
+      impactLevel: MatrixImpactLevel;
+      urgencyLevel: MatrixUrgencyLevel;
+      derivedSeverity: MatrixSeverityLevel;
+    }> = [];
     for (const imp of IMPACTS) {
       for (const urg of URGENCIES) {
-        cells.push({ impactLevel: imp, urgencyLevel: urg, derivedSeverity: matrix[imp][urg].severity });
+        cells.push({
+          impactLevel: imp,
+          urgencyLevel: urg,
+          derivedSeverity: matrix[imp][urg].severity,
+        });
       }
     }
     upsertMutation.mutate(
@@ -164,18 +232,27 @@ export function EscalationMatrixEditor({ scopeType, scopeId, scopeLabel, default
       {
         onSuccess: () => {
           toast({ title: `${scopeLabel} matrix saved` });
-          queryClient.invalidateQueries({ queryKey: getEscalationMatrixQueryKey(scopeType, scopeId) });
+          queryClient.invalidateQueries({
+            queryKey: getEscalationMatrixQueryKey(scopeType, scopeId),
+          });
           setIsDirty(false);
         },
         onError: (err: any) => {
-          toast({ title: "Failed to save matrix", description: err.message, variant: "destructive" });
+          toast({
+            title: 'Failed to save matrix',
+            description: err.message,
+            variant: 'destructive',
+          });
         },
-      }
+      },
     );
   };
 
   const overrideCount = matrix
-    ? IMPACTS.reduce((acc, imp) => acc + URGENCIES.filter((urg) => matrix[imp][urg].isOverride).length, 0)
+    ? IMPACTS.reduce(
+        (acc, imp) => acc + URGENCIES.filter((urg) => matrix[imp][urg].isOverride).length,
+        0,
+      )
     : 0;
 
   return (
@@ -191,15 +268,15 @@ export function EscalationMatrixEditor({ scopeType, scopeId, scopeLabel, default
               <CardTitle className="text-sm font-semibold">{scopeLabel}</CardTitle>
               <p className="text-xs text-muted-foreground mt-0.5">
                 {overrideCount > 0
-                  ? `${overrideCount} cell${overrideCount !== 1 ? "s" : ""} overriding the default ITIL matrix`
-                  : "Using default ITIL severity matrix"}
+                  ? `${overrideCount} cell${overrideCount !== 1 ? 's' : ''} overriding the default ITIL matrix`
+                  : 'Using default ITIL severity matrix'}
               </p>
             </div>
           </button>
           <div className="flex items-center gap-2">
             {overrideCount > 0 && (
               <Badge variant="secondary" className="text-xs">
-                {overrideCount} override{overrideCount !== 1 ? "s" : ""}
+                {overrideCount} override{overrideCount !== 1 ? 's' : ''}
               </Badge>
             )}
             {!readOnly && !collapsed && (
@@ -221,7 +298,7 @@ export function EscalationMatrixEditor({ scopeType, scopeId, scopeLabel, default
                   disabled={!isDirty || upsertMutation.isPending}
                 >
                   <Save className="w-3 h-3 mr-1" />
-                  {upsertMutation.isPending ? "Saving…" : "Save"}
+                  {upsertMutation.isPending ? 'Saving…' : 'Save'}
                 </Button>
               </>
             )}
@@ -238,10 +315,11 @@ export function EscalationMatrixEditor({ scopeType, scopeId, scopeLabel, default
               <div className="mb-3 flex items-start gap-1.5 text-xs text-muted-foreground">
                 <Info className="w-3.5 h-3.5 shrink-0 mt-0.5" />
                 <span>
-                  Rows = Impact level · Columns = Urgency level · Each cell defines the resulting severity.
-                  {scopeType !== "global"
-                    ? " Non-default cells are stored as overrides for this scope only."
-                    : " These become the global baseline."}
+                  Rows = Impact level · Columns = Urgency level · Each cell defines the resulting
+                  severity.
+                  {scopeType !== 'global'
+                    ? ' Non-default cells are stored as overrides for this scope only.'
+                    : ' These become the global baseline.'}
                 </span>
               </div>
 
@@ -252,17 +330,25 @@ export function EscalationMatrixEditor({ scopeType, scopeId, scopeLabel, default
                       <th className="text-left pb-2 pr-3 text-xs font-medium text-muted-foreground w-28">
                         <span>
                           Impact
-                          <HelpTip>The business effect of the incident on the customer, site, or service.</HelpTip>
+                          <HelpTip>
+                            The business effect of the incident on the customer, site, or service.
+                          </HelpTip>
                         </span>
                         <span className="text-muted-foreground/60"> ↓ / </span>
                         <span>
                           Urgency
-                          <HelpTip>How quickly action is required based on business need, outage duration, available failover, and operational context.</HelpTip>
+                          <HelpTip>
+                            How quickly action is required based on business need, outage duration,
+                            available failover, and operational context.
+                          </HelpTip>
                         </span>
                         <span className="text-muted-foreground/60"> →</span>
                       </th>
                       {URGENCIES.map((urg) => (
-                        <th key={urg} className="pb-2 px-2 text-center text-xs font-semibold text-foreground">
+                        <th
+                          key={urg}
+                          className="pb-2 px-2 text-center text-xs font-semibold text-foreground"
+                        >
                           {LEVEL_LABELS[urg]}
                         </th>
                       ))}
@@ -271,7 +357,9 @@ export function EscalationMatrixEditor({ scopeType, scopeId, scopeLabel, default
                   <tbody>
                     {IMPACTS.map((imp) => (
                       <tr key={imp} className="border-t border-border/30">
-                        <td className="py-2 pr-3 text-xs font-semibold text-foreground">{LEVEL_LABELS[imp]}</td>
+                        <td className="py-2 pr-3 text-xs font-semibold text-foreground">
+                          {LEVEL_LABELS[imp]}
+                        </td>
                         {URGENCIES.map((urg) => {
                           const cell = matrix[imp][urg];
                           const isModified = cell.severity !== DEFAULT_MATRIX[imp][urg];
@@ -280,22 +368,26 @@ export function EscalationMatrixEditor({ scopeType, scopeId, scopeLabel, default
                             <td key={urg} className="py-2 px-2">
                               <div className="flex items-center gap-1">
                                 {readOnly ? (
-                                  <span className={cn(
-                                    "inline-flex items-center px-2 py-1 rounded text-xs font-semibold border capitalize",
-                                    SEVERITY_COLORS[cell.severity]
-                                  )}>
+                                  <span
+                                    className={cn(
+                                      'inline-flex items-center px-2 py-1 rounded text-xs font-semibold border capitalize',
+                                      SEVERITY_COLORS[cell.severity],
+                                    )}
+                                  >
                                     {cell.severity}
                                   </span>
                                 ) : (
                                   <Select
                                     value={cell.severity}
-                                    onValueChange={(v) => handleCellChange(imp, urg, v as MatrixSeverityLevel)}
+                                    onValueChange={(v) =>
+                                      handleCellChange(imp, urg, v as MatrixSeverityLevel)
+                                    }
                                   >
                                     <SelectTrigger
                                       className={cn(
-                                        "h-8 text-xs w-28 font-medium border capitalize",
+                                        'h-8 text-xs w-28 font-medium border capitalize',
                                         SEVERITY_TRIGGER_COLORS[cell.severity],
-                                        isModified && "ring-2 ring-offset-1 ring-primary/40"
+                                        isModified && 'ring-2 ring-offset-1 ring-primary/40',
                                       )}
                                     >
                                       <SelectValue />
@@ -303,15 +395,29 @@ export function EscalationMatrixEditor({ scopeType, scopeId, scopeLabel, default
                                     <SelectContent>
                                       <p className="px-2 pt-1.5 pb-0.5 text-[10px] font-semibold text-muted-foreground uppercase tracking-wider flex items-center gap-1">
                                         Severity
-                                        <HelpTip>The resulting priority level derived from Impact and Urgency, used to drive escalation and notifications.</HelpTip>
+                                        <HelpTip>
+                                          The resulting priority level derived from Impact and
+                                          Urgency, used to drive escalation and notifications.
+                                        </HelpTip>
                                       </p>
                                       {SEVERITIES.map((s) => (
-                                        <SelectItem key={s} value={s} className="text-xs capitalize">
-                                          <span className={cn("inline-block px-1.5 py-0.5 rounded text-xs font-medium capitalize mr-1", SEVERITY_COLORS[s])}>
+                                        <SelectItem
+                                          key={s}
+                                          value={s}
+                                          className="text-xs capitalize"
+                                        >
+                                          <span
+                                            className={cn(
+                                              'inline-block px-1.5 py-0.5 rounded text-xs font-medium capitalize mr-1',
+                                              SEVERITY_COLORS[s],
+                                            )}
+                                          >
                                             {s}
                                           </span>
                                           {s === DEFAULT_MATRIX[imp][urg] && (
-                                            <span className="text-muted-foreground text-xs">(default)</span>
+                                            <span className="text-muted-foreground text-xs">
+                                              (default)
+                                            </span>
                                           )}
                                         </SelectItem>
                                       ))}
@@ -353,12 +459,20 @@ export function EscalationMatrixEditor({ scopeType, scopeId, scopeLabel, default
                 <div>
                   <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-2.5 flex items-center gap-1">
                     Severity Definitions
-                    <HelpTip>The resulting priority level derived from Impact and Urgency, used to drive escalation and notifications.</HelpTip>
+                    <HelpTip>
+                      The resulting priority level derived from Impact and Urgency, used to drive
+                      escalation and notifications.
+                    </HelpTip>
                   </p>
                   <div className="space-y-1.5">
                     {SEVERITY_DEFINITIONS.map((def) => (
                       <div key={def.level} className="flex items-start gap-2">
-                        <span className={cn("inline-flex shrink-0 items-center px-1.5 py-0.5 rounded text-xs font-semibold border w-14 justify-center capitalize", SEVERITY_COLORS[def.level])}>
+                        <span
+                          className={cn(
+                            'inline-flex shrink-0 items-center px-1.5 py-0.5 rounded text-xs font-semibold border w-14 justify-center capitalize',
+                            SEVERITY_COLORS[def.level],
+                          )}
+                        >
                           {def.level}
                         </span>
                         <p className="text-xs text-muted-foreground leading-relaxed">{def.text}</p>
@@ -369,12 +483,20 @@ export function EscalationMatrixEditor({ scopeType, scopeId, scopeLabel, default
                 <div>
                   <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-2.5 flex items-center gap-1">
                     Urgency Definitions
-                    <HelpTip>How quickly action is required based on business need, outage duration, available failover, and operational context.</HelpTip>
+                    <HelpTip>
+                      How quickly action is required based on business need, outage duration,
+                      available failover, and operational context.
+                    </HelpTip>
                   </p>
                   <div className="space-y-1.5">
                     {URGENCY_DEFINITIONS.map((def) => (
                       <div key={def.label} className="flex items-start gap-2">
-                        <span className={cn("inline-flex shrink-0 items-center px-1.5 py-0.5 rounded text-xs font-semibold border w-14 justify-center", def.color)}>
+                        <span
+                          className={cn(
+                            'inline-flex shrink-0 items-center px-1.5 py-0.5 rounded text-xs font-semibold border w-14 justify-center',
+                            def.color,
+                          )}
+                        >
                           {def.label}
                         </span>
                         <p className="text-xs text-muted-foreground leading-relaxed">{def.text}</p>

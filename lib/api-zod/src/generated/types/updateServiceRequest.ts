@@ -5,8 +5,8 @@
  * Service Assurance AI API
  * OpenAPI spec version: 0.1.0
  */
-import type { UpdateServiceRequestServiceType } from "./updateServiceRequestServiceType";
-import type { UpdateServiceRequestStatus } from "./updateServiceRequestStatus";
+import type { UpdateServiceRequestServiceType } from './updateServiceRequestServiceType';
+import type { UpdateServiceRequestStatus } from './updateServiceRequestStatus';
 
 export interface UpdateServiceRequest {
   vendorName?: string;

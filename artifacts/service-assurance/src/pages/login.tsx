@@ -1,33 +1,43 @@
-import { useState, useEffect } from "react";
-import { useLocation } from "wouter";
-import { useForm } from "react-hook-form";
-import { zodResolver } from "@hookform/resolvers/zod";
-import { z } from "zod";
-import { useLogin, useGetCurrentUser } from "@workspace/api-client-react";
-import { useAuth } from "@/lib/auth";
-import { saveToken } from "@/lib/token";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Activity } from "lucide-react";
+import { useState, useEffect } from 'react';
+import { useLocation } from 'wouter';
+import { useForm } from 'react-hook-form';
+import { zodResolver } from '@hookform/resolvers/zod';
+import { z } from 'zod';
+import { useLogin, useGetCurrentUser } from '@workspace/api-client-react';
+import { useAuth } from '@/lib/auth';
+import { saveToken } from '@/lib/token';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import {
+  Form,
+  FormControl,
+  FormField,
+  FormItem,
+  FormLabel,
+  FormMessage,
+} from '@/components/ui/form';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Activity } from 'lucide-react';
 
 const loginSchema = z.object({
-  email: z.string().email({ message: "Invalid email address" }),
-  password: z.string().min(1, { message: "Password is required" }),
+  email: z.string().email({ message: 'Invalid email address' }),
+  password: z.string().min(1, { message: 'Password is required' }),
 });
 
 export default function Login() {
   const [, setLocation] = useLocation();
   const { isAuthenticated, isLoading: authLoading, user } = useAuth();
   const loginMutation = useLogin();
-  const [errorMsg, setErrorMsg] = useState("");
+  const [errorMsg, setErrorMsg] = useState('');
 
   useEffect(() => {
     if (!authLoading && isAuthenticated) {
-      const dest = user?.role === "telecom_services_partner" ? "/customers"
-        : user?.role === "customer" ? "/my-tickets"
-        : "/dashboard";
+      const dest =
+        user?.role === 'telecom_services_partner'
+          ? '/customers'
+          : user?.role === 'customer'
+            ? '/my-tickets'
+            : '/dashboard';
       setLocation(dest);
     }
   }, [authLoading, isAuthenticated, user, setLocation]);
@@ -35,27 +45,35 @@ export default function Login() {
   const form = useForm<z.infer<typeof loginSchema>>({
     resolver: zodResolver(loginSchema),
     defaultValues: {
-      email: "",
-      password: "",
+      email: '',
+      password: '',
     },
   });
 
   const onSubmit = (values: z.infer<typeof loginSchema>) => {
-    setErrorMsg("");
-    loginMutation.mutate({ data: values }, {
-      onSuccess: (data: any) => {
-        if (data?.token) {
-          saveToken(data.token);
-        }
-        window.location.href = "/dashboard";
+    setErrorMsg('');
+    loginMutation.mutate(
+      { data: values },
+      {
+        onSuccess: (data: any) => {
+          if (data?.token) {
+            saveToken(data.token);
+          }
+          window.location.href = '/dashboard';
+        },
+        onError: (err: any) => {
+          setErrorMsg(err?.data?.message || err?.message || 'Invalid credentials');
+        },
       },
-      onError: (err: any) => {
-        setErrorMsg(err?.data?.message || err?.message || "Invalid credentials");
-      }
-    });
+    );
   };
 
-  if (authLoading) return <div className="min-h-screen flex items-center justify-center bg-slate-50"><Activity className="w-8 h-8 animate-spin text-primary" /></div>;
+  if (authLoading)
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-slate-50">
+        <Activity className="w-8 h-8 animate-spin text-primary" />
+      </div>
+    );
 
   return (
     <div className="min-h-screen w-full flex items-center justify-center bg-slate-50">
@@ -65,7 +83,9 @@ export default function Login() {
             <div className="w-10 h-10 bg-primary rounded-lg flex items-center justify-center shadow-md">
               <div className="w-4 h-4 bg-white rounded-sm" />
             </div>
-            <h1 className="text-2xl font-bold tracking-tight text-foreground">Service Assurance AI</h1>
+            <h1 className="text-2xl font-bold tracking-tight text-foreground">
+              Service Assurance AI
+            </h1>
           </div>
         </div>
 
@@ -86,7 +106,12 @@ export default function Login() {
                     <FormItem>
                       <FormLabel>Email</FormLabel>
                       <FormControl>
-                        <Input placeholder="admin@example.com" autoComplete="email" data-testid="login-email" {...field} />
+                        <Input
+                          placeholder="admin@example.com"
+                          autoComplete="email"
+                          data-testid="login-email"
+                          {...field}
+                        />
                       </FormControl>
                       <FormMessage />
                     </FormItem>
@@ -101,19 +126,33 @@ export default function Login() {
                         <FormLabel>Password</FormLabel>
                       </div>
                       <FormControl>
-                        <Input type="password" placeholder="••••••••" autoComplete="current-password" data-testid="login-password" {...field} />
+                        <Input
+                          type="password"
+                          placeholder="••••••••"
+                          autoComplete="current-password"
+                          data-testid="login-password"
+                          {...field}
+                        />
                       </FormControl>
                       <FormMessage />
                     </FormItem>
                   )}
                 />
                 {errorMsg && (
-                  <div className="text-sm font-medium text-destructive bg-destructive/10 p-3 rounded-md" data-testid="login-error">
+                  <div
+                    className="text-sm font-medium text-destructive bg-destructive/10 p-3 rounded-md"
+                    data-testid="login-error"
+                  >
                     {errorMsg}
                   </div>
                 )}
-                <Button type="submit" className="w-full font-medium" disabled={loginMutation.isPending} data-testid="login-submit">
-                  {loginMutation.isPending ? "Signing in..." : "Sign In"}
+                <Button
+                  type="submit"
+                  className="w-full font-medium"
+                  disabled={loginMutation.isPending}
+                  data-testid="login-submit"
+                >
+                  {loginMutation.isPending ? 'Signing in...' : 'Sign In'}
                 </Button>
               </form>
             </Form>

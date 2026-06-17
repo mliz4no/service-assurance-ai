@@ -5,7 +5,7 @@
  * Service Assurance AI API
  * OpenAPI spec version: 0.1.0
  */
-import type { CreateSlaPolicyRequestSeverity } from "./createSlaPolicyRequestSeverity";
+import type { CreateSlaPolicyRequestSeverity } from './createSlaPolicyRequestSeverity';
 
 export interface CreateSlaPolicyRequest {
   name: string;

@@ -1,4 +1,4 @@
-export const TOKEN_KEY = "sa_auth_token";
+export const TOKEN_KEY = 'sa_auth_token';
 
 export function saveToken(token: string): void {
   localStorage.setItem(TOKEN_KEY, token);

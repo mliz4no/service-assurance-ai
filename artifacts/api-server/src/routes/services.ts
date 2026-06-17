@@ -1,33 +1,42 @@
-import { Router, type IRouter } from "express";
-import { db, servicesTable, customersTable, sitesTable, ticketsTable } from "@workspace/db";
-import { eq, and, ilike, or, inArray } from "drizzle-orm";
-import { requireAuth } from "../middlewares/auth";
+import { Router, type IRouter } from 'express';
+import { db, servicesTable, customersTable, sitesTable, ticketsTable } from '@workspace/db';
+import { eq, and, ilike, or, inArray } from 'drizzle-orm';
+import { requireAuth } from '../middlewares/auth';
 
 const router: IRouter = Router();
 
-router.get("/services", requireAuth, async (req, res): Promise<void> => {
+router.get('/services', requireAuth, async (req, res): Promise<void> => {
   const { customerId, siteId, search, status, vendorName } = req.query as Record<string, string>;
   const conditions = [];
 
-  if (req.user?.role === "customer" && req.user.customerId) {
+  if (req.user?.role === 'customer' && req.user.customerId) {
     conditions.push(eq(servicesTable.customerId, req.user.customerId));
-  } else if (req.user?.role === "telecom_services_partner") {
+  } else if (req.user?.role === 'telecom_services_partner') {
     const pIds = req.partnerCustomerIds ?? [];
-    if (pIds.length === 0) { res.json([]); return; }
+    if (pIds.length === 0) {
+      res.json([]);
+      return;
+    }
     conditions.push(inArray(servicesTable.customerId, pIds));
   } else if (customerId) {
     conditions.push(eq(servicesTable.customerId, customerId));
   }
 
   if (siteId) conditions.push(eq(servicesTable.siteId, siteId));
-  if (status) conditions.push(eq(servicesTable.status, status as "active" | "pending" | "down" | "impaired" | "disconnected"));
+  if (status)
+    conditions.push(
+      eq(
+        servicesTable.status,
+        status as 'active' | 'pending' | 'down' | 'impaired' | 'disconnected',
+      ),
+    );
   if (vendorName) conditions.push(ilike(servicesTable.vendorName, `%${vendorName}%`));
   if (search) {
     conditions.push(
       or(
         ilike(servicesTable.circuitId, `%${search}%`),
-        ilike(servicesTable.vendorName, `%${search}%`)
-      )
+        ilike(servicesTable.vendorName, `%${search}%`),
+      ),
     );
   }
 
@@ -85,44 +94,77 @@ router.get("/services", requireAuth, async (req, res): Promise<void> => {
   res.json(services);
 });
 
-router.post("/services", requireAuth, async (req, res): Promise<void> => {
-  if (req.user?.role === "customer" || req.user?.role === "telecom_services_partner") {
-    res.status(403).json({ error: "Forbidden" });
+router.post('/services', requireAuth, async (req, res): Promise<void> => {
+  if (req.user?.role === 'customer' || req.user?.role === 'telecom_services_partner') {
+    res.status(403).json({ error: 'Forbidden' });
     return;
   }
 
-  const { customerId, siteId, vendorName, serviceType, circuitId, bandwidth, status, installDate, monthlyRecurringCharge, supportReference, notes } = req.body;
+  const {
+    customerId,
+    siteId,
+    vendorName,
+    serviceType,
+    circuitId,
+    bandwidth,
+    status,
+    installDate,
+    monthlyRecurringCharge,
+    supportReference,
+    notes,
+  } = req.body;
   if (!customerId || !siteId || !vendorName || !serviceType || !status) {
-    res.status(400).json({ error: "Bad Request", message: "customerId, siteId, vendorName, serviceType, and status are required" });
+    res.status(400).json({
+      error: 'Bad Request',
+      message: 'customerId, siteId, vendorName, serviceType, and status are required',
+    });
     return;
   }
 
   const [service] = await db
     .insert(servicesTable)
-    .values({ customerId, siteId, vendorName, serviceType, circuitId, bandwidth, status, installDate, monthlyRecurringCharge: monthlyRecurringCharge?.toString(), supportReference, notes })
+    .values({
+      customerId,
+      siteId,
+      vendorName,
+      serviceType,
+      circuitId,
+      bandwidth,
+      status,
+      installDate,
+      monthlyRecurringCharge: monthlyRecurringCharge?.toString(),
+      supportReference,
+      notes,
+    })
     .returning();
   res.status(201).json(service);
 });
 
-router.get("/services/:id", requireAuth, async (req, res): Promise<void> => {
+router.get('/services/:id', requireAuth, async (req, res): Promise<void> => {
   const id = Array.isArray(req.params.id) ? req.params.id[0] : req.params.id;
 
   const [service] = await db.select().from(servicesTable).where(eq(servicesTable.id, id));
   if (!service) {
-    res.status(404).json({ error: "Not Found" });
+    res.status(404).json({ error: 'Not Found' });
     return;
   }
 
-  if (req.user?.role === "customer" && req.user.customerId !== service.customerId) {
-    res.status(403).json({ error: "Forbidden" });
+  if (req.user?.role === 'customer' && req.user.customerId !== service.customerId) {
+    res.status(403).json({ error: 'Forbidden' });
     return;
   }
-  if (req.user?.role === "telecom_services_partner" && !(req.partnerCustomerIds ?? []).includes(service.customerId)) {
-    res.status(403).json({ error: "Forbidden" });
+  if (
+    req.user?.role === 'telecom_services_partner' &&
+    !(req.partnerCustomerIds ?? []).includes(service.customerId)
+  ) {
+    res.status(403).json({ error: 'Forbidden' });
     return;
   }
 
-  const [customer] = await db.select().from(customersTable).where(eq(customersTable.id, service.customerId));
+  const [customer] = await db
+    .select()
+    .from(customersTable)
+    .where(eq(customersTable.id, service.customerId));
   const [site] = service.siteId
     ? await db.select().from(sitesTable).where(eq(sitesTable.id, service.siteId))
     : [null];
@@ -143,14 +185,25 @@ router.get("/services/:id", requireAuth, async (req, res): Promise<void> => {
   res.json({ ...service, customer, site, tickets });
 });
 
-router.put("/services/:id", requireAuth, async (req, res): Promise<void> => {
-  if (req.user?.role === "customer") {
-    res.status(403).json({ error: "Forbidden" });
+router.put('/services/:id', requireAuth, async (req, res): Promise<void> => {
+  if (req.user?.role === 'customer') {
+    res.status(403).json({ error: 'Forbidden' });
     return;
   }
 
   const id = Array.isArray(req.params.id) ? req.params.id[0] : req.params.id;
-  const { vendorName, serviceType, circuitId, bandwidth, status, installDate, monthlyRecurringCharge, supportReference, notes, impactLevel } = req.body;
+  const {
+    vendorName,
+    serviceType,
+    circuitId,
+    bandwidth,
+    status,
+    installDate,
+    monthlyRecurringCharge,
+    supportReference,
+    notes,
+    impactLevel,
+  } = req.body;
 
   const updateData: Record<string, unknown> = { updatedAt: new Date() };
   if (vendorName !== undefined) updateData.vendorName = vendorName;
@@ -159,10 +212,11 @@ router.put("/services/:id", requireAuth, async (req, res): Promise<void> => {
   if (bandwidth !== undefined) updateData.bandwidth = bandwidth;
   if (status !== undefined) updateData.status = status;
   if (installDate !== undefined) updateData.installDate = installDate;
-  if (monthlyRecurringCharge !== undefined) updateData.monthlyRecurringCharge = monthlyRecurringCharge?.toString();
+  if (monthlyRecurringCharge !== undefined)
+    updateData.monthlyRecurringCharge = monthlyRecurringCharge?.toString();
   if (supportReference !== undefined) updateData.supportReference = supportReference;
   if (notes !== undefined) updateData.notes = notes;
-  if (impactLevel !== undefined) updateData.impactLevel = impactLevel === "" ? null : impactLevel;
+  if (impactLevel !== undefined) updateData.impactLevel = impactLevel === '' ? null : impactLevel;
 
   const [service] = await db
     .update(servicesTable)
@@ -171,25 +225,25 @@ router.put("/services/:id", requireAuth, async (req, res): Promise<void> => {
     .returning();
 
   if (!service) {
-    res.status(404).json({ error: "Not Found" });
+    res.status(404).json({ error: 'Not Found' });
     return;
   }
   res.json(service);
 });
 
-router.delete("/services/:id", requireAuth, async (req, res): Promise<void> => {
-  if (req.user?.role !== "admin") {
-    res.status(403).json({ error: "Forbidden" });
+router.delete('/services/:id', requireAuth, async (req, res): Promise<void> => {
+  if (req.user?.role !== 'admin') {
+    res.status(403).json({ error: 'Forbidden' });
     return;
   }
 
   const id = Array.isArray(req.params.id) ? req.params.id[0] : req.params.id;
   const [service] = await db.delete(servicesTable).where(eq(servicesTable.id, id)).returning();
   if (!service) {
-    res.status(404).json({ error: "Not Found" });
+    res.status(404).json({ error: 'Not Found' });
     return;
   }
-  res.json({ success: true, message: "Service deleted" });
+  res.json({ success: true, message: 'Service deleted' });
 });
 
 export default router;

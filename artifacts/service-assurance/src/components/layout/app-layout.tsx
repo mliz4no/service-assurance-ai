@@ -1,12 +1,12 @@
-import { useAuth } from "@/lib/auth";
-import { clearToken } from "@/lib/token";
-import { Link, useLocation } from "wouter";
-import { 
-  Building2, 
-  MapPin, 
-  Globe2, 
-  TicketCheck, 
-  LayoutDashboard, 
+import { useAuth } from '@/lib/auth';
+import { clearToken } from '@/lib/token';
+import { Link, useLocation } from 'wouter';
+import {
+  Building2,
+  MapPin,
+  Globe2,
+  TicketCheck,
+  LayoutDashboard,
   Settings,
   LogOut,
   User as UserIcon,
@@ -14,12 +14,12 @@ import {
   Server,
   Network,
   Activity,
-  Handshake
-} from "lucide-react";
-import { useLogout } from "@workspace/api-client-react";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Badge } from "@/components/ui/badge";
+  Handshake,
+} from 'lucide-react';
+import { useLogout } from '@workspace/api-client-react';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Badge } from '@/components/ui/badge';
 
 interface AppLayoutProps {
   children: React.ReactNode;
@@ -35,46 +35,48 @@ export function AppLayout({ children, title }: AppLayoutProps) {
     logout.mutate(undefined, {
       onSuccess: () => {
         clearToken();
-        window.location.href = "/";
+        window.location.href = '/';
       },
       onError: () => {
         clearToken();
-        window.location.href = "/";
-      }
+        window.location.href = '/';
+      },
     });
   };
 
-  const isAdminOrOps = user?.role === "admin" || user?.role === "ops";
-  const isPartner = user?.role === "telecom_services_partner";
+  const isAdminOrOps = user?.role === 'admin' || user?.role === 'ops';
+  const isPartner = user?.role === 'telecom_services_partner';
 
-  const navItems = isAdminOrOps ? [
-    { href: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
-    { href: "/tickets", label: "Tickets", icon: TicketCheck },
-    { href: "/customers", label: "Customers", icon: Building2 },
-    { href: "/sites", label: "Sites", icon: MapPin },
-    { href: "/services", label: "Services", icon: Globe2 },
-    { href: "/controllers", label: "Controllers", icon: Server },
-    { href: "/devices", label: "Devices", icon: Server },
-    { href: "/network-links", label: "Network Links", icon: Network },
-    { href: "/events", label: "Event Monitor", icon: Activity },
-    { href: "/map", label: "Network Map", icon: MapPin },
-    ...(user?.role === "admin" ? [{ href: "/admin", label: "Admin", icon: Settings }] : []),
-  ] : isPartner ? [
-    { href: "/customers", label: "My Customers", icon: Building2 },
-    { href: "/sites", label: "My Sites", icon: MapPin },
-    { href: "/services", label: "My Services", icon: Globe2 },
-    { href: "/tickets", label: "My Incidents", icon: TicketCheck },
-    { href: "/devices", label: "My Devices", icon: Server },
-    { href: "/map", label: "Network Map", icon: MapPin },
-  ] : [
-    { href: "/my-tickets", label: "My Tickets", icon: TicketCheck },
-  ];
+  const navItems = isAdminOrOps
+    ? [
+        { href: '/dashboard', label: 'Dashboard', icon: LayoutDashboard },
+        { href: '/tickets', label: 'Tickets', icon: TicketCheck },
+        { href: '/customers', label: 'Customers', icon: Building2 },
+        { href: '/sites', label: 'Sites', icon: MapPin },
+        { href: '/services', label: 'Services', icon: Globe2 },
+        { href: '/controllers', label: 'Controllers', icon: Server },
+        { href: '/devices', label: 'Devices', icon: Server },
+        { href: '/network-links', label: 'Network Links', icon: Network },
+        { href: '/events', label: 'Event Monitor', icon: Activity },
+        { href: '/map', label: 'Network Map', icon: MapPin },
+        ...(user?.role === 'admin' ? [{ href: '/admin', label: 'Admin', icon: Settings }] : []),
+      ]
+    : isPartner
+      ? [
+          { href: '/customers', label: 'My Customers', icon: Building2 },
+          { href: '/sites', label: 'My Sites', icon: MapPin },
+          { href: '/services', label: 'My Services', icon: Globe2 },
+          { href: '/tickets', label: 'My Incidents', icon: TicketCheck },
+          { href: '/devices', label: 'My Devices', icon: Server },
+          { href: '/map', label: 'Network Map', icon: MapPin },
+        ]
+      : [{ href: '/my-tickets', label: 'My Tickets', icon: TicketCheck }];
 
   const roleLabel: Record<string, string> = {
-    admin: "Admin",
-    ops: "Operations",
-    customer: "Customer",
-    telecom_services_partner: "Partner",
+    admin: 'Admin',
+    ops: 'Operations',
+    customer: 'Customer',
+    telecom_services_partner: 'Partner',
   };
 
   return (
@@ -106,13 +108,13 @@ export function AppLayout({ children, title }: AppLayoutProps) {
           {navItems.map((item) => {
             const isActive = location.startsWith(item.href);
             return (
-              <Link 
-                key={item.href} 
+              <Link
+                key={item.href}
                 href={item.href}
                 className={`flex items-center gap-3 px-3 py-2 rounded-md text-sm font-medium transition-colors ${
-                  isActive 
-                    ? "bg-sidebar-primary text-sidebar-primary-foreground shadow-sm" 
-                    : "text-sidebar-foreground/80 hover:bg-sidebar-accent hover:text-sidebar-accent-foreground"
+                  isActive
+                    ? 'bg-sidebar-primary text-sidebar-primary-foreground shadow-sm'
+                    : 'text-sidebar-foreground/80 hover:bg-sidebar-accent hover:text-sidebar-accent-foreground'
                 }`}
               >
                 <item.icon className="w-4 h-4" />
@@ -129,11 +131,21 @@ export function AppLayout({ children, title }: AppLayoutProps) {
                 {isPartner ? <Handshake className="w-4 h-4" /> : <UserIcon className="w-4 h-4" />}
               </div>
               <div className="flex flex-col overflow-hidden">
-                <span className="text-sm font-medium truncate" title={user?.name}>{user?.name}</span>
-                <span className="text-xs text-sidebar-foreground/60">{roleLabel[user?.role ?? ""] ?? user?.role}</span>
+                <span className="text-sm font-medium truncate" title={user?.name}>
+                  {user?.name}
+                </span>
+                <span className="text-xs text-sidebar-foreground/60">
+                  {roleLabel[user?.role ?? ''] ?? user?.role}
+                </span>
               </div>
             </div>
-            <Button variant="ghost" size="icon" className="h-8 w-8 text-sidebar-foreground hover:bg-sidebar-accent" onClick={handleLogout} title="Logout">
+            <Button
+              variant="ghost"
+              size="icon"
+              className="h-8 w-8 text-sidebar-foreground hover:bg-sidebar-accent"
+              onClick={handleLogout}
+              title="Logout"
+            >
               <LogOut className="w-4 h-4" />
             </Button>
           </div>
@@ -144,7 +156,9 @@ export function AppLayout({ children, title }: AppLayoutProps) {
       <div className="flex-1 ml-64 flex flex-col min-w-0">
         {/* Header */}
         <header className="h-16 bg-white border-b border-border flex items-center justify-between px-6 sticky top-0 z-10">
-          <h1 className="text-xl font-semibold text-foreground tracking-tight">{title || "Dashboard"}</h1>
+          <h1 className="text-xl font-semibold text-foreground tracking-tight">
+            {title || 'Dashboard'}
+          </h1>
           <div className="flex items-center gap-4">
             {isPartner && (
               <Badge variant="outline" className="text-xs text-blue-700 border-blue-200 bg-blue-50">
@@ -163,9 +177,7 @@ export function AppLayout({ children, title }: AppLayoutProps) {
         </header>
 
         {/* Page Content */}
-        <main className="flex-1 p-6 overflow-auto">
-          {children}
-        </main>
+        <main className="flex-1 p-6 overflow-auto">{children}</main>
       </div>
     </div>
   );

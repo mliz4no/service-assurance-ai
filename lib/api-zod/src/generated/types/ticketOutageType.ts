@@ -6,12 +6,11 @@
  * OpenAPI spec version: 0.1.0
  */
 
-export type TicketOutageType =
-  (typeof TicketOutageType)[keyof typeof TicketOutageType];
+export type TicketOutageType = (typeof TicketOutageType)[keyof typeof TicketOutageType];
 
 export const TicketOutageType = {
-  outage: "outage",
-  impairment: "impairment",
-  informational: "informational",
-  unknown: "unknown",
+  outage: 'outage',
+  impairment: 'impairment',
+  informational: 'informational',
+  unknown: 'unknown',
 } as const;

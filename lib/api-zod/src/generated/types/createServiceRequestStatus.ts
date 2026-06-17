@@ -10,9 +10,9 @@ export type CreateServiceRequestStatus =
   (typeof CreateServiceRequestStatus)[keyof typeof CreateServiceRequestStatus];
 
 export const CreateServiceRequestStatus = {
-  active: "active",
-  pending: "pending",
-  down: "down",
-  impaired: "impaired",
-  disconnected: "disconnected",
+  active: 'active',
+  pending: 'pending',
+  down: 'down',
+  impaired: 'impaired',
+  disconnected: 'disconnected',
 } as const;

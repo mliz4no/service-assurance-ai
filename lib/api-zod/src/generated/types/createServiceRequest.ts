@@ -5,8 +5,8 @@
  * Service Assurance AI API
  * OpenAPI spec version: 0.1.0
  */
-import type { CreateServiceRequestServiceType } from "./createServiceRequestServiceType";
-import type { CreateServiceRequestStatus } from "./createServiceRequestStatus";
+import type { CreateServiceRequestServiceType } from './createServiceRequestServiceType';
+import type { CreateServiceRequestStatus } from './createServiceRequestStatus';
 
 export interface CreateServiceRequest {
   customerId: string;

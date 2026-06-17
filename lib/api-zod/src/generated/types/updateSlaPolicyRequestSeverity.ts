@@ -10,8 +10,8 @@ export type UpdateSlaPolicyRequestSeverity =
   (typeof UpdateSlaPolicyRequestSeverity)[keyof typeof UpdateSlaPolicyRequestSeverity];
 
 export const UpdateSlaPolicyRequestSeverity = {
-  low: "low",
-  medium: "medium",
-  high: "high",
-  critical: "critical",
+  low: 'low',
+  medium: 'medium',
+  high: 'high',
+  critical: 'critical',
 } as const;

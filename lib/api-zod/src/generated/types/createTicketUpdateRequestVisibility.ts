@@ -10,6 +10,6 @@ export type CreateTicketUpdateRequestVisibility =
   (typeof CreateTicketUpdateRequestVisibility)[keyof typeof CreateTicketUpdateRequestVisibility];
 
 export const CreateTicketUpdateRequestVisibility = {
-  internal: "internal",
-  customer: "customer",
+  internal: 'internal',
+  customer: 'customer',
 } as const;

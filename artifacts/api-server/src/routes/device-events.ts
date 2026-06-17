@@ -1,17 +1,29 @@
-import { Router, type IRouter } from "express";
-import { db, deviceEventsTable, controllersTable, managedDevicesTable, customersTable, sitesTable, incidentCorrelationsTable, ticketsTable } from "@workspace/db";
-import { eq, desc, or } from "drizzle-orm";
-import { requireAuth } from "../middlewares/auth";
-import { summarizeControllerEvent, inferProbableImpact } from "../lib/ai";
+import { Router, type IRouter } from 'express';
+import {
+  db,
+  deviceEventsTable,
+  controllersTable,
+  managedDevicesTable,
+  customersTable,
+  sitesTable,
+  incidentCorrelationsTable,
+  ticketsTable,
+} from '@workspace/db';
+import { eq, desc, or } from 'drizzle-orm';
+import { requireAuth } from '../middlewares/auth';
+import { summarizeControllerEvent, inferProbableImpact } from '../lib/ai';
 
 const router: IRouter = Router();
 
-router.get("/device-events", requireAuth, async (req, res): Promise<void> => {
-  if (req.user?.role === "telecom_services_partner") {
-    res.status(403).json({ error: "Forbidden" });
+router.get('/device-events', requireAuth, async (req, res): Promise<void> => {
+  if (req.user?.role === 'telecom_services_partner') {
+    res.status(403).json({ error: 'Forbidden' });
     return;
   }
-  const { controllerId, customerId, siteId, severity, search } = req.query as Record<string, string>;
+  const { controllerId, customerId, siteId, severity, search } = req.query as Record<
+    string,
+    string
+  >;
 
   let events = await db
     .select()
@@ -27,8 +39,8 @@ router.get("/device-events", requireAuth, async (req, res): Promise<void> => {
     events = events.filter(
       (e) =>
         e.title.toLowerCase().includes(q) ||
-        (e.description ?? "").toLowerCase().includes(q) ||
-        e.eventType.toLowerCase().includes(q)
+        (e.description ?? '').toLowerCase().includes(q) ||
+        e.eventType.toLowerCase().includes(q),
     );
   }
 
@@ -36,8 +48,18 @@ router.get("/device-events", requireAuth, async (req, res): Promise<void> => {
   const customerIds = [...new Set(events.map((e) => e.customerId).filter(Boolean))] as string[];
 
   const [controllers, customers] = await Promise.all([
-    controllerIds.length ? db.select().from(controllersTable).where(or(...controllerIds.map((id) => eq(controllersTable.id, id)))) : [],
-    customerIds.length ? db.select().from(customersTable).where(or(...customerIds.map((id) => eq(customersTable.id, id)))) : [],
+    controllerIds.length
+      ? db
+          .select()
+          .from(controllersTable)
+          .where(or(...controllerIds.map((id) => eq(controllersTable.id, id))))
+      : [],
+    customerIds.length
+      ? db
+          .select()
+          .from(customersTable)
+          .where(or(...customerIds.map((id) => eq(customersTable.id, id))))
+      : [],
   ]);
 
   const enriched = events.map((e) => ({
@@ -49,22 +71,44 @@ router.get("/device-events", requireAuth, async (req, res): Promise<void> => {
   res.json(enriched);
 });
 
-router.get("/device-events/:id", requireAuth, async (req, res): Promise<void> => {
+router.get('/device-events/:id', requireAuth, async (req, res): Promise<void> => {
   const [event] = await db
     .select()
     .from(deviceEventsTable)
     .where(eq(deviceEventsTable.id, req.params.id));
 
   if (!event) {
-    res.status(404).json({ error: "Event not found" });
+    res.status(404).json({ error: 'Event not found' });
     return;
   }
 
   const [controller, device, customer, site] = await Promise.all([
-    db.select().from(controllersTable).where(eq(controllersTable.id, event.controllerId)).then((r) => r[0] ?? null),
-    event.managedDeviceId ? db.select().from(managedDevicesTable).where(eq(managedDevicesTable.id, event.managedDeviceId)).then((r) => r[0] ?? null) : Promise.resolve(null),
-    event.customerId ? db.select().from(customersTable).where(eq(customersTable.id, event.customerId)).then((r) => r[0] ?? null) : Promise.resolve(null),
-    event.siteId ? db.select().from(sitesTable).where(eq(sitesTable.id, event.siteId)).then((r) => r[0] ?? null) : Promise.resolve(null),
+    db
+      .select()
+      .from(controllersTable)
+      .where(eq(controllersTable.id, event.controllerId))
+      .then((r) => r[0] ?? null),
+    event.managedDeviceId
+      ? db
+          .select()
+          .from(managedDevicesTable)
+          .where(eq(managedDevicesTable.id, event.managedDeviceId))
+          .then((r) => r[0] ?? null)
+      : Promise.resolve(null),
+    event.customerId
+      ? db
+          .select()
+          .from(customersTable)
+          .where(eq(customersTable.id, event.customerId))
+          .then((r) => r[0] ?? null)
+      : Promise.resolve(null),
+    event.siteId
+      ? db
+          .select()
+          .from(sitesTable)
+          .where(eq(sitesTable.id, event.siteId))
+          .then((r) => r[0] ?? null)
+      : Promise.resolve(null),
   ]);
 
   // Find linked ticket via incident correlation
@@ -76,27 +120,33 @@ router.get("/device-events/:id", requireAuth, async (req, res): Promise<void> =>
   const ticketIds = correlations.map((c) => c.ticketId);
   const linkedTickets =
     ticketIds.length > 0
-      ? await db.select().from(ticketsTable).where(or(...ticketIds.map((id) => eq(ticketsTable.id, id))))
+      ? await db
+          .select()
+          .from(ticketsTable)
+          .where(or(...ticketIds.map((id) => eq(ticketsTable.id, id))))
       : [];
 
   res.json({ ...event, controller, device, customer, site, linkedTickets, correlations });
 });
 
 // AI analysis for a single event
-router.post("/device-events/:id/ai-analyze", requireAuth, async (req, res): Promise<void> => {
+router.post('/device-events/:id/ai-analyze', requireAuth, async (req, res): Promise<void> => {
   const [event] = await db
     .select()
     .from(deviceEventsTable)
     .where(eq(deviceEventsTable.id, req.params.id));
 
   if (!event) {
-    res.status(404).json({ error: "Event not found" });
+    res.status(404).json({ error: 'Event not found' });
     return;
   }
 
   let device: typeof managedDevicesTable.$inferSelect | null = null;
   if (event.managedDeviceId) {
-    const [d] = await db.select().from(managedDevicesTable).where(eq(managedDevicesTable.id, event.managedDeviceId));
+    const [d] = await db
+      .select()
+      .from(managedDevicesTable)
+      .where(eq(managedDevicesTable.id, event.managedDeviceId));
     device = d ?? null;
   }
 
@@ -139,7 +189,7 @@ router.post("/device-events/:id/ai-analyze", requireAuth, async (req, res): Prom
       normalizedStatus: summaryResult.normalizedStatus,
     });
   } catch (err: any) {
-    res.status(500).json({ error: "AI analysis failed", message: err.message });
+    res.status(500).json({ error: 'AI analysis failed', message: err.message });
   }
 });
 

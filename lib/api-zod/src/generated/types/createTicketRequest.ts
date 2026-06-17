@@ -5,10 +5,10 @@
  * Service Assurance AI API
  * OpenAPI spec version: 0.1.0
  */
-import type { CreateTicketRequestOutageType } from "./createTicketRequestOutageType";
-import type { CreateTicketRequestSeverity } from "./createTicketRequestSeverity";
-import type { CreateTicketRequestSource } from "./createTicketRequestSource";
-import type { CreateTicketRequestStatus } from "./createTicketRequestStatus";
+import type { CreateTicketRequestOutageType } from './createTicketRequestOutageType';
+import type { CreateTicketRequestSeverity } from './createTicketRequestSeverity';
+import type { CreateTicketRequestSource } from './createTicketRequestSource';
+import type { CreateTicketRequestStatus } from './createTicketRequestStatus';
 
 export interface CreateTicketRequest {
   customerId: string;

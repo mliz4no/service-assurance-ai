@@ -1,7 +1,7 @@
-import React, { createContext, useContext } from "react";
-import { useLocation } from "wouter";
-import { useGetCurrentUser, User } from "@workspace/api-client-react";
-import { Activity } from "lucide-react";
+import React, { createContext, useContext } from 'react';
+import { useLocation } from 'wouter';
+import { useGetCurrentUser, User } from '@workspace/api-client-react';
+import { Activity } from 'lucide-react';
 
 interface AuthContextType {
   user: User | null;
@@ -15,7 +15,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const { data: user, isLoading } = useGetCurrentUser({
     query: {
       retry: false,
-    }
+    },
   });
 
   return (
@@ -34,7 +34,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 export function useAuth() {
   const context = useContext(AuthContext);
   if (context === undefined) {
-    throw new Error("useAuth must be used within an AuthProvider");
+    throw new Error('useAuth must be used within an AuthProvider');
   }
   return context;
 }
@@ -45,7 +45,7 @@ export function ProtectedRoute({ children }: { children: React.ReactNode }) {
 
   React.useEffect(() => {
     if (!isLoading && !isAuthenticated) {
-      setLocation("/");
+      setLocation('/');
     }
   }, [isLoading, isAuthenticated, setLocation]);
 
@@ -75,10 +75,10 @@ export function InternalOnlyRoute({ children }: { children: React.ReactNode }) {
 
   React.useEffect(() => {
     if (!isLoading && !isAuthenticated) {
-      setLocation("/");
+      setLocation('/');
     }
-    if (!isLoading && isAuthenticated && user?.role === "telecom_services_partner") {
-      setLocation("/customers");
+    if (!isLoading && isAuthenticated && user?.role === 'telecom_services_partner') {
+      setLocation('/customers');
     }
   }, [isLoading, isAuthenticated, user, setLocation]);
 
@@ -90,7 +90,7 @@ export function InternalOnlyRoute({ children }: { children: React.ReactNode }) {
     );
   }
 
-  if (!isAuthenticated || user?.role === "telecom_services_partner") {
+  if (!isAuthenticated || user?.role === 'telecom_services_partner') {
     return null;
   }
 

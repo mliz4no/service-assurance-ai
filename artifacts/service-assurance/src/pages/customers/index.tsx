@@ -1,21 +1,34 @@
-import { useState } from "react";
-import { AppLayout } from "@/components/layout/app-layout";
-import { useGetCustomers } from "@workspace/api-client-react";
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { Input } from "@/components/ui/input";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Button } from "@/components/ui/button";
-import { StatusBadge } from "@/components/status-badge";
-import { Activity, Plus, Search } from "lucide-react";
-import { Link } from "wouter";
+import { useState } from 'react';
+import { AppLayout } from '@/components/layout/app-layout';
+import { useGetCustomers } from '@workspace/api-client-react';
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from '@/components/ui/table';
+import { Input } from '@/components/ui/input';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
+import { Button } from '@/components/ui/button';
+import { StatusBadge } from '@/components/status-badge';
+import { Activity, Plus, Search } from 'lucide-react';
+import { Link } from 'wouter';
 
 export default function CustomersList() {
-  const [search, setSearch] = useState("");
-  const [status, setStatus] = useState<string>("all");
+  const [search, setSearch] = useState('');
+  const [status, setStatus] = useState<string>('all');
 
   const { data: customers, isLoading } = useGetCustomers({
     search: search || undefined,
-    status: status !== "all" ? status : undefined,
+    status: status !== 'all' ? status : undefined,
   });
 
   return (
@@ -78,16 +91,20 @@ export default function CustomersList() {
                 customers.map((c) => (
                   <TableRow key={c.id} className="hover:bg-muted/20" data-testid="customer-row">
                     <TableCell className="font-medium">
-                      <Link href={`/customers/${c.id}`} className="text-primary hover:underline">{c.name}</Link>
+                      <Link href={`/customers/${c.id}`} className="text-primary hover:underline">
+                        {c.name}
+                      </Link>
                     </TableCell>
-                    <TableCell>{c.accountNumber || "-"}</TableCell>
+                    <TableCell>{c.accountNumber || '-'}</TableCell>
                     <TableCell>
                       <div className="flex flex-col text-sm">
-                        <span>{c.primaryContactName || "-"}</span>
+                        <span>{c.primaryContactName || '-'}</span>
                         <span className="text-muted-foreground">{c.primaryContactEmail}</span>
                       </div>
                     </TableCell>
-                    <TableCell><StatusBadge status={c.status} /></TableCell>
+                    <TableCell>
+                      <StatusBadge status={c.status} />
+                    </TableCell>
                   </TableRow>
                 ))
               )}

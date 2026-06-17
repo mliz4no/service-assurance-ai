@@ -1,21 +1,34 @@
-import { useState } from "react";
-import { AppLayout } from "@/components/layout/app-layout";
-import { useGetServices } from "@workspace/api-client-react";
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { Input } from "@/components/ui/input";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Button } from "@/components/ui/button";
-import { StatusBadge } from "@/components/status-badge";
-import { Activity, Plus, Search, Globe2 } from "lucide-react";
-import { Link } from "wouter";
+import { useState } from 'react';
+import { AppLayout } from '@/components/layout/app-layout';
+import { useGetServices } from '@workspace/api-client-react';
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from '@/components/ui/table';
+import { Input } from '@/components/ui/input';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
+import { Button } from '@/components/ui/button';
+import { StatusBadge } from '@/components/status-badge';
+import { Activity, Plus, Search, Globe2 } from 'lucide-react';
+import { Link } from 'wouter';
 
 export default function ServicesList() {
-  const [search, setSearch] = useState("");
-  const [status, setStatus] = useState<string>("all");
+  const [search, setSearch] = useState('');
+  const [status, setStatus] = useState<string>('all');
 
   const { data: services, isLoading } = useGetServices({
     search: search || undefined,
-    status: status !== "all" ? status : undefined,
+    status: status !== 'all' ? status : undefined,
   });
 
   return (
@@ -87,8 +100,11 @@ export default function ServicesList() {
                       {s.serviceType}
                     </TableCell>
                     <TableCell>
-                      <Link href={`/services/${s.id}`} className="text-primary font-mono text-sm hover:underline">
-                        {s.circuitId || "(no circuit id)"}
+                      <Link
+                        href={`/services/${s.id}`}
+                        className="text-primary font-mono text-sm hover:underline"
+                      >
+                        {s.circuitId || '(no circuit id)'}
                       </Link>
                     </TableCell>
                     <TableCell>{s.vendorName}</TableCell>
@@ -97,16 +113,22 @@ export default function ServicesList() {
                         <Link href={`/customers/${s.customer.id}`} className="hover:underline">
                           {s.customer.name}
                         </Link>
-                      ) : "-"}
+                      ) : (
+                        '-'
+                      )}
                     </TableCell>
                     <TableCell>
                       {s.site ? (
                         <Link href={`/sites/${s.site.id}`} className="hover:underline">
                           {s.site.siteName}
                         </Link>
-                      ) : "-"}
+                      ) : (
+                        '-'
+                      )}
                     </TableCell>
-                    <TableCell><StatusBadge status={s.status} /></TableCell>
+                    <TableCell>
+                      <StatusBadge status={s.status} />
+                    </TableCell>
                   </TableRow>
                 ))
               )}

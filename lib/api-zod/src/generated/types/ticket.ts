@@ -5,10 +5,10 @@
  * Service Assurance AI API
  * OpenAPI spec version: 0.1.0
  */
-import type { TicketOutageType } from "./ticketOutageType";
-import type { TicketSeverity } from "./ticketSeverity";
-import type { TicketSource } from "./ticketSource";
-import type { TicketStatus } from "./ticketStatus";
+import type { TicketOutageType } from './ticketOutageType';
+import type { TicketSeverity } from './ticketSeverity';
+import type { TicketSource } from './ticketSource';
+import type { TicketStatus } from './ticketStatus';
 
 export interface Ticket {
   id: string;

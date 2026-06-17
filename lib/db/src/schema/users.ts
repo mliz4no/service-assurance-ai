@@ -1,17 +1,22 @@
-import { pgTable, text, timestamp, uuid } from "drizzle-orm/pg-core";
-import { createInsertSchema } from "drizzle-zod";
-import { z } from "zod/v4";
+import { pgTable, text, timestamp, uuid } from 'drizzle-orm/pg-core';
+import { createInsertSchema } from 'drizzle-zod';
+import { z } from 'zod/v4';
 
-export const usersTable = pgTable("users", {
-  id: uuid("id").primaryKey().defaultRandom(),
-  name: text("name").notNull(),
-  email: text("email").notNull().unique(),
-  passwordHash: text("password_hash").notNull(),
-  role: text("role", { enum: ["admin", "ops", "customer", "telecom_services_partner"] }).notNull().default("ops"),
-  customerId: uuid("customer_id"),
-  telecomServicesPartnerId: uuid("telecom_services_partner_id"),
-  createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
-  updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow().$onUpdate(() => new Date()),
+export const usersTable = pgTable('users', {
+  id: uuid('id').primaryKey().defaultRandom(),
+  name: text('name').notNull(),
+  email: text('email').notNull().unique(),
+  passwordHash: text('password_hash').notNull(),
+  role: text('role', { enum: ['admin', 'ops', 'customer', 'telecom_services_partner'] })
+    .notNull()
+    .default('ops'),
+  customerId: uuid('customer_id'),
+  telecomServicesPartnerId: uuid('telecom_services_partner_id'),
+  createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
+  updatedAt: timestamp('updated_at', { withTimezone: true })
+    .notNull()
+    .defaultNow()
+    .$onUpdate(() => new Date()),
 });
 
 export const insertUserSchema = createInsertSchema(usersTable).omit({

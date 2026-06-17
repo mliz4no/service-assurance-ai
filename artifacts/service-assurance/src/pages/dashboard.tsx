@@ -2,12 +2,12 @@ import {
   useGetDashboardSummary,
   useGetRecentTickets,
   useGetEscalationNeeded,
-} from "@workspace/api-client-react";
-import { AppLayout } from "@/components/layout/app-layout";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
-import { StatusBadge } from "@/components/status-badge";
-import { SeverityBadge } from "@/components/severity-badge";
+} from '@workspace/api-client-react';
+import { AppLayout } from '@/components/layout/app-layout';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Badge } from '@/components/ui/badge';
+import { StatusBadge } from '@/components/status-badge';
+import { SeverityBadge } from '@/components/severity-badge';
 import {
   Activity,
   AlertTriangle,
@@ -19,12 +19,12 @@ import {
   Ticket,
   TrendingUp,
   Zap,
-} from "lucide-react";
-import { Link } from "wouter";
-import { cn } from "@/lib/utils";
+} from 'lucide-react';
+import { Link } from 'wouter';
+import { cn } from '@/lib/utils';
 
 function timeAgo(date: string | Date): string {
-  const d = typeof date === "string" ? new Date(date) : date;
+  const d = typeof date === 'string' ? new Date(date) : date;
   const secs = Math.floor((Date.now() - d.getTime()) / 1000);
   if (secs < 60) return `${secs}s ago`;
   const mins = Math.floor(secs / 60);
@@ -35,7 +35,7 @@ function timeAgo(date: string | Date): string {
 }
 
 function formatOverdue(date: string | Date): string {
-  const d = typeof date === "string" ? new Date(date) : date;
+  const d = typeof date === 'string' ? new Date(date) : date;
   const mins = Math.floor((Date.now() - d.getTime()) / 60000);
   if (mins < 0) {
     const upcoming = Math.abs(mins);
@@ -73,9 +73,9 @@ function KpiCard({
   const inner = (
     <Card
       className={cn(
-        "border-border/60 shadow-sm border-l-4 transition-shadow group",
+        'border-border/60 shadow-sm border-l-4 transition-shadow group',
         borderColor,
-        href && "hover:shadow-md cursor-pointer"
+        href && 'hover:shadow-md cursor-pointer',
       )}
     >
       <CardContent className="p-5">
@@ -85,18 +85,12 @@ function KpiCard({
               {label}
             </p>
             <p className="text-3xl font-bold tracking-tight text-foreground leading-none">
-              {isLoading ? (
-                <span className="text-muted-foreground text-2xl">—</span>
-              ) : (
-                value
-              )}
+              {isLoading ? <span className="text-muted-foreground text-2xl">—</span> : value}
             </p>
-            {subtext && (
-              <p className="text-xs text-muted-foreground mt-1.5">{subtext}</p>
-            )}
+            {subtext && <p className="text-xs text-muted-foreground mt-1.5">{subtext}</p>}
           </div>
-          <div className={cn("p-2.5 rounded-lg shrink-0", iconBg)}>
-            <Icon className={cn("w-5 h-5", iconColor)} />
+          <div className={cn('p-2.5 rounded-lg shrink-0', iconBg)}>
+            <Icon className={cn('w-5 h-5', iconColor)} />
           </div>
         </div>
         {href && (
@@ -122,7 +116,6 @@ export default function Dashboard() {
   return (
     <AppLayout title="Operations Dashboard">
       <div className="space-y-6 max-w-7xl">
-
         {/* ── KPI Cards ─────────────────────────────────────── */}
         <div className="grid grid-cols-2 lg:grid-cols-4 xl:grid-cols-5 gap-4">
           <KpiCard
@@ -189,13 +182,13 @@ export default function Dashboard() {
                   Ticket Pipeline
                 </span>
                 {[
-                  { key: "new", label: "New", color: "bg-slate-400" },
-                  { key: "investigating", label: "Investigating", color: "bg-blue-500" },
-                  { key: "vendor_engaged", label: "Vendor Engaged", color: "bg-purple-500" },
-                  { key: "dispatch_scheduled", label: "Dispatch", color: "bg-orange-500" },
-                  { key: "monitoring", label: "Monitoring", color: "bg-yellow-500" },
-                  { key: "resolved", label: "Resolved", color: "bg-green-500" },
-                  { key: "closed", label: "Closed", color: "bg-gray-300" },
+                  { key: 'new', label: 'New', color: 'bg-slate-400' },
+                  { key: 'investigating', label: 'Investigating', color: 'bg-blue-500' },
+                  { key: 'vendor_engaged', label: 'Vendor Engaged', color: 'bg-purple-500' },
+                  { key: 'dispatch_scheduled', label: 'Dispatch', color: 'bg-orange-500' },
+                  { key: 'monitoring', label: 'Monitoring', color: 'bg-yellow-500' },
+                  { key: 'resolved', label: 'Resolved', color: 'bg-green-500' },
+                  { key: 'closed', label: 'Closed', color: 'bg-gray-300' },
                 ].map(({ key, label, color }) => {
                   const count = ticketsByStatus[key] ?? 0;
                   if (count === 0) return null;
@@ -205,7 +198,7 @@ export default function Dashboard() {
                       href={`/tickets?status=${key}`}
                       className="flex items-center gap-1.5 hover:opacity-80"
                     >
-                      <span className={cn("w-2.5 h-2.5 rounded-full shrink-0", color)} />
+                      <span className={cn('w-2.5 h-2.5 rounded-full shrink-0', color)} />
                       <span className="text-xs text-muted-foreground">{label}</span>
                       <span className="text-xs font-bold text-foreground">{count}</span>
                     </Link>
@@ -215,16 +208,16 @@ export default function Dashboard() {
                   <>
                     <span className="text-border mx-2">|</span>
                     {[
-                      { key: "critical", label: "Critical", color: "bg-red-500" },
-                      { key: "high", label: "High", color: "bg-orange-500" },
-                      { key: "medium", label: "Medium", color: "bg-yellow-500" },
-                      { key: "low", label: "Low", color: "bg-slate-400" },
+                      { key: 'critical', label: 'Critical', color: 'bg-red-500' },
+                      { key: 'high', label: 'High', color: 'bg-orange-500' },
+                      { key: 'medium', label: 'Medium', color: 'bg-yellow-500' },
+                      { key: 'low', label: 'Low', color: 'bg-slate-400' },
                     ].map(({ key, label, color }) => {
                       const count = ticketsBySeverity[key] ?? 0;
                       if (count === 0) return null;
                       return (
                         <div key={key} className="flex items-center gap-1.5">
-                          <span className={cn("w-2 h-2 rounded-sm shrink-0", color)} />
+                          <span className={cn('w-2 h-2 rounded-sm shrink-0', color)} />
                           <span className="text-xs text-muted-foreground">{label}</span>
                           <span className="text-xs font-bold text-foreground">{count}</span>
                         </div>
@@ -239,7 +232,6 @@ export default function Dashboard() {
 
         {/* ── Main two-column ───────────────────────────────── */}
         <div className="grid grid-cols-1 xl:grid-cols-5 gap-5">
-
           {/* Recent Tickets — wider */}
           <div className="xl:col-span-3">
             <Card className="border-border/60 shadow-sm h-full">
@@ -280,14 +272,14 @@ export default function Dashboard() {
                           {/* Severity dot */}
                           <span
                             className={cn(
-                              "mt-1 w-2 h-2 rounded-full shrink-0",
-                              t.severity === "critical"
-                                ? "bg-red-500"
-                                : t.severity === "high"
-                                ? "bg-orange-400"
-                                : t.severity === "medium"
-                                ? "bg-yellow-400"
-                                : "bg-slate-300"
+                              'mt-1 w-2 h-2 rounded-full shrink-0',
+                              t.severity === 'critical'
+                                ? 'bg-red-500'
+                                : t.severity === 'high'
+                                  ? 'bg-orange-400'
+                                  : t.severity === 'medium'
+                                    ? 'bg-yellow-400'
+                                    : 'bg-slate-300',
                             )}
                           />
                           <div className="flex-1 min-w-0">
@@ -363,10 +355,10 @@ export default function Dashboard() {
                           key={t.id}
                           href={`/tickets/${t.id}`}
                           className={cn(
-                            "block p-3 rounded-lg border transition-all hover:shadow-sm",
+                            'block p-3 rounded-lg border transition-all hover:shadow-sm',
                             isBreached
-                              ? "bg-red-50 border-red-200 hover:border-red-300"
-                              : "bg-orange-50 border-orange-200 hover:border-orange-300"
+                              ? 'bg-red-50 border-red-200 hover:border-red-300'
+                              : 'bg-orange-50 border-orange-200 hover:border-orange-300',
                           )}
                         >
                           <div className="flex items-start justify-between gap-2 mb-1">
@@ -379,8 +371,8 @@ export default function Dashboard() {
                             {escalationLabel && (
                               <span
                                 className={cn(
-                                  "text-xs font-bold shrink-0",
-                                  isBreached ? "text-red-700" : "text-orange-700"
+                                  'text-xs font-bold shrink-0',
+                                  isBreached ? 'text-red-700' : 'text-orange-700',
                                 )}
                               >
                                 {escalationLabel}

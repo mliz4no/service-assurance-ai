@@ -10,6 +10,6 @@ export type TicketUpdateVisibility =
   (typeof TicketUpdateVisibility)[keyof typeof TicketUpdateVisibility];
 
 export const TicketUpdateVisibility = {
-  internal: "internal",
-  customer: "customer",
+  internal: 'internal',
+  customer: 'customer',
 } as const;

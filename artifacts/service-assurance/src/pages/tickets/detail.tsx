@@ -1,5 +1,5 @@
-import { useParams } from "wouter";
-import { AppLayout } from "@/components/layout/app-layout";
+import { useParams } from 'wouter';
+import { AppLayout } from '@/components/layout/app-layout';
 import {
   useGetTicket,
   useGetTicketUpdates,
@@ -12,13 +12,13 @@ import {
   getGetTicketUpdatesQueryKey,
   useGetUsers,
   UpdateTicketRequestStatus,
-} from "@workspace/api-client-react";
-import { useQueryClient } from "@tanstack/react-query";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Link } from "wouter";
-import { useToast } from "@/hooks/use-toast";
-import { useAuth } from "@/lib/auth";
-import { useState } from "react";
+} from '@workspace/api-client-react';
+import { useQueryClient } from '@tanstack/react-query';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Link } from 'wouter';
+import { useToast } from '@/hooks/use-toast';
+import { useAuth } from '@/lib/auth';
+import { useState } from 'react';
 import {
   Activity,
   Building2,
@@ -29,14 +29,14 @@ import {
   Tag,
   User as UserIcon,
   AlertTriangle,
-} from "lucide-react";
-import { EscalationPanel } from "./EscalationPanel";
-import { cn } from "@/lib/utils";
-import { formatDuration, timeAgo } from "./ticket-utils";
-import { TicketHeader } from "./TicketHeader";
-import { AIPanels } from "./AIPanels";
-import { UpdateTimeline } from "./UpdateTimeline";
-import type { TicketWithAI } from "@/types";
+} from 'lucide-react';
+import { EscalationPanel } from './EscalationPanel';
+import { cn } from '@/lib/utils';
+import { formatDuration, timeAgo } from './ticket-utils';
+import { TicketHeader } from './TicketHeader';
+import { AIPanels } from './AIPanels';
+import { UpdateTimeline } from './UpdateTimeline';
+import type { TicketWithAI } from '@/types';
 
 function Row({ label, children }: { label: string; children: React.ReactNode }) {
   return (
@@ -58,11 +58,11 @@ export default function TicketDetail() {
   const { toast } = useToast();
   const { user: currentUser } = useAuth();
 
-  const [updateText, setUpdateText] = useState("");
+  const [updateText, setUpdateText] = useState('');
   const [updateType, setUpdateType] = useState<
-    "internal_note" | "vendor_update" | "customer_update"
-  >("internal_note");
-  const [updateVisibility, setUpdateVisibility] = useState<"internal" | "customer">("internal");
+    'internal_note' | 'vendor_update' | 'customer_update'
+  >('internal_note');
+  const [updateVisibility, setUpdateVisibility] = useState<'internal' | 'customer'>('internal');
 
   const { data: rawTicket, isLoading: isLoadingTicket } = useGetTicket(id, {
     query: { enabled: !!id },
@@ -100,7 +100,7 @@ export default function TicketDetail() {
   // even though they're absent from the generated OpenAPI spec
   const ticket = rawTicket as TicketWithAI;
 
-  const isCustomer = currentUser?.role === "customer";
+  const isCustomer = currentUser?.role === 'customer';
   const now = new Date();
   const escalationAt = ticket.nextEscalationAt ? new Date(ticket.nextEscalationAt) : null;
   const isBreached = !!(escalationAt && escalationAt < now);
@@ -109,7 +109,7 @@ export default function TicketDetail() {
     : null;
   const isApproaching = !isBreached && minsUntilBreach !== null && minsUntilBreach < 60;
   const breachOverdueMs = isBreached ? now.getTime() - escalationAt!.getTime() : 0;
-  const isResolved = ticket.status === "resolved" || ticket.status === "closed";
+  const isResolved = ticket.status === 'resolved' || ticket.status === 'closed';
 
   // ── Handlers ────────────────────────────────────────────────────────────
 
@@ -122,43 +122,47 @@ export default function TicketDetail() {
             {
               id,
               data: {
-                updateType: "system_event",
-                rawText: `Status changed to ${newStatus.replace(/_/g, " ")}`,
-                visibility: "internal",
+                updateType: 'system_event',
+                rawText: `Status changed to ${newStatus.replace(/_/g, ' ')}`,
+                visibility: 'internal',
               },
             },
             {
               onSuccess: () => {
                 queryClient.invalidateQueries({ queryKey: getGetTicketQueryKey(id) });
                 queryClient.invalidateQueries({ queryKey: getGetTicketUpdatesQueryKey(id) });
-                toast({ title: "Status updated" });
+                toast({ title: 'Status updated' });
               },
-            }
+            },
           );
         },
         onError: (err: Error) => {
-          toast({ title: "Failed to update status", description: err.message, variant: "destructive" });
+          toast({
+            title: 'Failed to update status',
+            description: err.message,
+            variant: 'destructive',
+          });
         },
-      }
+      },
     );
   };
 
   const handleAssigneeChange = (newUserId: string) => {
     updateMutation.mutate(
-      { id, data: { assignedToUserId: newUserId === "unassigned" ? null : newUserId } },
+      { id, data: { assignedToUserId: newUserId === 'unassigned' ? null : newUserId } },
       {
         onSuccess: () => {
           const userName =
-            newUserId === "unassigned"
-              ? "Unassigned"
-              : users?.find((u) => u.id === newUserId)?.name || "Unknown";
+            newUserId === 'unassigned'
+              ? 'Unassigned'
+              : users?.find((u) => u.id === newUserId)?.name || 'Unknown';
           createUpdateMutation.mutate(
             {
               id,
               data: {
-                updateType: "system_event",
+                updateType: 'system_event',
                 rawText: `Assigned to ${userName}`,
-                visibility: "internal",
+                visibility: 'internal',
               },
             },
             {
@@ -166,10 +170,10 @@ export default function TicketDetail() {
                 queryClient.invalidateQueries({ queryKey: getGetTicketQueryKey(id) });
                 queryClient.invalidateQueries({ queryKey: getGetTicketUpdatesQueryKey(id) });
               },
-            }
+            },
           );
         },
-      }
+      },
     );
   };
 
@@ -179,48 +183,52 @@ export default function TicketDetail() {
       { id, data: { updateType, rawText: updateText, visibility: updateVisibility } },
       {
         onSuccess: () => {
-          setUpdateText("");
-          toast({ title: "Update posted" });
+          setUpdateText('');
+          toast({ title: 'Update posted' });
           queryClient.invalidateQueries({ queryKey: getGetTicketUpdatesQueryKey(id) });
           queryClient.invalidateQueries({ queryKey: getGetTicketQueryKey(id) });
         },
         onError: (err: Error) => {
-          toast({ title: "Error posting update", description: err.message, variant: "destructive" });
+          toast({
+            title: 'Error posting update',
+            description: err.message,
+            variant: 'destructive',
+          });
         },
-      }
+      },
     );
   };
 
-  const runAi = (action: "summarize" | "normalize" | "customer_update") => {
+  const runAi = (action: 'summarize' | 'normalize' | 'customer_update') => {
     const callbacks = {
       onSuccess: () => {
         queryClient.invalidateQueries({ queryKey: getGetTicketQueryKey(id) });
-        toast({ title: "AI output generated" });
+        toast({ title: 'AI output generated' });
       },
       onError: (err: Error) => {
         toast({
-          title: "AI generation failed",
-          description: err.message || "Check your OPENAI_API_KEY",
-          variant: "destructive",
+          title: 'AI generation failed',
+          description: err.message || 'Check your OPENAI_API_KEY',
+          variant: 'destructive',
         });
       },
     };
 
-    if (action === "summarize") summarizeMutation.mutate({ id }, callbacks);
-    else if (action === "normalize") normalizeMutation.mutate({ id }, callbacks);
+    if (action === 'summarize') summarizeMutation.mutate({ id }, callbacks);
+    else if (action === 'normalize') normalizeMutation.mutate({ id }, callbacks);
     else customerUpdateMutation.mutate({ id }, callbacks);
   };
 
   const copyToClipboard = (text: string) => {
     navigator.clipboard.writeText(text);
-    toast({ title: "Copied to clipboard" });
+    toast({ title: 'Copied to clipboard' });
   };
 
   const handleUseAsUpdate = (text: string) => {
     setUpdateText(text);
-    setUpdateType("customer_update");
-    setUpdateVisibility("customer");
-    document.getElementById("update-form")?.scrollIntoView({ behavior: "smooth" });
+    setUpdateType('customer_update');
+    setUpdateVisibility('customer');
+    document.getElementById('update-form')?.scrollIntoView({ behavior: 'smooth' });
   };
 
   // ── Render ───────────────────────────────────────────────────────────────
@@ -228,7 +236,6 @@ export default function TicketDetail() {
   return (
     <AppLayout title={`${ticket.ticketNumber} — ${ticket.title}`}>
       <div className="max-w-7xl mx-auto pb-16 space-y-0">
-
         <TicketHeader
           ticket={ticket}
           users={users}
@@ -257,10 +264,8 @@ export default function TicketDetail() {
 
         {/* ── Main two-column layout ────────────────────────── */}
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-5">
-
           {/* Left: Properties */}
           <div className="space-y-5">
-
             <Card className="border-border/60 shadow-sm">
               <CardHeader className="pb-2 pt-4 px-5">
                 <CardTitle className="text-sm font-semibold text-muted-foreground uppercase tracking-wide">
@@ -282,9 +287,7 @@ export default function TicketDetail() {
                   )}
                 </Row>
                 <Row label="Account No.">
-                  <span className="font-mono text-xs">
-                    {ticket.customer?.accountNumber || "—"}
-                  </span>
+                  <span className="font-mono text-xs">{ticket.customer?.accountNumber || '—'}</span>
                 </Row>
                 <Row label="Site">
                   {ticket.site ? (
@@ -384,8 +387,8 @@ export default function TicketDetail() {
                   {escalationAt ? (
                     <span
                       className={cn(
-                        "flex items-center gap-1 font-medium",
-                        isBreached ? "text-red-600" : isApproaching ? "text-orange-500" : ""
+                        'flex items-center gap-1 font-medium',
+                        isBreached ? 'text-red-600' : isApproaching ? 'text-orange-500' : '',
                       )}
                     >
                       <Clock className="w-3.5 h-3.5" />
@@ -408,13 +411,7 @@ export default function TicketDetail() {
               </CardContent>
             </Card>
 
-
-            <EscalationPanel
-              ticketId={id}
-              isCustomer={isCustomer}
-              isResolved={isResolved}
-            />
-
+            <EscalationPanel ticketId={id} isCustomer={isCustomer} isResolved={isResolved} />
           </div>
 
           {/* Right: Description + Timeline + Add Update */}
@@ -432,7 +429,6 @@ export default function TicketDetail() {
             onAddUpdate={handleAddUpdate}
             isPostingUpdate={createUpdateMutation.isPending}
           />
-
         </div>
       </div>
     </AppLayout>

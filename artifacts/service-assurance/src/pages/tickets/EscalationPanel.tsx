@@ -1,30 +1,43 @@
-import { useState } from "react";
-import { Bell, ChevronDown, ChevronRight, Clock, GitBranch, Mail, RefreshCw, User } from "lucide-react";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
-import { useGetTicketNotifications, useEvaluateEscalation, getGetTicketNotificationsQueryKey } from "@workspace/api-client-react";
-import { useQueryClient } from "@tanstack/react-query";
-import { useToast } from "@/hooks/use-toast";
-import { cn } from "@/lib/utils";
+import { useState } from 'react';
+import {
+  Bell,
+  ChevronDown,
+  ChevronRight,
+  Clock,
+  GitBranch,
+  Mail,
+  RefreshCw,
+  User,
+} from 'lucide-react';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
+import {
+  useGetTicketNotifications,
+  useEvaluateEscalation,
+  getGetTicketNotificationsQueryKey,
+} from '@workspace/api-client-react';
+import { useQueryClient } from '@tanstack/react-query';
+import { useToast } from '@/hooks/use-toast';
+import { cn } from '@/lib/utils';
 
 const REASON_LABELS: Record<string, string> = {
-  severity_threshold: "Severity threshold met",
-  duration_threshold: "Duration threshold reached",
-  manual: "Manually triggered",
+  severity_threshold: 'Severity threshold met',
+  duration_threshold: 'Duration threshold reached',
+  manual: 'Manually triggered',
 };
 
 const ROLE_BADGE: Record<string, string> = {
-  noc: "bg-blue-100 text-blue-800",
-  manager: "bg-purple-100 text-purple-800",
-  director: "bg-orange-100 text-orange-800",
-  executive: "bg-red-100 text-red-800",
+  noc: 'bg-blue-100 text-blue-800',
+  manager: 'bg-purple-100 text-purple-800',
+  director: 'bg-orange-100 text-orange-800',
+  executive: 'bg-red-100 text-red-800',
 };
 
 const SEVERITY_BADGE: Record<string, string> = {
-  critical: "bg-red-100 text-red-800",
-  high: "bg-orange-100 text-orange-800",
-  medium: "bg-yellow-100 text-yellow-800",
-  low: "bg-slate-100 text-slate-700",
+  critical: 'bg-red-100 text-red-800',
+  high: 'bg-orange-100 text-orange-800',
+  medium: 'bg-yellow-100 text-yellow-800',
+  low: 'bg-slate-100 text-slate-700',
 };
 
 interface Props {
@@ -41,19 +54,28 @@ export function EscalationPanel({ ticketId, isCustomer, isResolved }: Props) {
   const [expandedId, setExpandedId] = useState<string | null>(null);
 
   const handleEvaluate = () => {
-    evaluateMutation.mutate({ ticketId }, {
-      onSuccess: (result) => {
-        queryClient.invalidateQueries({ queryKey: getGetTicketNotificationsQueryKey(ticketId) });
-        if (result.notified > 0) {
-          toast({ title: `Customer escalation evaluated — ${result.notified} contact(s) notified` });
-        } else {
-          toast({ title: "Customer escalation evaluated — no new notifications required" });
-        }
+    evaluateMutation.mutate(
+      { ticketId },
+      {
+        onSuccess: (result) => {
+          queryClient.invalidateQueries({ queryKey: getGetTicketNotificationsQueryKey(ticketId) });
+          if (result.notified > 0) {
+            toast({
+              title: `Customer escalation evaluated — ${result.notified} contact(s) notified`,
+            });
+          } else {
+            toast({ title: 'Customer escalation evaluated — no new notifications required' });
+          }
+        },
+        onError: (err: any) => {
+          toast({
+            title: 'Customer escalation failed',
+            description: err.message,
+            variant: 'destructive',
+          });
+        },
       },
-      onError: (err: any) => {
-        toast({ title: "Customer escalation failed", description: err.message, variant: "destructive" });
-      },
-    });
+    );
   };
 
   if (isCustomer) return null;
@@ -74,7 +96,9 @@ export function EscalationPanel({ ticketId, isCustomer, isResolved }: Props) {
             disabled={evaluateMutation.isPending}
             data-testid="evaluate-escalation-btn"
           >
-            <RefreshCw className={cn("w-3 h-3 mr-1", evaluateMutation.isPending && "animate-spin")} />
+            <RefreshCw
+              className={cn('w-3 h-3 mr-1', evaluateMutation.isPending && 'animate-spin')}
+            />
             Evaluate
           </Button>
         )}
@@ -95,16 +119,29 @@ export function EscalationPanel({ ticketId, isCustomer, isResolved }: Props) {
                   onClick={() => setExpandedId(expandedId === n.id ? null : n.id)}
                 >
                   <div className="flex items-center gap-2 min-w-0">
-                    {expandedId === n.id
-                      ? <ChevronDown className="w-3.5 h-3.5 text-muted-foreground shrink-0" />
-                      : <ChevronRight className="w-3.5 h-3.5 text-muted-foreground shrink-0" />
-                    }
+                    {expandedId === n.id ? (
+                      <ChevronDown className="w-3.5 h-3.5 text-muted-foreground shrink-0" />
+                    ) : (
+                      <ChevronRight className="w-3.5 h-3.5 text-muted-foreground shrink-0" />
+                    )}
                     <User className="w-3.5 h-3.5 text-muted-foreground shrink-0" />
-                    <span className="text-sm font-medium truncate" data-testid="notif-contact-name">{n.contactName}</span>
-                    <span className={cn("text-xs px-1.5 py-0.5 rounded font-medium capitalize shrink-0", ROLE_BADGE[n.contactRole] ?? "bg-slate-100 text-slate-700")}>
+                    <span className="text-sm font-medium truncate" data-testid="notif-contact-name">
+                      {n.contactName}
+                    </span>
+                    <span
+                      className={cn(
+                        'text-xs px-1.5 py-0.5 rounded font-medium capitalize shrink-0',
+                        ROLE_BADGE[n.contactRole] ?? 'bg-slate-100 text-slate-700',
+                      )}
+                    >
                       {n.contactRole}
                     </span>
-                    <span className={cn("text-xs px-1.5 py-0.5 rounded font-medium uppercase shrink-0", SEVERITY_BADGE[n.severity] ?? "bg-slate-100 text-slate-700")}>
+                    <span
+                      className={cn(
+                        'text-xs px-1.5 py-0.5 rounded font-medium uppercase shrink-0',
+                        SEVERITY_BADGE[n.severity] ?? 'bg-slate-100 text-slate-700',
+                      )}
+                    >
                       {n.severity}
                     </span>
                   </div>

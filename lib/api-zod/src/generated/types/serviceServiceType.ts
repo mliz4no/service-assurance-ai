@@ -6,14 +6,13 @@
  * OpenAPI spec version: 0.1.0
  */
 
-export type ServiceServiceType =
-  (typeof ServiceServiceType)[keyof typeof ServiceServiceType];
+export type ServiceServiceType = (typeof ServiceServiceType)[keyof typeof ServiceServiceType];
 
 export const ServiceServiceType = {
-  DIA: "DIA",
-  Broadband: "Broadband",
-  "SD-WAN": "SD-WAN",
-  Voice: "Voice",
-  Wireless: "Wireless",
-  Other: "Other",
+  DIA: 'DIA',
+  Broadband: 'Broadband',
+  'SD-WAN': 'SD-WAN',
+  Voice: 'Voice',
+  Wireless: 'Wireless',
+  Other: 'Other',
 } as const;

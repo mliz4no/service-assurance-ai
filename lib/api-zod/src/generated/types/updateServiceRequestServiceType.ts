@@ -10,10 +10,10 @@ export type UpdateServiceRequestServiceType =
   (typeof UpdateServiceRequestServiceType)[keyof typeof UpdateServiceRequestServiceType];
 
 export const UpdateServiceRequestServiceType = {
-  DIA: "DIA",
-  Broadband: "Broadband",
-  "SD-WAN": "SD-WAN",
-  Voice: "Voice",
-  Wireless: "Wireless",
-  Other: "Other",
+  DIA: 'DIA',
+  Broadband: 'Broadband',
+  'SD-WAN': 'SD-WAN',
+  Voice: 'Voice',
+  Wireless: 'Wireless',
+  Other: 'Other',
 } as const;

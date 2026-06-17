@@ -27,9 +27,9 @@ export interface LoginRequest {
 export type UserRole = (typeof UserRole)[keyof typeof UserRole];
 
 export const UserRole = {
-  admin: "admin",
-  ops: "ops",
-  customer: "customer",
+  admin: 'admin',
+  ops: 'ops',
+  customer: 'customer',
 } as const;
 
 export interface User {
@@ -51,9 +51,9 @@ export type CreateUserRequestRole =
   (typeof CreateUserRequestRole)[keyof typeof CreateUserRequestRole];
 
 export const CreateUserRequestRole = {
-  admin: "admin",
-  ops: "ops",
-  customer: "customer",
+  admin: 'admin',
+  ops: 'ops',
+  customer: 'customer',
 } as const;
 
 export interface CreateUserRequest {
@@ -68,9 +68,9 @@ export type UpdateUserRequestRole =
   (typeof UpdateUserRequestRole)[keyof typeof UpdateUserRequestRole];
 
 export const UpdateUserRequestRole = {
-  admin: "admin",
-  ops: "ops",
-  customer: "customer",
+  admin: 'admin',
+  ops: 'ops',
+  customer: 'customer',
 } as const;
 
 export interface UpdateUserRequest {
@@ -81,12 +81,11 @@ export interface UpdateUserRequest {
   customerId?: string | null;
 }
 
-export type CustomerStatus =
-  (typeof CustomerStatus)[keyof typeof CustomerStatus];
+export type CustomerStatus = (typeof CustomerStatus)[keyof typeof CustomerStatus];
 
 export const CustomerStatus = {
-  active: "active",
-  inactive: "inactive",
+  active: 'active',
+  inactive: 'inactive',
 } as const;
 
 export interface Customer {
@@ -120,31 +119,30 @@ export interface Site {
   lconEmail?: string | null;
   latitude?: number | null;
   longitude?: number | null;
-  geoSource?: "manual" | "geocoded" | "imported" | null;
+  geoSource?: 'manual' | 'geocoded' | 'imported' | null;
   createdAt: string;
   updatedAt: string;
 }
 
-export type ServiceServiceType =
-  (typeof ServiceServiceType)[keyof typeof ServiceServiceType];
+export type ServiceServiceType = (typeof ServiceServiceType)[keyof typeof ServiceServiceType];
 
 export const ServiceServiceType = {
-  DIA: "DIA",
-  Broadband: "Broadband",
-  "SD-WAN": "SD-WAN",
-  Voice: "Voice",
-  Wireless: "Wireless",
-  Other: "Other",
+  DIA: 'DIA',
+  Broadband: 'Broadband',
+  'SD-WAN': 'SD-WAN',
+  Voice: 'Voice',
+  Wireless: 'Wireless',
+  Other: 'Other',
 } as const;
 
 export type ServiceStatus = (typeof ServiceStatus)[keyof typeof ServiceStatus];
 
 export const ServiceStatus = {
-  active: "active",
-  pending: "pending",
-  down: "down",
-  impaired: "impaired",
-  disconnected: "disconnected",
+  active: 'active',
+  pending: 'pending',
+  down: 'down',
+  impaired: 'impaired',
+  disconnected: 'disconnected',
 } as const;
 
 export interface Service {
@@ -167,45 +165,43 @@ export interface Service {
 export type TicketSource = (typeof TicketSource)[keyof typeof TicketSource];
 
 export const TicketSource = {
-  manual: "manual",
-  email: "email",
-  api: "api",
+  manual: 'manual',
+  email: 'email',
+  api: 'api',
 } as const;
 
-export type TicketSeverity =
-  (typeof TicketSeverity)[keyof typeof TicketSeverity];
+export type TicketSeverity = (typeof TicketSeverity)[keyof typeof TicketSeverity];
 
 export const TicketSeverity = {
-  low: "low",
-  medium: "medium",
-  high: "high",
-  critical: "critical",
+  low: 'low',
+  medium: 'medium',
+  high: 'high',
+  critical: 'critical',
 } as const;
 
 export type TicketStatus = (typeof TicketStatus)[keyof typeof TicketStatus];
 
 export const TicketStatus = {
-  new: "new",
-  investigating: "investigating",
-  vendor_engaged: "vendor_engaged",
-  dispatch_scheduled: "dispatch_scheduled",
-  monitoring: "monitoring",
-  resolved: "resolved",
-  closed: "closed",
+  new: 'new',
+  investigating: 'investigating',
+  vendor_engaged: 'vendor_engaged',
+  dispatch_scheduled: 'dispatch_scheduled',
+  monitoring: 'monitoring',
+  resolved: 'resolved',
+  closed: 'closed',
 } as const;
 
-export type TicketOutageType =
-  (typeof TicketOutageType)[keyof typeof TicketOutageType];
+export type TicketOutageType = (typeof TicketOutageType)[keyof typeof TicketOutageType];
 
 export const TicketOutageType = {
-  outage: "outage",
-  impairment: "impairment",
-  informational: "informational",
-  unknown: "unknown",
+  outage: 'outage',
+  impairment: 'impairment',
+  informational: 'informational',
+  unknown: 'unknown',
 } as const;
 
-export type TicketImpactLevel = "low" | "medium" | "high";
-export type TicketUrgencyLevel = "low" | "medium" | "high";
+export type TicketImpactLevel = 'low' | 'medium' | 'high';
+export type TicketUrgencyLevel = 'low' | 'medium' | 'high';
 
 export interface Ticket {
   id: string;
@@ -236,7 +232,7 @@ export interface Ticket {
   updatedAt: string;
 }
 
-export type CustomerContactRole = "noc" | "manager" | "director" | "executive";
+export type CustomerContactRole = 'noc' | 'manager' | 'director' | 'executive';
 
 export interface CustomerContact {
   id: string;
@@ -272,8 +268,8 @@ export interface UpdateCustomerContactRequest {
   notificationChannels?: string;
 }
 
-export type EscalationReason = "severity_threshold" | "duration_threshold" | "manual";
-export type EscalationStatus = "simulated" | "sent" | "failed";
+export type EscalationReason = 'severity_threshold' | 'duration_threshold' | 'manual';
+export type EscalationStatus = 'simulated' | 'sent' | 'failed';
 
 export interface EscalationNotification {
   id: string;
@@ -303,8 +299,8 @@ export type CreateCustomerRequestStatus =
   (typeof CreateCustomerRequestStatus)[keyof typeof CreateCustomerRequestStatus];
 
 export const CreateCustomerRequestStatus = {
-  active: "active",
-  inactive: "inactive",
+  active: 'active',
+  inactive: 'inactive',
 } as const;
 
 export interface CreateCustomerRequest {
@@ -321,8 +317,8 @@ export type UpdateCustomerRequestStatus =
   (typeof UpdateCustomerRequestStatus)[keyof typeof UpdateCustomerRequestStatus];
 
 export const UpdateCustomerRequestStatus = {
-  active: "active",
-  inactive: "inactive",
+  active: 'active',
+  inactive: 'inactive',
 } as const;
 
 export interface UpdateCustomerRequest {
@@ -362,7 +358,7 @@ export interface CreateSiteRequest {
   lconEmail?: string | null;
   latitude?: number | null;
   longitude?: number | null;
-  geoSource?: "manual" | "geocoded" | "imported" | null;
+  geoSource?: 'manual' | 'geocoded' | 'imported' | null;
 }
 
 export interface UpdateSiteRequest {
@@ -381,7 +377,7 @@ export interface UpdateSiteRequest {
   lconEmail?: string | null;
   latitude?: number | null;
   longitude?: number | null;
-  geoSource?: "manual" | "geocoded" | "imported" | null;
+  geoSource?: 'manual' | 'geocoded' | 'imported' | null;
 }
 
 export type ServiceWithRelations = Service & {
@@ -393,23 +389,23 @@ export type CreateServiceRequestServiceType =
   (typeof CreateServiceRequestServiceType)[keyof typeof CreateServiceRequestServiceType];
 
 export const CreateServiceRequestServiceType = {
-  DIA: "DIA",
-  Broadband: "Broadband",
-  "SD-WAN": "SD-WAN",
-  Voice: "Voice",
-  Wireless: "Wireless",
-  Other: "Other",
+  DIA: 'DIA',
+  Broadband: 'Broadband',
+  'SD-WAN': 'SD-WAN',
+  Voice: 'Voice',
+  Wireless: 'Wireless',
+  Other: 'Other',
 } as const;
 
 export type CreateServiceRequestStatus =
   (typeof CreateServiceRequestStatus)[keyof typeof CreateServiceRequestStatus];
 
 export const CreateServiceRequestStatus = {
-  active: "active",
-  pending: "pending",
-  down: "down",
-  impaired: "impaired",
-  disconnected: "disconnected",
+  active: 'active',
+  pending: 'pending',
+  down: 'down',
+  impaired: 'impaired',
+  disconnected: 'disconnected',
 } as const;
 
 export interface CreateServiceRequest {
@@ -430,23 +426,23 @@ export type UpdateServiceRequestServiceType =
   (typeof UpdateServiceRequestServiceType)[keyof typeof UpdateServiceRequestServiceType];
 
 export const UpdateServiceRequestServiceType = {
-  DIA: "DIA",
-  Broadband: "Broadband",
-  "SD-WAN": "SD-WAN",
-  Voice: "Voice",
-  Wireless: "Wireless",
-  Other: "Other",
+  DIA: 'DIA',
+  Broadband: 'Broadband',
+  'SD-WAN': 'SD-WAN',
+  Voice: 'Voice',
+  Wireless: 'Wireless',
+  Other: 'Other',
 } as const;
 
 export type UpdateServiceRequestStatus =
   (typeof UpdateServiceRequestStatus)[keyof typeof UpdateServiceRequestStatus];
 
 export const UpdateServiceRequestStatus = {
-  active: "active",
-  pending: "pending",
-  down: "down",
-  impaired: "impaired",
-  disconnected: "disconnected",
+  active: 'active',
+  pending: 'pending',
+  down: 'down',
+  impaired: 'impaired',
+  disconnected: 'disconnected',
 } as const;
 
 export interface UpdateServiceRequest {
@@ -472,19 +468,19 @@ export type TicketUpdateUpdateType =
   (typeof TicketUpdateUpdateType)[keyof typeof TicketUpdateUpdateType];
 
 export const TicketUpdateUpdateType = {
-  internal_note: "internal_note",
-  vendor_update: "vendor_update",
-  customer_update: "customer_update",
-  system_event: "system_event",
-  ai_generated: "ai_generated",
+  internal_note: 'internal_note',
+  vendor_update: 'vendor_update',
+  customer_update: 'customer_update',
+  system_event: 'system_event',
+  ai_generated: 'ai_generated',
 } as const;
 
 export type TicketUpdateVisibility =
   (typeof TicketUpdateVisibility)[keyof typeof TicketUpdateVisibility];
 
 export const TicketUpdateVisibility = {
-  internal: "internal",
-  customer: "customer",
+  internal: 'internal',
+  customer: 'customer',
 } as const;
 
 export interface TicketUpdate {
@@ -507,42 +503,42 @@ export type CreateTicketRequestSource =
   (typeof CreateTicketRequestSource)[keyof typeof CreateTicketRequestSource];
 
 export const CreateTicketRequestSource = {
-  manual: "manual",
-  email: "email",
-  api: "api",
+  manual: 'manual',
+  email: 'email',
+  api: 'api',
 } as const;
 
 export type CreateTicketRequestSeverity =
   (typeof CreateTicketRequestSeverity)[keyof typeof CreateTicketRequestSeverity];
 
 export const CreateTicketRequestSeverity = {
-  low: "low",
-  medium: "medium",
-  high: "high",
-  critical: "critical",
+  low: 'low',
+  medium: 'medium',
+  high: 'high',
+  critical: 'critical',
 } as const;
 
 export type CreateTicketRequestStatus =
   (typeof CreateTicketRequestStatus)[keyof typeof CreateTicketRequestStatus];
 
 export const CreateTicketRequestStatus = {
-  new: "new",
-  investigating: "investigating",
-  vendor_engaged: "vendor_engaged",
-  dispatch_scheduled: "dispatch_scheduled",
-  monitoring: "monitoring",
-  resolved: "resolved",
-  closed: "closed",
+  new: 'new',
+  investigating: 'investigating',
+  vendor_engaged: 'vendor_engaged',
+  dispatch_scheduled: 'dispatch_scheduled',
+  monitoring: 'monitoring',
+  resolved: 'resolved',
+  closed: 'closed',
 } as const;
 
 export type CreateTicketRequestOutageType =
   (typeof CreateTicketRequestOutageType)[keyof typeof CreateTicketRequestOutageType];
 
 export const CreateTicketRequestOutageType = {
-  outage: "outage",
-  impairment: "impairment",
-  informational: "informational",
-  unknown: "unknown",
+  outage: 'outage',
+  impairment: 'impairment',
+  informational: 'informational',
+  unknown: 'unknown',
 } as const;
 
 export interface CreateTicketRequest {
@@ -566,33 +562,33 @@ export type UpdateTicketRequestSeverity =
   (typeof UpdateTicketRequestSeverity)[keyof typeof UpdateTicketRequestSeverity];
 
 export const UpdateTicketRequestSeverity = {
-  low: "low",
-  medium: "medium",
-  high: "high",
-  critical: "critical",
+  low: 'low',
+  medium: 'medium',
+  high: 'high',
+  critical: 'critical',
 } as const;
 
 export type UpdateTicketRequestStatus =
   (typeof UpdateTicketRequestStatus)[keyof typeof UpdateTicketRequestStatus];
 
 export const UpdateTicketRequestStatus = {
-  new: "new",
-  investigating: "investigating",
-  vendor_engaged: "vendor_engaged",
-  dispatch_scheduled: "dispatch_scheduled",
-  monitoring: "monitoring",
-  resolved: "resolved",
-  closed: "closed",
+  new: 'new',
+  investigating: 'investigating',
+  vendor_engaged: 'vendor_engaged',
+  dispatch_scheduled: 'dispatch_scheduled',
+  monitoring: 'monitoring',
+  resolved: 'resolved',
+  closed: 'closed',
 } as const;
 
 export type UpdateTicketRequestOutageType =
   (typeof UpdateTicketRequestOutageType)[keyof typeof UpdateTicketRequestOutageType];
 
 export const UpdateTicketRequestOutageType = {
-  outage: "outage",
-  impairment: "impairment",
-  informational: "informational",
-  unknown: "unknown",
+  outage: 'outage',
+  impairment: 'impairment',
+  informational: 'informational',
+  unknown: 'unknown',
 } as const;
 
 export interface UpdateTicketRequest {
@@ -616,19 +612,19 @@ export type CreateTicketUpdateRequestUpdateType =
   (typeof CreateTicketUpdateRequestUpdateType)[keyof typeof CreateTicketUpdateRequestUpdateType];
 
 export const CreateTicketUpdateRequestUpdateType = {
-  internal_note: "internal_note",
-  vendor_update: "vendor_update",
-  customer_update: "customer_update",
-  system_event: "system_event",
-  ai_generated: "ai_generated",
+  internal_note: 'internal_note',
+  vendor_update: 'vendor_update',
+  customer_update: 'customer_update',
+  system_event: 'system_event',
+  ai_generated: 'ai_generated',
 } as const;
 
 export type CreateTicketUpdateRequestVisibility =
   (typeof CreateTicketUpdateRequestVisibility)[keyof typeof CreateTicketUpdateRequestVisibility];
 
 export const CreateTicketUpdateRequestVisibility = {
-  internal: "internal",
-  customer: "customer",
+  internal: 'internal',
+  customer: 'customer',
 } as const;
 
 export interface CreateTicketUpdateRequest {
@@ -638,14 +634,13 @@ export interface CreateTicketUpdateRequest {
   visibility: CreateTicketUpdateRequestVisibility;
 }
 
-export type SlaPolicySeverity =
-  (typeof SlaPolicySeverity)[keyof typeof SlaPolicySeverity];
+export type SlaPolicySeverity = (typeof SlaPolicySeverity)[keyof typeof SlaPolicySeverity];
 
 export const SlaPolicySeverity = {
-  low: "low",
-  medium: "medium",
-  high: "high",
-  critical: "critical",
+  low: 'low',
+  medium: 'medium',
+  high: 'high',
+  critical: 'critical',
 } as const;
 
 export interface SlaPolicy {
@@ -664,10 +659,10 @@ export type CreateSlaPolicyRequestSeverity =
   (typeof CreateSlaPolicyRequestSeverity)[keyof typeof CreateSlaPolicyRequestSeverity];
 
 export const CreateSlaPolicyRequestSeverity = {
-  low: "low",
-  medium: "medium",
-  high: "high",
-  critical: "critical",
+  low: 'low',
+  medium: 'medium',
+  high: 'high',
+  critical: 'critical',
 } as const;
 
 export interface CreateSlaPolicyRequest {
@@ -683,10 +678,10 @@ export type UpdateSlaPolicyRequestSeverity =
   (typeof UpdateSlaPolicyRequestSeverity)[keyof typeof UpdateSlaPolicyRequestSeverity];
 
 export const UpdateSlaPolicyRequestSeverity = {
-  low: "low",
-  medium: "medium",
-  high: "high",
-  critical: "critical",
+  low: 'low',
+  medium: 'medium',
+  high: 'high',
+  critical: 'critical',
 } as const;
 
 export interface UpdateSlaPolicyRequest {
@@ -771,10 +766,10 @@ export type GetTicketsParams = {
   sortOrder?: string;
 };
 
-export type MatrixScopeType = "global" | "customer" | "site" | "service";
-export type MatrixImpactLevel = "high" | "medium" | "low";
-export type MatrixUrgencyLevel = "high" | "medium" | "low";
-export type MatrixSeverityLevel = "critical" | "high" | "medium" | "low";
+export type MatrixScopeType = 'global' | 'customer' | 'site' | 'service';
+export type MatrixImpactLevel = 'high' | 'medium' | 'low';
+export type MatrixUrgencyLevel = 'high' | 'medium' | 'low';
+export type MatrixSeverityLevel = 'critical' | 'high' | 'medium' | 'low';
 
 export interface MatrixCell {
   impactLevel: MatrixImpactLevel;

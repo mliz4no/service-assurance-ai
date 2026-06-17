@@ -1,33 +1,68 @@
-import { useState, useMemo, useEffect } from "react";
-import { AppLayout } from "@/components/layout/app-layout";
-import { useGetSites, useGetCustomers, useGetTickets } from "@workspace/api-client-react";
-import { useGetDevices } from "@/lib/controller-hooks";
-import { MapContainer, TileLayer, Marker, Popup, useMap } from "react-leaflet";
-import MarkerClusterGroup from "react-leaflet-cluster";
-import L from "leaflet";
-import { Link } from "wouter";
-import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Skeleton } from "@/components/ui/skeleton";
-import { Building2, Server, X, ExternalLink, Radio, AlertTriangle, CheckCircle2, Circle } from "lucide-react";
-import type { Site } from "@workspace/api-client-react";
-import type { ManagedDeviceRecord } from "@/lib/controller-hooks";
+import { useState, useMemo, useEffect } from 'react';
+import { AppLayout } from '@/components/layout/app-layout';
+import { useGetSites, useGetCustomers, useGetTickets } from '@workspace/api-client-react';
+import { useGetDevices } from '@/lib/controller-hooks';
+import { MapContainer, TileLayer, Marker, Popup, useMap } from 'react-leaflet';
+import MarkerClusterGroup from 'react-leaflet-cluster';
+import L from 'leaflet';
+import { Link } from 'wouter';
+import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
+import { Skeleton } from '@/components/ui/skeleton';
+import {
+  Building2,
+  Server,
+  X,
+  ExternalLink,
+  Radio,
+  AlertTriangle,
+  CheckCircle2,
+  Circle,
+} from 'lucide-react';
+import type { Site } from '@workspace/api-client-react';
+import type { ManagedDeviceRecord } from '@/lib/controller-hooks';
 
 // ─── Status colour palette ────────────────────────────────────────────────────
 
 const STATUS = {
-  online:   { fill: "#16a34a", ring: "#14532d", text: "Online",   tw: "bg-green-100 text-green-800 border-green-300" },
-  degraded: { fill: "#d97706", ring: "#92400e", text: "Degraded", tw: "bg-amber-100 text-amber-800 border-amber-300" },
-  offline:  { fill: "#dc2626", ring: "#7f1d1d", text: "Offline",  tw: "bg-red-100 text-red-800 border-red-300" },
-  unknown:  { fill: "#64748b", ring: "#334155", text: "Unknown",  tw: "bg-slate-100 text-slate-600 border-slate-300" },
+  online: {
+    fill: '#16a34a',
+    ring: '#14532d',
+    text: 'Online',
+    tw: 'bg-green-100 text-green-800 border-green-300',
+  },
+  degraded: {
+    fill: '#d97706',
+    ring: '#92400e',
+    text: 'Degraded',
+    tw: 'bg-amber-100 text-amber-800 border-amber-300',
+  },
+  offline: {
+    fill: '#dc2626',
+    ring: '#7f1d1d',
+    text: 'Offline',
+    tw: 'bg-red-100 text-red-800 border-red-300',
+  },
+  unknown: {
+    fill: '#64748b',
+    ring: '#334155',
+    text: 'Unknown',
+    tw: 'bg-slate-100 text-slate-600 border-slate-300',
+  },
 } as const;
 
 type StatusKey = keyof typeof STATUS;
 
 function statusKey(s: string | undefined | null): StatusKey {
-  if (s === "online" || s === "degraded" || s === "offline") return s;
-  return "unknown";
+  if (s === 'online' || s === 'degraded' || s === 'offline') return s;
+  return 'unknown';
 }
 
 // ─── Marker icon factories ────────────────────────────────────────────────────
@@ -36,9 +71,9 @@ function createSiteIcon(status: StatusKey, hasOpenTickets: boolean): L.DivIcon {
   const p = STATUS[status];
   const alert = hasOpenTickets
     ? `<circle cx="24" cy="6" r="5" fill="#dc2626"/><text x="24" y="9.5" text-anchor="middle" font-size="6" font-weight="bold" fill="white" font-family="system-ui">!</text>`
-    : "";
+    : '';
   return L.divIcon({
-    className: "",
+    className: '',
     iconSize: [30, 38],
     iconAnchor: [15, 38],
     popupAnchor: [0, -40],
@@ -57,7 +92,7 @@ function createSiteIcon(status: StatusKey, hasOpenTickets: boolean): L.DivIcon {
 function createDeviceIcon(status: StatusKey): L.DivIcon {
   const p = STATUS[status];
   return L.divIcon({
-    className: "",
+    className: '',
     iconSize: [22, 22],
     iconAnchor: [11, 11],
     popupAnchor: [0, -13],
@@ -76,11 +111,13 @@ function createDeviceIcon(status: StatusKey): L.DivIcon {
 function StatusBadge({ status }: { status: string }) {
   const k = statusKey(status);
   return (
-    <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-semibold border ${STATUS[k].tw}`}>
-      {k === "online" && <CheckCircle2 className="w-3 h-3" />}
-      {k === "degraded" && <AlertTriangle className="w-3 h-3" />}
-      {k === "offline" && <Radio className="w-3 h-3" />}
-      {k === "unknown" && <Circle className="w-3 h-3" />}
+    <span
+      className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-semibold border ${STATUS[k].tw}`}
+    >
+      {k === 'online' && <CheckCircle2 className="w-3 h-3" />}
+      {k === 'degraded' && <AlertTriangle className="w-3 h-3" />}
+      {k === 'offline' && <Radio className="w-3 h-3" />}
+      {k === 'unknown' && <Circle className="w-3 h-3" />}
       {STATUS[k].text}
     </span>
   );
@@ -126,35 +163,43 @@ function SiteDetailPanel({ site, devices, openTicketCount, onClose }: SiteDetail
 
         {(site.city || site.state) && (
           <p className="text-sm text-muted-foreground">
-            {[site.address1, site.city, site.state].filter(Boolean).join(", ")}
+            {[site.address1, site.city, site.state].filter(Boolean).join(', ')}
           </p>
         )}
 
         <div className="flex items-center gap-2">
-          {devices.length > 0 && <StatusBadge status={
-            devicesByStatus.offline > 0 ? "offline"
-              : devicesByStatus.degraded > 0 ? "degraded"
-              : devicesByStatus.online > 0 ? "online"
-              : "unknown"
-          } />}
+          {devices.length > 0 && (
+            <StatusBadge
+              status={
+                devicesByStatus.offline > 0
+                  ? 'offline'
+                  : devicesByStatus.degraded > 0
+                    ? 'degraded'
+                    : devicesByStatus.online > 0
+                      ? 'online'
+                      : 'unknown'
+              }
+            />
+          )}
           {openTicketCount > 0 && (
             <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-semibold border bg-red-50 text-red-700 border-red-200">
               <AlertTriangle className="w-3 h-3" />
-              {openTicketCount} open ticket{openTicketCount !== 1 ? "s" : ""}
+              {openTicketCount} open ticket{openTicketCount !== 1 ? 's' : ''}
             </span>
           )}
         </div>
 
         {devices.length > 0 && (
           <div className="grid grid-cols-4 gap-1">
-            {(["online", "degraded", "offline", "unknown"] as StatusKey[]).map(s => (
-              devicesByStatus[s] > 0 && (
-                <div key={s} className={`rounded p-1.5 text-center border ${STATUS[s].tw}`}>
-                  <div className="text-base font-bold leading-none">{devicesByStatus[s]}</div>
-                  <div className="text-xs mt-0.5 capitalize">{STATUS[s].text}</div>
-                </div>
-              )
-            ))}
+            {(['online', 'degraded', 'offline', 'unknown'] as StatusKey[]).map(
+              (s) =>
+                devicesByStatus[s] > 0 && (
+                  <div key={s} className={`rounded p-1.5 text-center border ${STATUS[s].tw}`}>
+                    <div className="text-base font-bold leading-none">{devicesByStatus[s]}</div>
+                    <div className="text-xs mt-0.5 capitalize">{STATUS[s].text}</div>
+                  </div>
+                ),
+            )}
           </div>
         )}
 
@@ -204,23 +249,44 @@ function DeviceDetailPanel({ device, openTicketCount, onClose }: DeviceDetailPro
       <div className="px-4 py-3 space-y-3">
         <div className="flex items-center gap-2">
           <StatusBadge status={device.status} />
-          {device.haState && device.haState !== "standalone" && (
-            <Badge variant="outline" className="text-xs capitalize">{device.haState}</Badge>
+          {device.haState && device.haState !== 'standalone' && (
+            <Badge variant="outline" className="text-xs capitalize">
+              {device.haState}
+            </Badge>
           )}
         </div>
 
         <div className="text-sm space-y-1 text-muted-foreground">
-          <div><span className="font-medium text-foreground">Vendor:</span> {device.vendor}</div>
-          {device.model && <div><span className="font-medium text-foreground">Model:</span> {device.model}</div>}
-          {device.site && <div><span className="font-medium text-foreground">Site:</span> {device.site.siteName}</div>}
-          {device.customer && <div><span className="font-medium text-foreground">Customer:</span> {device.customer.name}</div>}
-          {device.mgmtIp && <div><span className="font-medium text-foreground">Mgmt IP:</span> <span className="font-mono">{device.mgmtIp}</span></div>}
+          <div>
+            <span className="font-medium text-foreground">Vendor:</span> {device.vendor}
+          </div>
+          {device.model && (
+            <div>
+              <span className="font-medium text-foreground">Model:</span> {device.model}
+            </div>
+          )}
+          {device.site && (
+            <div>
+              <span className="font-medium text-foreground">Site:</span> {device.site.siteName}
+            </div>
+          )}
+          {device.customer && (
+            <div>
+              <span className="font-medium text-foreground">Customer:</span> {device.customer.name}
+            </div>
+          )}
+          {device.mgmtIp && (
+            <div>
+              <span className="font-medium text-foreground">Mgmt IP:</span>{' '}
+              <span className="font-mono">{device.mgmtIp}</span>
+            </div>
+          )}
         </div>
 
         {openTicketCount > 0 && (
           <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-semibold border bg-red-50 text-red-700 border-red-200">
             <AlertTriangle className="w-3 h-3" />
-            {openTicketCount} open ticket{openTicketCount !== 1 ? "s" : ""}
+            {openTicketCount} open ticket{openTicketCount !== 1 ? 's' : ''}
           </span>
         )}
 
@@ -244,9 +310,12 @@ function MapLegend() {
     <div className="absolute bottom-4 right-4 z-[1000] bg-white rounded-lg shadow-md border border-border px-3 py-2.5 text-xs">
       <p className="font-semibold text-muted-foreground uppercase tracking-wider mb-1.5">Legend</p>
       <div className="space-y-1">
-        {(Object.keys(STATUS) as StatusKey[]).map(k => (
+        {(Object.keys(STATUS) as StatusKey[]).map((k) => (
           <div key={k} className="flex items-center gap-2">
-            <span className="w-3 h-3 rounded-full shrink-0" style={{ background: STATUS[k].fill }} />
+            <span
+              className="w-3 h-3 rounded-full shrink-0"
+              style={{ background: STATUS[k].fill }}
+            />
             <span className="text-foreground">{STATUS[k].text}</span>
           </div>
         ))}
@@ -265,18 +334,18 @@ function MapLegend() {
 
 // ─── Main page ────────────────────────────────────────────────────────────────
 
-type SelectedItem =
-  | { type: "site"; item: Site }
-  | { type: "device"; item: ManagedDeviceRecord };
+type SelectedItem = { type: 'site'; item: Site } | { type: 'device'; item: ManagedDeviceRecord };
 
 export default function MapPage() {
   const { data: sites = [], isLoading: sitesLoading } = useGetSites();
   const { data: devices = [], isLoading: devicesLoading } = useGetDevices();
-  const { data: tickets = [] } = useGetTickets({ status: "new,investigating,vendor_engaged,dispatch_scheduled,monitoring" });
+  const { data: tickets = [] } = useGetTickets({
+    status: 'new,investigating,vendor_engaged,dispatch_scheduled,monitoring',
+  });
   const { data: customers = [] } = useGetCustomers();
 
-  const [customerFilter, setCustomerFilter] = useState<string>("all");
-  const [statusFilter, setStatusFilter] = useState<string>("all");
+  const [customerFilter, setCustomerFilter] = useState<string>('all');
+  const [statusFilter, setStatusFilter] = useState<string>('all');
   const [showSites, setShowSites] = useState(true);
   const [showDevices, setShowDevices] = useState(true);
   const [selected, setSelected] = useState<SelectedItem | null>(null);
@@ -331,11 +400,11 @@ export default function MapPage() {
   // ── Filtered markers ──────────────────────────────────────────────────────
 
   const filteredSites = useMemo(() => {
-    return sites.filter(s => {
+    return sites.filter((s) => {
       if (!s.latitude || !s.longitude) return false;
-      if (customerFilter !== "all" && s.customerId !== customerFilter) return false;
-      if (statusFilter !== "all") {
-        const st = siteStatuses[s.id] || "unknown";
+      if (customerFilter !== 'all' && s.customerId !== customerFilter) return false;
+      if (statusFilter !== 'all') {
+        const st = siteStatuses[s.id] || 'unknown';
         if (st !== statusFilter) return false;
       }
       return true;
@@ -343,10 +412,10 @@ export default function MapPage() {
   }, [sites, customerFilter, statusFilter, siteStatuses]);
 
   const filteredDevices = useMemo(() => {
-    return devices.filter(d => {
+    return devices.filter((d) => {
       if (!d.latitude || !d.longitude) return false;
-      if (customerFilter !== "all" && d.customerId !== customerFilter) return false;
-      if (statusFilter !== "all" && statusKey(d.status) !== statusFilter) return false;
+      if (customerFilter !== 'all' && d.customerId !== customerFilter) return false;
+      if (statusFilter !== 'all' && statusKey(d.status) !== statusFilter) return false;
       return true;
     });
   }, [devices, customerFilter, statusFilter]);
@@ -366,7 +435,7 @@ export default function MapPage() {
 
   const summaryCounts = useMemo(() => {
     const counts: Record<StatusKey, number> = { online: 0, degraded: 0, offline: 0, unknown: 0 };
-    for (const s of filteredSites) counts[siteStatuses[s.id] || "unknown"]++;
+    for (const s of filteredSites) counts[siteStatuses[s.id] || 'unknown']++;
     return counts;
   }, [filteredSites, siteStatuses]);
 
@@ -376,13 +445,15 @@ export default function MapPage() {
     <AppLayout title="Network Map">
       <div
         className="-m-6 flex overflow-hidden"
-        style={{ height: "calc(100vh - 64px)" }}
+        style={{ height: 'calc(100vh - 64px)' }}
         data-testid="map-page"
       >
         {/* ── Filter Sidebar ─────────────────────────────────────────────── */}
         <div className="w-60 shrink-0 bg-white border-r border-border flex flex-col overflow-y-auto">
           <div className="px-4 py-4 border-b border-border">
-            <h2 className="text-xs font-semibold uppercase tracking-wider text-muted-foreground mb-3">Filters</h2>
+            <h2 className="text-xs font-semibold uppercase tracking-wider text-muted-foreground mb-3">
+              Filters
+            </h2>
 
             <div className="space-y-3">
               <div>
@@ -393,8 +464,10 @@ export default function MapPage() {
                   </SelectTrigger>
                   <SelectContent>
                     <SelectItem value="all">All customers</SelectItem>
-                    {customers.map(c => (
-                      <SelectItem key={c.id} value={c.id}>{c.name}</SelectItem>
+                    {customers.map((c) => (
+                      <SelectItem key={c.id} value={c.id}>
+                        {c.name}
+                      </SelectItem>
                     ))}
                   </SelectContent>
                 </Select>
@@ -419,13 +492,15 @@ export default function MapPage() {
           </div>
 
           <div className="px-4 py-3 border-b border-border space-y-2">
-            <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground mb-2">Layers</p>
+            <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground mb-2">
+              Layers
+            </p>
             <label className="flex items-center gap-2 cursor-pointer select-none">
               <input
                 type="checkbox"
                 className="accent-blue-600"
                 checked={showSites}
-                onChange={e => setShowSites(e.target.checked)}
+                onChange={(e) => setShowSites(e.target.checked)}
                 data-testid="map-layer-sites"
               />
               <Building2 className="w-3.5 h-3.5 text-muted-foreground" />
@@ -436,7 +511,7 @@ export default function MapPage() {
                 type="checkbox"
                 className="accent-blue-600"
                 checked={showDevices}
-                onChange={e => setShowDevices(e.target.checked)}
+                onChange={(e) => setShowDevices(e.target.checked)}
                 data-testid="map-layer-devices"
               />
               <Server className="w-3.5 h-3.5 text-muted-foreground" />
@@ -445,21 +520,28 @@ export default function MapPage() {
           </div>
 
           <div className="px-4 py-3 border-b border-border">
-            <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground mb-2">Site Status</p>
+            <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground mb-2">
+              Site Status
+            </p>
             <div className="space-y-1.5">
-              {(Object.keys(STATUS) as StatusKey[]).map(k => (
+              {(Object.keys(STATUS) as StatusKey[]).map((k) => (
                 <div
                   key={k}
                   className="flex items-center justify-between cursor-pointer hover:bg-slate-50 rounded px-1 py-0.5 transition-colors"
-                  onClick={() => setStatusFilter(statusFilter === k ? "all" : k)}
+                  onClick={() => setStatusFilter(statusFilter === k ? 'all' : k)}
                 >
                   <div className="flex items-center gap-2">
-                    <span className="w-2.5 h-2.5 rounded-full" style={{ background: STATUS[k].fill }} />
+                    <span
+                      className="w-2.5 h-2.5 rounded-full"
+                      style={{ background: STATUS[k].fill }}
+                    />
                     <span className="text-xs">{STATUS[k].text}</span>
                   </div>
-                  <span className={`text-xs font-semibold tabular-nums rounded-full px-1.5 py-0.5 ${
-                    summaryCounts[k] > 0 ? `${STATUS[k].tw}` : "text-muted-foreground"
-                  }`}>
+                  <span
+                    className={`text-xs font-semibold tabular-nums rounded-full px-1.5 py-0.5 ${
+                      summaryCounts[k] > 0 ? `${STATUS[k].tw}` : 'text-muted-foreground'
+                    }`}
+                  >
                     {summaryCounts[k]}
                   </span>
                 </div>
@@ -469,16 +551,25 @@ export default function MapPage() {
 
           <div className="px-4 py-3 mt-auto">
             <div className="text-xs text-muted-foreground space-y-0.5">
-              <div><span className="font-medium">{filteredSites.length}</span> sites shown</div>
-              <div><span className="font-medium">{filteredDevices.length}</span> devices with coords</div>
-              <div><span className="font-medium">{tickets.length}</span> open tickets</div>
+              <div>
+                <span className="font-medium">{filteredSites.length}</span> sites shown
+              </div>
+              <div>
+                <span className="font-medium">{filteredDevices.length}</span> devices with coords
+              </div>
+              <div>
+                <span className="font-medium">{tickets.length}</span> open tickets
+              </div>
             </div>
-            {(customerFilter !== "all" || statusFilter !== "all") && (
+            {(customerFilter !== 'all' || statusFilter !== 'all') && (
               <Button
                 variant="outline"
                 size="sm"
                 className="w-full mt-2 text-xs h-7"
-                onClick={() => { setCustomerFilter("all"); setStatusFilter("all"); }}
+                onClick={() => {
+                  setCustomerFilter('all');
+                  setStatusFilter('all');
+                }}
                 data-testid="map-clear-filters"
               >
                 Clear filters
@@ -501,7 +592,7 @@ export default function MapPage() {
           <MapContainer
             center={[39.5, -98.35]}
             zoom={4}
-            style={{ height: "100%", width: "100%" }}
+            style={{ height: '100%', width: '100%' }}
             zoomControl={true}
             data-testid="map-container"
           >
@@ -522,8 +613,8 @@ export default function MapPage() {
                 showCoverageOnHover={false}
                 maxClusterRadius={50}
               >
-                {filteredSites.map(site => {
-                  const st = siteStatuses[site.id] || "unknown";
+                {filteredSites.map((site) => {
+                  const st = siteStatuses[site.id] || 'unknown';
                   const hasTickets = (openTicketCountBySite[site.id] || 0) > 0;
                   return (
                     <Marker
@@ -531,16 +622,22 @@ export default function MapPage() {
                       position={[site.latitude!, site.longitude!]}
                       icon={createSiteIcon(st, hasTickets)}
                       eventHandlers={{
-                        click: () => setSelected({ type: "site", item: site }),
+                        click: () => setSelected({ type: 'site', item: site }),
                       }}
                       data-testid={`map-site-marker-${site.id}`}
                     >
                       <Popup>
                         <div className="text-sm">
                           <p className="font-semibold">{site.siteName}</p>
-                          {site.siteCode && <p className="text-xs text-muted-foreground font-mono">{site.siteCode}</p>}
+                          {site.siteCode && (
+                            <p className="text-xs text-muted-foreground font-mono">
+                              {site.siteCode}
+                            </p>
+                          )}
                           {(site.city || site.state) && (
-                            <p className="text-xs text-muted-foreground mt-0.5">{[site.city, site.state].filter(Boolean).join(", ")}</p>
+                            <p className="text-xs text-muted-foreground mt-0.5">
+                              {[site.city, site.state].filter(Boolean).join(', ')}
+                            </p>
                           )}
                         </div>
                       </Popup>
@@ -552,25 +649,23 @@ export default function MapPage() {
 
             {/* Devices layer (only those with own coordinates) */}
             {showDevices && (
-              <MarkerClusterGroup
-                chunkedLoading
-                showCoverageOnHover={false}
-                maxClusterRadius={40}
-              >
-                {filteredDevices.map(device => (
+              <MarkerClusterGroup chunkedLoading showCoverageOnHover={false} maxClusterRadius={40}>
+                {filteredDevices.map((device) => (
                   <Marker
                     key={device.id}
                     position={[device.latitude!, device.longitude!]}
                     icon={createDeviceIcon(statusKey(device.status))}
                     eventHandlers={{
-                      click: () => setSelected({ type: "device", item: device }),
+                      click: () => setSelected({ type: 'device', item: device }),
                     }}
                     data-testid={`map-device-marker-${device.id}`}
                   >
                     <Popup>
                       <div className="text-sm">
                         <p className="font-semibold">{device.hostname}</p>
-                        <p className="text-xs text-muted-foreground">{device.vendor} · {device.model}</p>
+                        <p className="text-xs text-muted-foreground">
+                          {device.vendor} · {device.model}
+                        </p>
                       </div>
                     </Popup>
                   </Marker>
@@ -580,7 +675,7 @@ export default function MapPage() {
           </MapContainer>
 
           {/* Detail panel overlay */}
-          {selected?.type === "site" && (
+          {selected?.type === 'site' && (
             <SiteDetailPanel
               site={selected.item}
               devices={siteDevices[selected.item.id] || []}
@@ -588,7 +683,7 @@ export default function MapPage() {
               onClose={() => setSelected(null)}
             />
           )}
-          {selected?.type === "device" && (
+          {selected?.type === 'device' && (
             <DeviceDetailPanel
               device={selected.item}
               openTicketCount={openTicketCountByDevice[selected.item.id] || 0}
@@ -618,7 +713,7 @@ function FitBoundsOnce({ coords, onDone }: FitBoundsOnceProps) {
     const bounds = L.latLngBounds(coords.map(([lat, lng]) => L.latLng(lat, lng)));
     map.fitBounds(bounds, { padding: [48, 48], maxZoom: 9 });
     onDone();
-  // eslint-disable-next-line react-hooks/exhaustive-deps
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
   return null;
 }

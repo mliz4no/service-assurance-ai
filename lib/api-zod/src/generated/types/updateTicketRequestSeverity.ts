@@ -10,8 +10,8 @@ export type UpdateTicketRequestSeverity =
   (typeof UpdateTicketRequestSeverity)[keyof typeof UpdateTicketRequestSeverity];
 
 export const UpdateTicketRequestSeverity = {
-  low: "low",
-  medium: "medium",
-  high: "high",
-  critical: "critical",
+  low: 'low',
+  medium: 'medium',
+  high: 'high',
+  critical: 'critical',
 } as const;

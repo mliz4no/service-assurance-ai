@@ -5,7 +5,7 @@
  * Service Assurance AI API
  * OpenAPI spec version: 0.1.0
  */
-import type { CreateCustomerRequestStatus } from "./createCustomerRequestStatus";
+import type { CreateCustomerRequestStatus } from './createCustomerRequestStatus';
 
 export interface CreateCustomerRequest {
   name: string;

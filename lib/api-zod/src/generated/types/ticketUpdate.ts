@@ -5,9 +5,9 @@
  * Service Assurance AI API
  * OpenAPI spec version: 0.1.0
  */
-import type { TicketUpdateUpdateType } from "./ticketUpdateUpdateType";
-import type { TicketUpdateVisibility } from "./ticketUpdateVisibility";
-import type { User } from "./user";
+import type { TicketUpdateUpdateType } from './ticketUpdateUpdateType';
+import type { TicketUpdateVisibility } from './ticketUpdateVisibility';
+import type { User } from './user';
 
 export interface TicketUpdate {
   id: string;

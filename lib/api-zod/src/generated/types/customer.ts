@@ -5,7 +5,7 @@
  * Service Assurance AI API
  * OpenAPI spec version: 0.1.0
  */
-import type { CustomerStatus } from "./customerStatus";
+import type { CustomerStatus } from './customerStatus';
 
 export interface Customer {
   id: string;

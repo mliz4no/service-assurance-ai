@@ -1,12 +1,18 @@
-import { Activity, Lock, Sparkles } from "lucide-react";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
-import { Textarea } from "@/components/ui/textarea";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Badge } from "@/components/ui/badge";
-import { cn } from "@/lib/utils";
-import { UPDATE_TYPE_CONFIG, timeAgo } from "./ticket-utils";
-import type { TicketUpdate } from "@workspace/api-client-react";
+import { Activity, Lock, Sparkles } from 'lucide-react';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
+import { Textarea } from '@/components/ui/textarea';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
+import { Badge } from '@/components/ui/badge';
+import { cn } from '@/lib/utils';
+import { UPDATE_TYPE_CONFIG, timeAgo } from './ticket-utils';
+import type { TicketUpdate } from '@workspace/api-client-react';
 
 interface Props {
   description: string | null | undefined;
@@ -15,10 +21,10 @@ interface Props {
   isCustomer: boolean;
   updateText: string;
   setUpdateText: (text: string) => void;
-  updateType: "internal_note" | "vendor_update" | "customer_update";
-  setUpdateType: (type: "internal_note" | "vendor_update" | "customer_update") => void;
-  updateVisibility: "internal" | "customer";
-  setUpdateVisibility: (vis: "internal" | "customer") => void;
+  updateType: 'internal_note' | 'vendor_update' | 'customer_update';
+  setUpdateType: (type: 'internal_note' | 'vendor_update' | 'customer_update') => void;
+  updateVisibility: 'internal' | 'customer';
+  setUpdateVisibility: (vis: 'internal' | 'customer') => void;
   onAddUpdate: () => void;
   isPostingUpdate: boolean;
 }
@@ -39,7 +45,6 @@ export function UpdateTimeline({
 }: Props) {
   return (
     <div className="lg:col-span-2 space-y-5">
-
       {/* Description */}
       <Card className="border-border/60 shadow-sm">
         <CardHeader className="pb-2 pt-4 px-5">
@@ -64,7 +69,7 @@ export function UpdateTimeline({
           </CardTitle>
           {updates && (
             <span className="text-xs text-muted-foreground">
-              {updates.length} {updates.length === 1 ? "entry" : "entries"}
+              {updates.length} {updates.length === 1 ? 'entry' : 'entries'}
             </span>
           )}
         </CardHeader>
@@ -74,9 +79,7 @@ export function UpdateTimeline({
               <Activity className="w-6 h-6 animate-spin text-muted-foreground" />
             </div>
           ) : !updates?.length ? (
-            <p className="text-sm text-muted-foreground text-center py-10">
-              No activity yet.
-            </p>
+            <p className="text-sm text-muted-foreground text-center py-10">No activity yet.</p>
           ) : (
             <div className="relative">
               {/* Vertical line */}
@@ -84,31 +87,26 @@ export function UpdateTimeline({
 
               <div className="space-y-4">
                 {[...updates]
-                  .sort(
-                    (a, b) =>
-                      new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime()
-                  )
+                  .sort((a, b) => new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime())
                   .map((update) => {
                     const cfg =
-                      UPDATE_TYPE_CONFIG[update.updateType] ||
-                      UPDATE_TYPE_CONFIG.system_event;
+                      UPDATE_TYPE_CONFIG[update.updateType] || UPDATE_TYPE_CONFIG.system_event;
                     const Icon = cfg.icon;
                     const isInternal =
-                      update.visibility === "internal" &&
-                      update.updateType !== "system_event";
+                      update.visibility === 'internal' && update.updateType !== 'system_event';
 
                     return (
                       <div key={update.id} className="flex gap-4 relative">
                         {/* Icon dot */}
                         <div
                           className={cn(
-                            "w-8 h-8 rounded-full border-2 flex items-center justify-center shrink-0 z-10",
+                            'w-8 h-8 rounded-full border-2 flex items-center justify-center shrink-0 z-10',
                             cfg.bg,
                             cfg.border,
-                            "border-white ring-2 ring-white"
+                            'border-white ring-2 ring-white',
                           )}
                         >
-                          <Icon className={cn("w-3.5 h-3.5", cfg.text)} />
+                          <Icon className={cn('w-3.5 h-3.5', cfg.text)} />
                         </div>
 
                         {/* Content */}
@@ -117,10 +115,10 @@ export function UpdateTimeline({
                             <Badge
                               variant="outline"
                               className={cn(
-                                "text-[10px] font-semibold uppercase tracking-wide px-1.5 py-0",
+                                'text-[10px] font-semibold uppercase tracking-wide px-1.5 py-0',
                                 cfg.bg,
                                 cfg.text,
-                                cfg.border
+                                cfg.border,
                               )}
                             >
                               {cfg.label}
@@ -134,16 +132,15 @@ export function UpdateTimeline({
                               </Badge>
                             )}
                             <span className="text-xs text-muted-foreground ml-auto">
-                              {timeAgo(update.createdAt)} ·{" "}
-                              {update.createdBy?.name || "System"}
+                              {timeAgo(update.createdAt)} · {update.createdBy?.name || 'System'}
                             </span>
                           </div>
                           <div
                             className={cn(
-                              "text-sm rounded-md border p-3 leading-relaxed whitespace-pre-wrap",
-                              update.updateType === "system_event"
-                                ? "bg-slate-50 border-slate-100 text-slate-500 italic text-xs"
-                                : "bg-white border-border/60 text-foreground"
+                              'text-sm rounded-md border p-3 leading-relaxed whitespace-pre-wrap',
+                              update.updateType === 'system_event'
+                                ? 'bg-slate-50 border-slate-100 text-slate-500 italic text-xs'
+                                : 'bg-white border-border/60 text-foreground',
                             )}
                           >
                             {update.rawText}
@@ -177,9 +174,9 @@ export function UpdateTimeline({
               <Select
                 value={updateType}
                 onValueChange={(v) => {
-                  const t = v as "internal_note" | "vendor_update" | "customer_update";
+                  const t = v as 'internal_note' | 'vendor_update' | 'customer_update';
                   setUpdateType(t);
-                  setUpdateVisibility(t === "customer_update" ? "customer" : "internal");
+                  setUpdateVisibility(t === 'customer_update' ? 'customer' : 'internal');
                 }}
               >
                 <SelectTrigger className="w-[180px] h-8 text-sm">
@@ -194,7 +191,7 @@ export function UpdateTimeline({
 
               <Select
                 value={updateVisibility}
-                onValueChange={(v) => setUpdateVisibility(v as "internal" | "customer")}
+                onValueChange={(v) => setUpdateVisibility(v as 'internal' | 'customer')}
               >
                 <SelectTrigger className="w-[175px] h-8 text-sm">
                   <SelectValue />
@@ -215,16 +212,16 @@ export function UpdateTimeline({
 
             <div className="flex items-center justify-between">
               <p className="text-xs text-muted-foreground">
-                {updateVisibility === "customer"
-                  ? "This update will be visible to the customer."
-                  : "This update is internal only."}
+                {updateVisibility === 'customer'
+                  ? 'This update will be visible to the customer.'
+                  : 'This update is internal only.'}
               </p>
               <Button
                 onClick={onAddUpdate}
                 disabled={isPostingUpdate || !updateText.trim()}
                 size="sm"
               >
-                {isPostingUpdate ? "Posting..." : "Post Update"}
+                {isPostingUpdate ? 'Posting...' : 'Post Update'}
               </Button>
             </div>
           </CardContent>

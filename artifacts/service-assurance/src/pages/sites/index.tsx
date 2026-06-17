@@ -1,14 +1,21 @@
-import { useState } from "react";
-import { AppLayout } from "@/components/layout/app-layout";
-import { useGetSites } from "@workspace/api-client-react";
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { Input } from "@/components/ui/input";
-import { Button } from "@/components/ui/button";
-import { Activity, Plus, Search, MapPin } from "lucide-react";
-import { Link } from "wouter";
+import { useState } from 'react';
+import { AppLayout } from '@/components/layout/app-layout';
+import { useGetSites } from '@workspace/api-client-react';
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from '@/components/ui/table';
+import { Input } from '@/components/ui/input';
+import { Button } from '@/components/ui/button';
+import { Activity, Plus, Search, MapPin } from 'lucide-react';
+import { Link } from 'wouter';
 
 export default function SitesList() {
-  const [search, setSearch] = useState("");
+  const [search, setSearch] = useState('');
 
   const { data: sites, isLoading } = useGetSites({
     search: search || undefined,
@@ -66,23 +73,33 @@ export default function SitesList() {
                   <TableRow key={s.id} className="hover:bg-muted/20">
                     <TableCell className="font-medium flex items-center gap-2">
                       <MapPin className="w-4 h-4 text-muted-foreground" />
-                      <Link href={`/sites/${s.id}`} className="text-primary hover:underline">{s.siteName}</Link>
+                      <Link href={`/sites/${s.id}`} className="text-primary hover:underline">
+                        {s.siteName}
+                      </Link>
                     </TableCell>
-                    <TableCell>{s.siteCode || "-"}</TableCell>
+                    <TableCell>{s.siteCode || '-'}</TableCell>
                     <TableCell>
                       {s.customer ? (
                         <Link href={`/customers/${s.customer.id}`} className="hover:underline">
                           {s.customer.name}
                         </Link>
-                      ) : "-"}
+                      ) : (
+                        '-'
+                      )}
                     </TableCell>
                     <TableCell>
                       <div className="text-sm">
-                        <div>{s.city}{s.city && s.state ? ", " : ""}{s.state}</div>
+                        <div>
+                          {s.city}
+                          {s.city && s.state ? ', ' : ''}
+                          {s.state}
+                        </div>
                         <div className="text-muted-foreground">{s.country}</div>
                       </div>
                     </TableCell>
-                    <TableCell className="text-muted-foreground text-sm">{s.timezone || "-"}</TableCell>
+                    <TableCell className="text-muted-foreground text-sm">
+                      {s.timezone || '-'}
+                    </TableCell>
                   </TableRow>
                 ))
               )}

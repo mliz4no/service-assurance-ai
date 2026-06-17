@@ -1,33 +1,61 @@
-import { useParams, useLocation } from "wouter";
-import { AppLayout } from "@/components/layout/app-layout";
-import { useGetCustomer, useGetCustomerContacts, useCreateCustomerContact, useUpdateCustomerContact, useDeleteCustomerContact, getGetCustomerContactsQueryKey } from "@workspace/api-client-react";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { StatusBadge } from "@/components/status-badge";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Activity, Edit, Building2, MapPin, Globe2, Ticket, Mail, Phone, Users, Plus, Trash2, Pencil, Bell, Cloud } from "lucide-react";
-import { EscalationMatrixEditor } from "@/components/EscalationMatrixEditor";
-import { Link } from "wouter";
-import { useState } from "react";
-import { useToast } from "@/hooks/use-toast";
-import { useQueryClient } from "@tanstack/react-query";
-import { cn } from "@/lib/utils";
-import type { CustomerContact } from "@workspace/api-client-react";
+import { useParams, useLocation } from 'wouter';
+import { AppLayout } from '@/components/layout/app-layout';
+import {
+  useGetCustomer,
+  useGetCustomerContacts,
+  useCreateCustomerContact,
+  useUpdateCustomerContact,
+  useDeleteCustomerContact,
+  getGetCustomerContactsQueryKey,
+} from '@workspace/api-client-react';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { StatusBadge } from '@/components/status-badge';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
+import {
+  Activity,
+  Edit,
+  Building2,
+  MapPin,
+  Globe2,
+  Ticket,
+  Mail,
+  Phone,
+  Users,
+  Plus,
+  Trash2,
+  Pencil,
+  Bell,
+  Cloud,
+} from 'lucide-react';
+import { EscalationMatrixEditor } from '@/components/EscalationMatrixEditor';
+import { Link } from 'wouter';
+import { useState } from 'react';
+import { useToast } from '@/hooks/use-toast';
+import { useQueryClient } from '@tanstack/react-query';
+import { cn } from '@/lib/utils';
+import type { CustomerContact } from '@workspace/api-client-react';
 
 const ROLE_BADGE: Record<string, string> = {
-  noc: "bg-blue-100 text-blue-800",
-  manager: "bg-purple-100 text-purple-800",
-  director: "bg-orange-100 text-orange-800",
-  executive: "bg-red-100 text-red-800",
+  noc: 'bg-blue-100 text-blue-800',
+  manager: 'bg-purple-100 text-purple-800',
+  director: 'bg-orange-100 text-orange-800',
+  executive: 'bg-red-100 text-red-800',
 };
 
 const SEVERITY_BADGE: Record<string, string> = {
-  critical: "bg-red-100 text-red-800",
-  high: "bg-orange-100 text-orange-800",
-  medium: "bg-yellow-100 text-yellow-800",
-  low: "bg-slate-100 text-slate-700",
+  critical: 'bg-red-100 text-red-800',
+  high: 'bg-orange-100 text-orange-800',
+  medium: 'bg-yellow-100 text-yellow-800',
+  low: 'bg-slate-100 text-slate-700',
 };
 
 interface ContactFormData {
@@ -40,12 +68,12 @@ interface ContactFormData {
 }
 
 const BLANK_FORM: ContactFormData = {
-  name: "",
-  email: "",
-  phone: "",
-  role: "noc",
-  notifyOnSeverity: "high",
-  notifyOnDurationMinutes: "",
+  name: '',
+  email: '',
+  phone: '',
+  role: 'noc',
+  notifyOnSeverity: 'high',
+  notifyOnDurationMinutes: '',
 };
 
 function ContactForm({
@@ -61,26 +89,45 @@ function ContactForm({
 }) {
   const [form, setForm] = useState<ContactFormData>(initial);
   const set = (k: keyof ContactFormData) => (e: React.ChangeEvent<HTMLInputElement>) =>
-    setForm(f => ({ ...f, [k]: e.target.value }));
+    setForm((f) => ({ ...f, [k]: e.target.value }));
 
   return (
     <div className="grid grid-cols-1 md:grid-cols-3 gap-3 p-4 bg-muted/30 rounded-lg border border-border/50">
       <div>
         <label className="text-xs font-medium text-muted-foreground mb-1 block">Name *</label>
-        <Input value={form.name} onChange={set("name")} placeholder="Full name" data-testid="contact-name-input" />
+        <Input
+          value={form.name}
+          onChange={set('name')}
+          placeholder="Full name"
+          data-testid="contact-name-input"
+        />
       </div>
       <div>
         <label className="text-xs font-medium text-muted-foreground mb-1 block">Email *</label>
-        <Input type="email" value={form.email} onChange={set("email")} placeholder="email@company.com" data-testid="contact-email-input" />
+        <Input
+          type="email"
+          value={form.email}
+          onChange={set('email')}
+          placeholder="email@company.com"
+          data-testid="contact-email-input"
+        />
       </div>
       <div>
         <label className="text-xs font-medium text-muted-foreground mb-1 block">Phone</label>
-        <Input type="tel" value={form.phone} onChange={set("phone")} placeholder="+1 555-000-0000" data-testid="contact-phone-input" />
+        <Input
+          type="tel"
+          value={form.phone}
+          onChange={set('phone')}
+          placeholder="+1 555-000-0000"
+          data-testid="contact-phone-input"
+        />
       </div>
       <div>
         <label className="text-xs font-medium text-muted-foreground mb-1 block">Role *</label>
-        <Select value={form.role} onValueChange={(v) => setForm(f => ({ ...f, role: v }))}>
-          <SelectTrigger data-testid="contact-role-select"><SelectValue /></SelectTrigger>
+        <Select value={form.role} onValueChange={(v) => setForm((f) => ({ ...f, role: v }))}>
+          <SelectTrigger data-testid="contact-role-select">
+            <SelectValue />
+          </SelectTrigger>
           <SelectContent>
             <SelectItem value="noc">NOC</SelectItem>
             <SelectItem value="manager">Manager</SelectItem>
@@ -90,9 +137,16 @@ function ContactForm({
         </Select>
       </div>
       <div>
-        <label className="text-xs font-medium text-muted-foreground mb-1 block">Notify at severity</label>
-        <Select value={form.notifyOnSeverity} onValueChange={(v) => setForm(f => ({ ...f, notifyOnSeverity: v }))}>
-          <SelectTrigger data-testid="contact-severity-select"><SelectValue /></SelectTrigger>
+        <label className="text-xs font-medium text-muted-foreground mb-1 block">
+          Notify at severity
+        </label>
+        <Select
+          value={form.notifyOnSeverity}
+          onValueChange={(v) => setForm((f) => ({ ...f, notifyOnSeverity: v }))}
+        >
+          <SelectTrigger data-testid="contact-severity-select">
+            <SelectValue />
+          </SelectTrigger>
           <SelectContent>
             <SelectItem value="low">Low and above</SelectItem>
             <SelectItem value="medium">Medium and above</SelectItem>
@@ -102,20 +156,29 @@ function ContactForm({
         </Select>
       </div>
       <div>
-        <label className="text-xs font-medium text-muted-foreground mb-1 block">Escalate after (minutes)</label>
+        <label className="text-xs font-medium text-muted-foreground mb-1 block">
+          Escalate after (minutes)
+        </label>
         <Input
           type="number"
           min="0"
           value={form.notifyOnDurationMinutes}
-          onChange={set("notifyOnDurationMinutes")}
+          onChange={set('notifyOnDurationMinutes')}
           placeholder="e.g. 30"
           data-testid="contact-duration-input"
         />
       </div>
       <div className="md:col-span-3 flex gap-2 justify-end pt-1">
-        <Button size="sm" variant="outline" onClick={onCancel}>Cancel</Button>
-        <Button size="sm" onClick={() => onSave(form)} disabled={isSaving || !form.name || !form.email} data-testid="contact-save-btn">
-          {isSaving ? "Saving..." : "Save Contact"}
+        <Button size="sm" variant="outline" onClick={onCancel}>
+          Cancel
+        </Button>
+        <Button
+          size="sm"
+          onClick={() => onSave(form)}
+          disabled={isSaving || !form.name || !form.email}
+          data-testid="contact-save-btn"
+        >
+          {isSaving ? 'Saving...' : 'Save Contact'}
         </Button>
       </div>
     </div>
@@ -134,54 +197,70 @@ function ContactsTab({ customerId }: { customerId: string }) {
   const [editingId, setEditingId] = useState<string | null>(null);
 
   function handleCreate(data: ContactFormData) {
-    createMutation.mutate({
-      data: {
-        name: data.name,
-        email: data.email,
-        phone: data.phone || null,
-        role: data.role as "noc" | "manager" | "director" | "executive",
-        notifyOnSeverity: data.notifyOnSeverity as "low" | "medium" | "high" | "critical",
-        notifyOnDurationMinutes: data.notifyOnDurationMinutes ? parseInt(data.notifyOnDurationMinutes) : null,
-      }
-    }, {
-      onSuccess: () => {
-        toast({ title: "Contact added" });
-        setShowAdd(false);
-        queryClient.invalidateQueries({ queryKey: getGetCustomerContactsQueryKey(customerId) });
+    createMutation.mutate(
+      {
+        data: {
+          name: data.name,
+          email: data.email,
+          phone: data.phone || null,
+          role: data.role as 'noc' | 'manager' | 'director' | 'executive',
+          notifyOnSeverity: data.notifyOnSeverity as 'low' | 'medium' | 'high' | 'critical',
+          notifyOnDurationMinutes: data.notifyOnDurationMinutes
+            ? parseInt(data.notifyOnDurationMinutes)
+            : null,
+        },
       },
-      onError: (err: any) => toast({ title: "Error", description: err.message, variant: "destructive" }),
-    });
+      {
+        onSuccess: () => {
+          toast({ title: 'Contact added' });
+          setShowAdd(false);
+          queryClient.invalidateQueries({ queryKey: getGetCustomerContactsQueryKey(customerId) });
+        },
+        onError: (err: any) =>
+          toast({ title: 'Error', description: err.message, variant: 'destructive' }),
+      },
+    );
   }
 
   function handleUpdate(contact: CustomerContact, data: ContactFormData) {
-    updateMutation.mutate({
-      contactId: contact.id,
-      data: {
-        name: data.name,
-        email: data.email,
-        phone: data.phone || null,
-        role: data.role as "noc" | "manager" | "director" | "executive",
-        notifyOnSeverity: data.notifyOnSeverity as "low" | "medium" | "high" | "critical",
-        notifyOnDurationMinutes: data.notifyOnDurationMinutes ? parseInt(data.notifyOnDurationMinutes) : null,
-      }
-    }, {
-      onSuccess: () => {
-        toast({ title: "Contact updated" });
-        setEditingId(null);
-        queryClient.invalidateQueries({ queryKey: getGetCustomerContactsQueryKey(customerId) });
+    updateMutation.mutate(
+      {
+        contactId: contact.id,
+        data: {
+          name: data.name,
+          email: data.email,
+          phone: data.phone || null,
+          role: data.role as 'noc' | 'manager' | 'director' | 'executive',
+          notifyOnSeverity: data.notifyOnSeverity as 'low' | 'medium' | 'high' | 'critical',
+          notifyOnDurationMinutes: data.notifyOnDurationMinutes
+            ? parseInt(data.notifyOnDurationMinutes)
+            : null,
+        },
       },
-      onError: (err: any) => toast({ title: "Error", description: err.message, variant: "destructive" }),
-    });
+      {
+        onSuccess: () => {
+          toast({ title: 'Contact updated' });
+          setEditingId(null);
+          queryClient.invalidateQueries({ queryKey: getGetCustomerContactsQueryKey(customerId) });
+        },
+        onError: (err: any) =>
+          toast({ title: 'Error', description: err.message, variant: 'destructive' }),
+      },
+    );
   }
 
   function handleDelete(contactId: string) {
-    deleteMutation.mutate({ contactId }, {
-      onSuccess: () => {
-        toast({ title: "Contact removed" });
-        queryClient.invalidateQueries({ queryKey: getGetCustomerContactsQueryKey(customerId) });
+    deleteMutation.mutate(
+      { contactId },
+      {
+        onSuccess: () => {
+          toast({ title: 'Contact removed' });
+          queryClient.invalidateQueries({ queryKey: getGetCustomerContactsQueryKey(customerId) });
+        },
+        onError: (err: any) =>
+          toast({ title: 'Error', description: err.message, variant: 'destructive' }),
       },
-      onError: (err: any) => toast({ title: "Error", description: err.message, variant: "destructive" }),
-    });
+    );
   }
 
   return (
@@ -192,11 +271,20 @@ function ContactsTab({ customerId }: { customerId: string }) {
             <Bell className="w-4 h-4 text-muted-foreground" />
             <CardTitle className="text-sm font-semibold">Customer Escalation Contacts</CardTitle>
           </div>
-          <Button size="sm" variant="outline" onClick={() => setShowAdd(true)} disabled={showAdd} data-testid="add-contact-btn">
+          <Button
+            size="sm"
+            variant="outline"
+            onClick={() => setShowAdd(true)}
+            disabled={showAdd}
+            data-testid="add-contact-btn"
+          >
             <Plus className="w-3.5 h-3.5 mr-1" /> Add Contact
           </Button>
         </div>
-        <p className="text-xs text-muted-foreground mt-1">Customer contacts are automatically notified when ticket severity and/or open duration thresholds are met. Distinct from vendor escalation.</p>
+        <p className="text-xs text-muted-foreground mt-1">
+          Customer contacts are automatically notified when ticket severity and/or open duration
+          thresholds are met. Distinct from vendor escalation.
+        </p>
       </CardHeader>
       <CardContent className="p-4 space-y-3">
         {showAdd && (
@@ -210,43 +298,63 @@ function ContactsTab({ customerId }: { customerId: string }) {
         {isLoading ? (
           <div className="py-4 text-center text-sm text-muted-foreground">Loading contacts...</div>
         ) : !contacts?.length && !showAdd ? (
-          <div className="py-6 text-center text-sm text-muted-foreground italic" data-testid="contacts-empty">
+          <div
+            className="py-6 text-center text-sm text-muted-foreground italic"
+            data-testid="contacts-empty"
+          >
             No escalation contacts configured.
           </div>
         ) : (
-          contacts?.map((contact) => (
+          contacts?.map((contact) =>
             editingId === contact.id ? (
               <ContactForm
                 key={contact.id}
                 initial={{
                   name: contact.name,
                   email: contact.email,
-                  phone: contact.phone ?? "",
+                  phone: contact.phone ?? '',
                   role: contact.role,
                   notifyOnSeverity: contact.notifyOnSeverity,
-                  notifyOnDurationMinutes: contact.notifyOnDurationMinutes?.toString() ?? "",
+                  notifyOnDurationMinutes: contact.notifyOnDurationMinutes?.toString() ?? '',
                 }}
                 onSave={(data) => handleUpdate(contact, data)}
                 onCancel={() => setEditingId(null)}
                 isSaving={updateMutation.isPending}
               />
             ) : (
-              <div key={contact.id} className="flex items-center justify-between gap-3 p-3 rounded-lg border border-border/40 hover:bg-muted/20 transition-colors" data-testid="contact-row">
+              <div
+                key={contact.id}
+                className="flex items-center justify-between gap-3 p-3 rounded-lg border border-border/40 hover:bg-muted/20 transition-colors"
+                data-testid="contact-row"
+              >
                 <div className="flex items-center gap-3 min-w-0">
                   <div className="min-w-0">
                     <div className="flex items-center gap-2 flex-wrap">
                       <span className="font-medium text-sm">{contact.name}</span>
-                      <span className={cn("text-xs px-1.5 py-0.5 rounded font-medium capitalize", ROLE_BADGE[contact.role] ?? "bg-slate-100 text-slate-700")}>
+                      <span
+                        className={cn(
+                          'text-xs px-1.5 py-0.5 rounded font-medium capitalize',
+                          ROLE_BADGE[contact.role] ?? 'bg-slate-100 text-slate-700',
+                        )}
+                      >
                         {contact.role}
                       </span>
                     </div>
                     <div className="flex items-center gap-3 mt-1 flex-wrap">
-                      <a href={`mailto:${contact.email}`} className="text-xs text-primary hover:underline flex items-center gap-1">
-                        <Mail className="w-3 h-3" />{contact.email}
+                      <a
+                        href={`mailto:${contact.email}`}
+                        className="text-xs text-primary hover:underline flex items-center gap-1"
+                      >
+                        <Mail className="w-3 h-3" />
+                        {contact.email}
                       </a>
                       {contact.phone && (
-                        <a href={`tel:${contact.phone}`} className="text-xs text-muted-foreground hover:underline flex items-center gap-1">
-                          <Phone className="w-3 h-3" />{contact.phone}
+                        <a
+                          href={`tel:${contact.phone}`}
+                          className="text-xs text-muted-foreground hover:underline flex items-center gap-1"
+                        >
+                          <Phone className="w-3 h-3" />
+                          {contact.phone}
                         </a>
                       )}
                     </div>
@@ -257,7 +365,12 @@ function ContactsTab({ customerId }: { customerId: string }) {
                     <div className="flex items-center gap-1 text-xs text-muted-foreground mb-0.5">
                       <Bell className="w-3 h-3" />
                       <span>Notify at</span>
-                      <span className={cn("px-1.5 py-0.5 rounded font-semibold uppercase", SEVERITY_BADGE[contact.notifyOnSeverity] ?? "bg-slate-100")}>
+                      <span
+                        className={cn(
+                          'px-1.5 py-0.5 rounded font-semibold uppercase',
+                          SEVERITY_BADGE[contact.notifyOnSeverity] ?? 'bg-slate-100',
+                        )}
+                      >
                         {contact.notifyOnSeverity}
                       </span>
                     </div>
@@ -268,17 +381,29 @@ function ContactsTab({ customerId }: { customerId: string }) {
                     )}
                   </div>
                   <div className="flex gap-1">
-                    <Button size="icon" variant="ghost" className="h-7 w-7" onClick={() => setEditingId(contact.id)} data-testid="edit-contact-btn">
+                    <Button
+                      size="icon"
+                      variant="ghost"
+                      className="h-7 w-7"
+                      onClick={() => setEditingId(contact.id)}
+                      data-testid="edit-contact-btn"
+                    >
                       <Pencil className="w-3.5 h-3.5" />
                     </Button>
-                    <Button size="icon" variant="ghost" className="h-7 w-7 text-destructive hover:text-destructive" onClick={() => handleDelete(contact.id)} data-testid="delete-contact-btn">
+                    <Button
+                      size="icon"
+                      variant="ghost"
+                      className="h-7 w-7 text-destructive hover:text-destructive"
+                      onClick={() => handleDelete(contact.id)}
+                      data-testid="delete-contact-btn"
+                    >
                       <Trash2 className="w-3.5 h-3.5" />
                     </Button>
                   </div>
                 </div>
               </div>
-            )
-          ))
+            ),
+          )
         )}
       </CardContent>
     </Card>
@@ -291,13 +416,15 @@ export default function CustomerDetail() {
   const [, setLocation] = useLocation();
 
   const { data: customer, isLoading } = useGetCustomer(id, {
-    query: { enabled: !!id }
+    query: { enabled: !!id },
   });
 
   if (isLoading) {
     return (
       <AppLayout title="Loading Customer...">
-        <div className="flex justify-center py-12"><Activity className="w-8 h-8 animate-spin text-muted-foreground" /></div>
+        <div className="flex justify-center py-12">
+          <Activity className="w-8 h-8 animate-spin text-muted-foreground" />
+        </div>
       </AppLayout>
     );
   }
@@ -322,18 +449,22 @@ export default function CustomerDetail() {
               <h1 className="text-2xl font-bold text-foreground flex items-center gap-2 flex-wrap">
                 {customer.name}
                 <StatusBadge status={customer.status} />
-                {(customer as any).externalSystem === "salesforce" && (
+                {(customer as any).externalSystem === 'salesforce' && (
                   <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded text-xs font-semibold bg-blue-100 text-blue-700 border border-blue-200">
                     <Cloud className="w-3 h-3" /> Salesforce
                   </span>
                 )}
               </h1>
-              <p className="text-muted-foreground">Account #: {customer.accountNumber || "N/A"}</p>
-              {(customer as any).externalSystem === "salesforce" && (
+              <p className="text-muted-foreground">Account #: {customer.accountNumber || 'N/A'}</p>
+              {(customer as any).externalSystem === 'salesforce' && (
                 <div className="flex items-center gap-4 mt-1 text-xs text-muted-foreground">
-                  <span>SF ID: <span className="font-mono">{(customer as any).externalId}</span></span>
+                  <span>
+                    SF ID: <span className="font-mono">{(customer as any).externalId}</span>
+                  </span>
                   {(customer as any).externalSyncedAt && (
-                    <span>Last synced: {new Date((customer as any).externalSyncedAt).toLocaleString()}</span>
+                    <span>
+                      Last synced: {new Date((customer as any).externalSyncedAt).toLocaleString()}
+                    </span>
                   )}
                 </div>
               )}
@@ -347,17 +478,24 @@ export default function CustomerDetail() {
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
           <Card className="col-span-1 border-border/50 shadow-sm">
             <CardHeader>
-              <CardTitle className="text-sm font-semibold text-muted-foreground uppercase tracking-wider">Contact Info</CardTitle>
+              <CardTitle className="text-sm font-semibold text-muted-foreground uppercase tracking-wider">
+                Contact Info
+              </CardTitle>
             </CardHeader>
             <CardContent className="space-y-4">
               <div>
                 <p className="text-sm text-muted-foreground mb-1">Primary Contact</p>
-                <p className="font-medium">{customer.primaryContactName || "Not set"}</p>
+                <p className="font-medium">{customer.primaryContactName || 'Not set'}</p>
               </div>
               {customer.primaryContactEmail && (
                 <div className="flex items-center gap-2 text-sm">
                   <Mail className="w-4 h-4 text-muted-foreground" />
-                  <a href={`mailto:${customer.primaryContactEmail}`} className="text-primary hover:underline">{customer.primaryContactEmail}</a>
+                  <a
+                    href={`mailto:${customer.primaryContactEmail}`}
+                    className="text-primary hover:underline"
+                  >
+                    {customer.primaryContactEmail}
+                  </a>
                 </div>
               )}
               {customer.primaryContactPhone && (
@@ -378,24 +516,44 @@ export default function CustomerDetail() {
           <div className="col-span-1 md:col-span-2">
             <Tabs defaultValue="sites" className="w-full">
               <TabsList className="grid w-full grid-cols-4">
-                <TabsTrigger value="sites"><MapPin className="w-4 h-4 mr-1.5"/> Sites ({customer.sites?.length || 0})</TabsTrigger>
-                <TabsTrigger value="services"><Globe2 className="w-4 h-4 mr-1.5"/> Services ({customer.services?.length || 0})</TabsTrigger>
-                <TabsTrigger value="tickets"><Ticket className="w-4 h-4 mr-1.5"/> Tickets ({customer.tickets?.length || 0})</TabsTrigger>
-                <TabsTrigger value="contacts" data-testid="contacts-tab"><Users className="w-4 h-4 mr-1.5"/> Contacts</TabsTrigger>
+                <TabsTrigger value="sites">
+                  <MapPin className="w-4 h-4 mr-1.5" /> Sites ({customer.sites?.length || 0})
+                </TabsTrigger>
+                <TabsTrigger value="services">
+                  <Globe2 className="w-4 h-4 mr-1.5" /> Services ({customer.services?.length || 0})
+                </TabsTrigger>
+                <TabsTrigger value="tickets">
+                  <Ticket className="w-4 h-4 mr-1.5" /> Tickets ({customer.tickets?.length || 0})
+                </TabsTrigger>
+                <TabsTrigger value="contacts" data-testid="contacts-tab">
+                  <Users className="w-4 h-4 mr-1.5" /> Contacts
+                </TabsTrigger>
               </TabsList>
 
               <TabsContent value="sites" className="mt-4">
                 <Card className="border-border/50 shadow-sm">
                   <CardContent className="p-0">
                     {!customer.sites?.length ? (
-                      <div className="p-8 text-center text-muted-foreground text-sm">No sites configured.</div>
+                      <div className="p-8 text-center text-muted-foreground text-sm">
+                        No sites configured.
+                      </div>
                     ) : (
                       <div className="divide-y divide-border/50">
-                        {customer.sites.map(s => (
-                          <div key={s.id} className="p-4 flex items-center justify-between hover:bg-muted/30">
+                        {customer.sites.map((s) => (
+                          <div
+                            key={s.id}
+                            className="p-4 flex items-center justify-between hover:bg-muted/30"
+                          >
                             <div>
-                              <Link href={`/sites/${s.id}`} className="font-medium text-primary hover:underline">{s.siteName}</Link>
-                              <div className="text-sm text-muted-foreground">{s.city}, {s.state}</div>
+                              <Link
+                                href={`/sites/${s.id}`}
+                                className="font-medium text-primary hover:underline"
+                              >
+                                {s.siteName}
+                              </Link>
+                              <div className="text-sm text-muted-foreground">
+                                {s.city}, {s.state}
+                              </div>
                             </div>
                             <div className="text-sm text-muted-foreground">{s.siteCode}</div>
                           </div>
@@ -410,14 +568,26 @@ export default function CustomerDetail() {
                 <Card className="border-border/50 shadow-sm">
                   <CardContent className="p-0">
                     {!customer.services?.length ? (
-                      <div className="p-8 text-center text-muted-foreground text-sm">No services provisioned.</div>
+                      <div className="p-8 text-center text-muted-foreground text-sm">
+                        No services provisioned.
+                      </div>
                     ) : (
                       <div className="divide-y divide-border/50">
-                        {customer.services.map(s => (
-                          <div key={s.id} className="p-4 flex items-center justify-between hover:bg-muted/30">
+                        {customer.services.map((s) => (
+                          <div
+                            key={s.id}
+                            className="p-4 flex items-center justify-between hover:bg-muted/30"
+                          >
                             <div>
-                              <Link href={`/services/${s.id}`} className="font-medium text-primary hover:underline">{s.serviceType}</Link>
-                              <div className="text-sm text-muted-foreground">Circuit: {s.circuitId || "N/A"}</div>
+                              <Link
+                                href={`/services/${s.id}`}
+                                className="font-medium text-primary hover:underline"
+                              >
+                                {s.serviceType}
+                              </Link>
+                              <div className="text-sm text-muted-foreground">
+                                Circuit: {s.circuitId || 'N/A'}
+                              </div>
                             </div>
                             <StatusBadge status={s.status} />
                           </div>
@@ -432,14 +602,26 @@ export default function CustomerDetail() {
                 <Card className="border-border/50 shadow-sm">
                   <CardContent className="p-0">
                     {!customer.tickets?.length ? (
-                      <div className="p-8 text-center text-muted-foreground text-sm">No recent tickets.</div>
+                      <div className="p-8 text-center text-muted-foreground text-sm">
+                        No recent tickets.
+                      </div>
                     ) : (
                       <div className="divide-y divide-border/50">
-                        {customer.tickets.map(t => (
-                          <div key={t.id} className="p-4 flex items-center justify-between hover:bg-muted/30">
+                        {customer.tickets.map((t) => (
+                          <div
+                            key={t.id}
+                            className="p-4 flex items-center justify-between hover:bg-muted/30"
+                          >
                             <div>
-                              <Link href={`/tickets/${t.id}`} className="font-medium text-primary hover:underline">{t.ticketNumber} - {t.title}</Link>
-                              <div className="text-sm text-muted-foreground">{new Date(t.openedAt).toLocaleDateString()}</div>
+                              <Link
+                                href={`/tickets/${t.id}`}
+                                className="font-medium text-primary hover:underline"
+                              >
+                                {t.ticketNumber} - {t.title}
+                              </Link>
+                              <div className="text-sm text-muted-foreground">
+                                {new Date(t.openedAt).toLocaleDateString()}
+                              </div>
                             </div>
                             <StatusBadge status={t.status} />
                           </div>

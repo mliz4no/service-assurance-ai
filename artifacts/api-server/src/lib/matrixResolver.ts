@@ -1,8 +1,8 @@
-import { db, escalationMatrixOverridesTable } from "@workspace/db";
-import { or, and, eq, isNull } from "drizzle-orm";
-import { type ImpactLevel, type UrgencyLevel, type SeverityLevel } from "./severity";
+import { db, escalationMatrixOverridesTable } from '@workspace/db';
+import { or, and, eq, isNull } from 'drizzle-orm';
+import { type ImpactLevel, type UrgencyLevel, type SeverityLevel } from './severity';
 
-export type MatrixScopeType = "global" | "customer" | "site" | "service";
+export type MatrixScopeType = 'global' | 'customer' | 'site' | 'service';
 
 const SCOPE_PRIORITY: Record<string, number> = {
   global: 1,
@@ -12,16 +12,16 @@ const SCOPE_PRIORITY: Record<string, number> = {
 };
 
 const SCOPE_LABELS: Record<string, string> = {
-  global: "Global override",
-  customer: "Customer override",
-  site: "Location override",
-  service: "Service override",
+  global: 'Global override',
+  customer: 'Customer override',
+  site: 'Location override',
+  service: 'Service override',
 };
 
 export const DEFAULT_MATRIX: Record<ImpactLevel, Record<UrgencyLevel, SeverityLevel>> = {
-  high: { high: "critical", medium: "high", low: "medium" },
-  medium: { high: "high", medium: "medium", low: "low" },
-  low: { high: "medium", medium: "low", low: "low" },
+  high: { high: 'critical', medium: 'high', low: 'medium' },
+  medium: { high: 'high', medium: 'medium', low: 'low' },
+  low: { high: 'medium', medium: 'low', low: 'low' },
 };
 
 export type MatrixCell = {
@@ -49,30 +49,30 @@ export async function fetchOverridesForContext(context: {
 }): Promise<OverrideRow[]> {
   const conds: ReturnType<typeof and>[] = [
     and(
-      eq(escalationMatrixOverridesTable.scopeType, "global"),
-      isNull(escalationMatrixOverridesTable.scopeId)
+      eq(escalationMatrixOverridesTable.scopeType, 'global'),
+      isNull(escalationMatrixOverridesTable.scopeId),
     ),
     and(
-      eq(escalationMatrixOverridesTable.scopeType, "customer"),
-      eq(escalationMatrixOverridesTable.scopeId, context.customerId)
+      eq(escalationMatrixOverridesTable.scopeType, 'customer'),
+      eq(escalationMatrixOverridesTable.scopeId, context.customerId),
     ),
   ];
 
   if (context.siteId) {
     conds.push(
       and(
-        eq(escalationMatrixOverridesTable.scopeType, "site"),
-        eq(escalationMatrixOverridesTable.scopeId, context.siteId)
-      )
+        eq(escalationMatrixOverridesTable.scopeType, 'site'),
+        eq(escalationMatrixOverridesTable.scopeId, context.siteId),
+      ),
     );
   }
 
   if (context.serviceId) {
     conds.push(
       and(
-        eq(escalationMatrixOverridesTable.scopeType, "service"),
-        eq(escalationMatrixOverridesTable.scopeId, context.serviceId)
-      )
+        eq(escalationMatrixOverridesTable.scopeType, 'service'),
+        eq(escalationMatrixOverridesTable.scopeId, context.serviceId),
+      ),
     );
   }
 
@@ -85,25 +85,23 @@ export async function fetchOverridesForContext(context: {
 export function resolveCellFromOverrides(
   impact: ImpactLevel,
   urgency: UrgencyLevel,
-  overrides: OverrideRow[]
+  overrides: OverrideRow[],
 ): { severity: SeverityLevel; scopeLabel: string } {
   const cellOverrides = overrides
     .filter((o) => o.impactLevel === impact && o.urgencyLevel === urgency)
-    .sort(
-      (a, b) => (SCOPE_PRIORITY[b.scopeType] ?? 0) - (SCOPE_PRIORITY[a.scopeType] ?? 0)
-    );
+    .sort((a, b) => (SCOPE_PRIORITY[b.scopeType] ?? 0) - (SCOPE_PRIORITY[a.scopeType] ?? 0));
 
   if (cellOverrides.length > 0) {
     const winner = cellOverrides[0];
     return {
       severity: winner.derivedSeverity as SeverityLevel,
-      scopeLabel: SCOPE_LABELS[winner.scopeType] ?? "Override",
+      scopeLabel: SCOPE_LABELS[winner.scopeType] ?? 'Override',
     };
   }
 
   return {
     severity: DEFAULT_MATRIX[impact][urgency],
-    scopeLabel: "Default ITIL matrix",
+    scopeLabel: 'Default ITIL matrix',
   };
 }
 
@@ -114,30 +112,30 @@ export async function resolveMatrixCellForTicket(
     serviceId?: string | null;
   },
   impact: ImpactLevel,
-  urgency: UrgencyLevel
+  urgency: UrgencyLevel,
 ): Promise<{ severity: SeverityLevel; scopeLabel: string }> {
   const overrides = await fetchOverridesForContext(context);
   return resolveCellFromOverrides(impact, urgency, overrides);
 }
 
 export async function getEffectiveMatrixForScope(
-  scopeType: MatrixScopeType | "default",
-  scopeId: string | null
+  scopeType: MatrixScopeType | 'default',
+  scopeId: string | null,
 ): Promise<MatrixCell[]> {
-  const IMPACTS: ImpactLevel[] = ["high", "medium", "low"];
-  const URGENCIES: UrgencyLevel[] = ["high", "medium", "low"];
+  const IMPACTS: ImpactLevel[] = ['high', 'medium', 'low'];
+  const URGENCIES: UrgencyLevel[] = ['high', 'medium', 'low'];
 
   let overrides: OverrideRow[] = [];
 
-  if (scopeType !== "default") {
+  if (scopeType !== 'default') {
     const cond = scopeId
       ? and(
           eq(escalationMatrixOverridesTable.scopeType, scopeType),
-          eq(escalationMatrixOverridesTable.scopeId, scopeId)
+          eq(escalationMatrixOverridesTable.scopeId, scopeId),
         )
       : and(
           eq(escalationMatrixOverridesTable.scopeType, scopeType),
-          isNull(escalationMatrixOverridesTable.scopeId)
+          isNull(escalationMatrixOverridesTable.scopeId),
         );
 
     overrides = (await db
@@ -150,7 +148,7 @@ export async function getEffectiveMatrixForScope(
   for (const impact of IMPACTS) {
     for (const urgency of URGENCIES) {
       const override = overrides.find(
-        (o) => o.impactLevel === impact && o.urgencyLevel === urgency
+        (o) => o.impactLevel === impact && o.urgencyLevel === urgency,
       );
       cells.push({
         impactLevel: impact,
@@ -160,7 +158,7 @@ export async function getEffectiveMatrixForScope(
           : DEFAULT_MATRIX[impact][urgency],
         isOverride: !!override,
         overrideId: override?.id ?? null,
-        inheritedFrom: override ? null : "Default ITIL matrix",
+        inheritedFrom: override ? null : 'Default ITIL matrix',
       });
     }
   }
@@ -172,16 +170,14 @@ export async function upsertMatrixOverrides(
   scopeType: MatrixScopeType,
   scopeId: string | null,
   cells: Array<{ impactLevel: string; urgencyLevel: string; derivedSeverity: string }>,
-  updatedByUserId?: string
+  updatedByUserId?: string,
 ): Promise<void> {
-  const IMPACTS: ImpactLevel[] = ["high", "medium", "low"];
-  const URGENCIES: UrgencyLevel[] = ["high", "medium", "low"];
+  const IMPACTS: ImpactLevel[] = ['high', 'medium', 'low'];
+  const URGENCIES: UrgencyLevel[] = ['high', 'medium', 'low'];
 
   for (const impact of IMPACTS) {
     for (const urgency of URGENCIES) {
-      const cell = cells.find(
-        (c) => c.impactLevel === impact && c.urgencyLevel === urgency
-      );
+      const cell = cells.find((c) => c.impactLevel === impact && c.urgencyLevel === urgency);
       const defaultSeverity = DEFAULT_MATRIX[impact][urgency];
       const incoming = cell?.derivedSeverity ?? defaultSeverity;
 
@@ -190,13 +186,13 @@ export async function upsertMatrixOverrides(
             eq(escalationMatrixOverridesTable.scopeType, scopeType),
             eq(escalationMatrixOverridesTable.scopeId, scopeId),
             eq(escalationMatrixOverridesTable.impactLevel, impact),
-            eq(escalationMatrixOverridesTable.urgencyLevel, urgency)
+            eq(escalationMatrixOverridesTable.urgencyLevel, urgency),
           )
         : and(
             eq(escalationMatrixOverridesTable.scopeType, scopeType),
             isNull(escalationMatrixOverridesTable.scopeId),
             eq(escalationMatrixOverridesTable.impactLevel, impact),
-            eq(escalationMatrixOverridesTable.urgencyLevel, urgency)
+            eq(escalationMatrixOverridesTable.urgencyLevel, urgency),
           );
 
       const [existing] = await db
