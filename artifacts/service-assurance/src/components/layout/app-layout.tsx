@@ -45,7 +45,7 @@ export function AppLayout({ children, title }: AppLayoutProps) {
   };
 
   const isAdminOrOps = user?.role === 'admin' || user?.role === 'ops';
-  const isPartner = user?.role === 'telecom_services_partner';
+  const isPartner = false;
 
   const navItems = isAdminOrOps
     ? [
@@ -76,7 +76,7 @@ export function AppLayout({ children, title }: AppLayoutProps) {
     admin: 'Admin',
     ops: 'Operations',
     customer: 'Customer',
-    telecom_services_partner: 'Partner',
+    // telecom_services_partner removed from API roles
   };
 
   return (

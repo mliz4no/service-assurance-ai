@@ -22,6 +22,16 @@ export function SalesforcePanel() {
   const testMutation = useSalesforceTest();
   const syncMutation = useSalesforceSync('full');
 
+  // Cast external API responses to `any` for UI consumption (generated types are loose)
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const statusAny: any = status;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const savedConfigAny: any = savedConfig;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const testData: any = testMutation.data;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const syncData: any = syncMutation.data;
+
   const [showForm, setShowForm] = useState(false);
   const [form, setForm] = useState({
     clientId: '',
@@ -34,14 +44,14 @@ export function SalesforcePanel() {
   });
 
   useEffect(() => {
-    if (savedConfig && showForm) {
+    if (savedConfigAny && showForm) {
       setForm({
-        clientId: savedConfig.clientId || '',
-        clientSecret: savedConfig.hasClientSecret ? MASKED : '',
-        loginUrl: savedConfig.loginUrl || '',
-        instanceUrl: savedConfig.instanceUrl || '',
-        username: savedConfig.username || '',
-        password: savedConfig.hasPassword ? MASKED : '',
+        clientId: savedConfigAny.clientId || '',
+        clientSecret: savedConfigAny.hasClientSecret ? MASKED : '',
+        loginUrl: savedConfigAny.loginUrl || '',
+        instanceUrl: savedConfigAny.instanceUrl || '',
+        username: savedConfigAny.username || '',
+        password: savedConfigAny.hasPassword ? MASKED : '',
         securityToken: '',
       });
     }
@@ -103,7 +113,7 @@ export function SalesforcePanel() {
     });
   }
 
-  const configured = status?.configured ?? false;
+  const configured = statusAny?.configured ?? false;
   const set = (k: string) => (e: React.ChangeEvent<HTMLInputElement>) =>
     setForm((f) => ({ ...f, [k]: e.target.value }));
 
@@ -235,7 +245,7 @@ export function SalesforcePanel() {
                     if (form.clientSecret === MASKED) setForm((f) => ({ ...f, clientSecret: '' }));
                   }}
                   placeholder={
-                    savedConfig?.hasClientSecret
+                    savedConfigAny?.hasClientSecret
                       ? 'Leave blank to keep existing'
                       : 'Consumer Secret'
                   }
@@ -261,7 +271,7 @@ export function SalesforcePanel() {
                     if (form.password === MASKED) setForm((f) => ({ ...f, password: '' }));
                   }}
                   placeholder={
-                    savedConfig?.hasPassword
+                    savedConfigAny?.hasPassword
                       ? 'Leave blank to keep existing'
                       : 'Salesforce password'
                   }
@@ -327,13 +337,13 @@ export function SalesforcePanel() {
           <div className="p-3 bg-muted/30 rounded-md border border-border/50">
             <p className="text-xs font-semibold text-muted-foreground mb-1">Accounts synced</p>
             <p className="text-lg font-bold">
-              {loadingStatus ? '—' : (status?.accountsSynced ?? 0)}
+              {loadingStatus ? '—' : (statusAny?.accountsSynced ?? 0)}
             </p>
           </div>
           <div className="p-3 bg-muted/30 rounded-md border border-border/50">
             <p className="text-xs font-semibold text-muted-foreground mb-1">Contacts synced</p>
             <p className="text-lg font-bold">
-              {loadingStatus ? '—' : (status?.contactsSynced ?? 0)}
+            {loadingStatus ? '—' : (statusAny?.contactsSynced ?? 0)}
             </p>
           </div>
           <div className="p-3 bg-muted/30 rounded-md border border-border/50">
@@ -341,8 +351,8 @@ export function SalesforcePanel() {
             <p className="text-sm font-medium">
               {loadingStatus
                 ? '—'
-                : status?.lastSyncAt
-                  ? new Date(status.lastSyncAt).toLocaleString(undefined, {
+                  : statusAny?.lastSyncAt
+                    ? new Date(statusAny.lastSyncAt).toLocaleString(undefined, {
                       month: 'short',
                       day: 'numeric',
                       hour: '2-digit',
@@ -353,37 +363,37 @@ export function SalesforcePanel() {
           </div>
         </div>
 
-        {testMutation.data && (
+        {testData && (
           <div
-            className={`flex items-start gap-2 p-3 rounded-md text-xs border ${testMutation.data.ok ? 'bg-green-50 border-green-200 text-green-800' : 'bg-red-50 border-red-200 text-red-800'}`}
+            className={`flex items-start gap-2 p-3 rounded-md text-xs border ${testData.ok ? 'bg-green-50 border-green-200 text-green-800' : 'bg-red-50 border-red-200 text-red-800'}`}
           >
-            {testMutation.data.ok ? (
+            {testData.ok ? (
               <CheckCircle2 className="w-4 h-4 shrink-0 mt-0.5" />
             ) : (
               <XCircle className="w-4 h-4 shrink-0 mt-0.5" />
             )}
-            <span>{testMutation.data.message}</span>
+            <span>{testData.message}</span>
           </div>
         )}
 
-        {syncMutation.data && (
+        {syncData && (
           <div className="p-3 bg-green-50 border border-green-200 rounded-md text-xs text-green-800">
-            Sync complete — {syncMutation.data.accounts?.synced ?? 0} accounts,{' '}
-            {syncMutation.data.contacts?.synced ?? 0} contacts processed.
-            {(syncMutation.data.accounts?.errors?.length > 0 ||
-              syncMutation.data.contacts?.errors?.length > 0) && (
+            Sync complete — {syncData.accounts?.synced ?? 0} accounts,{' '}
+            {syncData.contacts?.synced ?? 0} contacts processed.
+            {(syncData.accounts?.errors?.length > 0 ||
+              syncData.contacts?.errors?.length > 0) && (
               <span className="text-amber-700"> Some rows had errors — check sync log below.</span>
             )}
           </div>
         )}
 
-        {status?.recentLogs?.length > 0 && (
+        {statusAny?.recentLogs?.length > 0 && (
           <div>
             <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide mb-2">
               Recent Sync Log
             </p>
             <div className="space-y-1.5">
-              {status.recentLogs.map((log: any) => (
+              {statusAny.recentLogs.map((log: any) => (
                 <div
                   key={log.id}
                   className="flex items-center gap-3 px-3 py-2 bg-muted/20 rounded border border-border/40 text-xs"

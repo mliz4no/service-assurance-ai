@@ -112,7 +112,7 @@ export async function correlateEvent(params: {
     'vendor_engaged',
     'dispatch_scheduled',
     'monitoring',
-  ];
+  ] as const;
 
   let existingTickets = await db
     .select()
@@ -128,7 +128,7 @@ export async function correlateEvent(params: {
   // Prefer matching by siteId then serviceId for closer correlation
   let matchedTicket =
     existingTickets.find(
-      (t) =>
+      (t: typeof ticketsTable.$inferSelect) =>
         (params.siteId && t.siteId === params.siteId) ||
         (params.serviceId && t.serviceId === params.serviceId),
     ) ??

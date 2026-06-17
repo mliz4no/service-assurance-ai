@@ -1,4 +1,4 @@
-import { Router, type IRouter } from 'express';
+import { Router, type IRouter, type Request, type Response } from 'express';
 import {
   db,
   controllersTable,
@@ -14,12 +14,13 @@ import { requireAuth, requireRole } from '../middlewares/auth';
 import { createConnector } from '../connectors';
 import { correlateEvent } from '../lib/incident-correlator';
 import { logger } from '../lib/logger';
+import { getStringParam } from '../lib/params';
 
 const router: IRouter = Router();
 
 // ── List controllers ─────────────────────────────────────────────────────────
 
-router.get('/controllers', requireAuth, async (req, res): Promise<void> => {
+router.get('/controllers', requireAuth, async (req: Request, res: Response): Promise<void> => {
   if (req.user?.role === 'telecom_services_partner') {
     res.status(403).json({ error: 'Forbidden' });
     return;
@@ -27,13 +28,13 @@ router.get('/controllers', requireAuth, async (req, res): Promise<void> => {
   const controllers = await db.select().from(controllersTable).orderBy(controllersTable.name);
 
   const enriched = await Promise.all(
-    controllers.map(async (c) => {
+    controllers.map(async (c: typeof controllersTable.$inferSelect) => {
       const [deviceCount] = await db
-        .select({ count: count() })
+        .select({ count: count(managedDevicesTable.id) })
         .from(managedDevicesTable)
         .where(eq(managedDevicesTable.controllerId, c.id));
       const [eventCount] = await db
-        .select({ count: count() })
+        .select({ count: count(deviceEventsTable.id) })
         .from(deviceEventsTable)
         .where(eq(deviceEventsTable.controllerId, c.id));
       return {
@@ -49,11 +50,12 @@ router.get('/controllers', requireAuth, async (req, res): Promise<void> => {
 
 // ── Get one controller ────────────────────────────────────────────────────────
 
-router.get('/controllers/:id', requireAuth, async (req, res): Promise<void> => {
+router.get('/controllers/:id', requireAuth, async (req, res: Response): Promise<void> => {
+  const id = getStringParam(req.params.id, 'id');
   const [controller] = await db
     .select()
     .from(controllersTable)
-    .where(eq(controllersTable.id, req.params.id));
+    .where(eq(controllersTable.id, id));
   if (!controller) {
     res.status(404).json({ error: 'Controller not found' });
     return;
@@ -71,7 +73,7 @@ router.get('/controllers/:id', requireAuth, async (req, res): Promise<void> => {
       .from(managedDevicesTable)
       .where(eq(managedDevicesTable.controllerId, controller.id)),
     db
-      .select({ count: count() })
+      .select({ count: count(networkLinksTable.id) })
       .from(networkLinksTable)
       .innerJoin(managedDevicesTable, eq(networkLinksTable.managedDeviceId, managedDevicesTable.id))
       .where(eq(managedDevicesTable.controllerId, controller.id)),
@@ -95,7 +97,7 @@ router.get('/controllers/:id', requireAuth, async (req, res): Promise<void> => {
 
 // ── Create controller ─────────────────────────────────────────────────────────
 
-router.post('/controllers', requireAuth, requireRole('admin'), async (req, res): Promise<void> => {
+router.post('/controllers', requireAuth, requireRole('admin'), async (req: Request, res: Response): Promise<void> => {
   const {
     name,
     vendor,
@@ -139,7 +141,8 @@ router.put(
   '/controllers/:id',
   requireAuth,
   requireRole('admin'),
-  async (req, res): Promise<void> => {
+  async (req: Request, res: Response): Promise<void> => {
+    const id = getStringParam(req.params.id, 'id');
     const {
       name,
       vendor,
@@ -155,7 +158,7 @@ router.put(
     const [existing] = await db
       .select()
       .from(controllersTable)
-      .where(eq(controllersTable.id, req.params.id));
+      .where(eq(controllersTable.id, id));
     if (!existing) {
       res.status(404).json({ error: 'Controller not found' });
       return;
@@ -175,7 +178,7 @@ router.put(
         pollingEnabled: pollingEnabled ?? existing.pollingEnabled,
         pollingIntervalSeconds: pollingIntervalSeconds ?? existing.pollingIntervalSeconds,
       })
-      .where(eq(controllersTable.id, req.params.id))
+      .where(eq(controllersTable.id, id))
       .returning();
 
     res.json(updated);
@@ -188,28 +191,30 @@ router.delete(
   '/controllers/:id',
   requireAuth,
   requireRole('admin'),
-  async (req, res): Promise<void> => {
+  async (req: Request, res: Response): Promise<void> => {
+    const id = getStringParam(req.params.id, 'id');
     const [existing] = await db
       .select()
       .from(controllersTable)
-      .where(eq(controllersTable.id, req.params.id));
+      .where(eq(controllersTable.id, id));
     if (!existing) {
       res.status(404).json({ error: 'Controller not found' });
       return;
     }
 
-    await db.delete(controllersTable).where(eq(controllersTable.id, req.params.id));
+    await db.delete(controllersTable).where(eq(controllersTable.id, id));
     res.json({ success: true });
   },
 );
 
 // ── Test connection ────────────────────────────────────────────────────────────
 
-router.post('/controllers/:id/test', requireAuth, async (req, res): Promise<void> => {
+router.post('/controllers/:id/test', requireAuth, async (req: Request, res: Response): Promise<void> => {
+  const id = getStringParam(req.params.id, 'id');
   const [controller] = await db
     .select()
     .from(controllersTable)
-    .where(eq(controllersTable.id, req.params.id));
+    .where(eq(controllersTable.id, id));
   if (!controller) {
     res.status(404).json({ error: 'Controller not found' });
     return;
@@ -227,11 +232,12 @@ router.post('/controllers/:id/test', requireAuth, async (req, res): Promise<void
 
 // ── Sync one controller ───────────────────────────────────────────────────────
 
-router.post('/controllers/:id/sync', requireAuth, async (req, res): Promise<void> => {
+router.post('/controllers/:id/sync', requireAuth, async (req: Request, res: Response): Promise<void> => {
+  const id = getStringParam(req.params.id, 'id');
   const [controller] = await db
     .select()
     .from(controllersTable)
-    .where(eq(controllersTable.id, req.params.id));
+    .where(eq(controllersTable.id, id));
   if (!controller) {
     res.status(404).json({ error: 'Controller not found' });
     return;
@@ -253,7 +259,7 @@ router.post('/controllers/:id/sync', requireAuth, async (req, res): Promise<void
 
 // ── Sync all enabled controllers ──────────────────────────────────────────────
 
-router.post('/controllers/sync/all', requireAuth, async (req, res): Promise<void> => {
+router.post('/controllers/sync/all', requireAuth, async (req: Request, res: Response): Promise<void> => {
   const controllers = await db
     .select()
     .from(controllersTable)
@@ -448,8 +454,8 @@ async function runSync(
           .select()
           .from(networkLinksTable)
           .where(eq(networkLinksTable.managedDeviceId, managedDeviceId));
-        const primary = allLinks.find((l) => l.role === 'primary');
-        const backup = allLinks.find((l) => l.role === 'backup');
+        const primary = allLinks.find((l: typeof networkLinksTable.$inferSelect) => l.role === 'primary');
+        const backup = allLinks.find((l: typeof networkLinksTable.$inferSelect) => l.role === 'backup');
         if (primary?.status === 'down' && backup?.status === 'up') {
           failoverActive = true;
         }

@@ -65,6 +65,8 @@ export default function AdminPanel() {
   const { data: users, isLoading: loadingUsers } = useGetUsers();
   const { data: health, isLoading: loadingHealth } = useGetConfigHealth();
   const { data: partners, isLoading: loadingPartners } = usePartners();
+  // API responses may be loosely typed; use `any` aliases for UI access
+  const partnersAny: any = partners;
   const deleteSlaPolicy = useDeleteSlaPolicy();
   const deleteUser = useDeleteUser();
   const deletePartner = useDeletePartner();
@@ -73,6 +75,8 @@ export default function AdminPanel() {
 
   const [aiTestInput, setAiTestInput] = useState('');
   const testAiMutation = useAiTest();
+  // ai test response can be partial; cast to any for UI rendering
+  const testAiData: any = testAiMutation.data;
 
   const [slaPolicyDialogOpen, setSlaPolicyDialogOpen] = useState(false);
   const [editingPolicy, setEditingPolicy] = useState<SlaPolicy | null>(null);
@@ -409,14 +413,14 @@ export default function AdminPanel() {
                       <Activity className="w-5 h-5 animate-spin mx-auto text-muted-foreground" />
                     </TableCell>
                   </TableRow>
-                ) : !partners?.length ? (
+                ) : !partnersAny?.length ? (
                   <TableRow>
                     <TableCell colSpan={5} className="text-center py-6 text-muted-foreground">
                       No partners configured.
                     </TableCell>
                   </TableRow>
                 ) : (
-                  partners.map((partner) => (
+                  partnersAny.map((partner: any) => (
                     <TableRow key={partner.id} className="hover:bg-muted/20">
                       <TableCell className="font-medium">{partner.companyName}</TableCell>
                       <TableCell>{partner.name}</TableCell>
@@ -510,7 +514,7 @@ export default function AdminPanel() {
               </div>
             )}
 
-            {testAiMutation.data && (
+            {testAiData && (
               <div
                 className="p-4 bg-muted/30 rounded-md border border-border/50 space-y-3"
                 data-testid="ai-test-result"
@@ -520,36 +524,36 @@ export default function AdminPanel() {
                     <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide mb-0.5">
                       Normalized Status
                     </p>
-                    <p className="font-semibold text-primary">
-                      {testAiMutation.data.normalizedStatus}
+                      <p className="font-semibold text-primary">
+                      {testAiData.normalizedStatus}
                     </p>
                   </div>
-                  {testAiMutation.data.confidence !== undefined && (
+                  {testAiData.confidence !== undefined && (
                     <div>
                       <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide mb-0.5">
                         Confidence
                       </p>
                       <span
                         className={`inline-flex items-center px-2 py-0.5 rounded text-xs font-bold ${
-                          testAiMutation.data.confidence >= 80
+                          testAiData.confidence >= 80
                             ? 'bg-green-100 text-green-800'
-                            : testAiMutation.data.confidence >= 50
+                            : testAiData.confidence >= 50
                               ? 'bg-yellow-100 text-yellow-800'
                               : 'bg-red-100 text-red-800'
                         }`}
                       >
-                        {testAiMutation.data.confidence}%
+                        {testAiData.confidence}%
                       </span>
                     </div>
                   )}
                 </div>
-                {testAiMutation.data.reasoning && (
+                {testAiData.reasoning && (
                   <div>
                     <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide mb-0.5">
                       Reasoning
                     </p>
                     <p className="text-sm text-muted-foreground italic">
-                      {testAiMutation.data.reasoning}
+                      {testAiData.reasoning}
                     </p>
                   </div>
                 )}

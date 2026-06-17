@@ -1,4 +1,3 @@
-import type { DrizzleClient } from 'drizzle-orm';
 import { t, h, m, d } from '../time';
 
 type SeedParams = {

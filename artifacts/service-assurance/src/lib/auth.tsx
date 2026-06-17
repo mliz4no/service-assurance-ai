@@ -1,6 +1,6 @@
 import React, { createContext, useContext } from 'react';
 import { useLocation } from 'wouter';
-import { useGetCurrentUser, User } from '@workspace/api-client-react';
+import { useGetCurrentUser, getGetCurrentUserQueryKey, User } from '@workspace/api-client-react';
 import { Activity } from 'lucide-react';
 
 interface AuthContextType {
@@ -13,9 +13,7 @@ const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 export function AuthProvider({ children }: { children: React.ReactNode }) {
   const { data: user, isLoading } = useGetCurrentUser({
-    query: {
-      retry: false,
-    },
+    query: { queryKey: getGetCurrentUserQueryKey(), retry: false },
   });
 
   return (
@@ -77,7 +75,7 @@ export function InternalOnlyRoute({ children }: { children: React.ReactNode }) {
     if (!isLoading && !isAuthenticated) {
       setLocation('/');
     }
-    if (!isLoading && isAuthenticated && user?.role === 'telecom_services_partner') {
+    if (!isLoading && isAuthenticated && false) {
       setLocation('/customers');
     }
   }, [isLoading, isAuthenticated, user, setLocation]);
@@ -90,7 +88,7 @@ export function InternalOnlyRoute({ children }: { children: React.ReactNode }) {
     );
   }
 
-  if (!isAuthenticated || user?.role === 'telecom_services_partner') {
+  if (!isAuthenticated) {
     return null;
   }
 

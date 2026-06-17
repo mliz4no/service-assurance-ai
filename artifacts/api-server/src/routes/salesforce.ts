@@ -127,7 +127,7 @@ router.get('/salesforce/status', ...adminOnly, async (req, res): Promise<void> =
     .orderBy(desc(crmSyncLogsTable.startedAt))
     .limit(5);
 
-  const lastSuccessLog = recentLogs.find((l) => l.status === 'success');
+  const lastSuccessLog = recentLogs.find((l: typeof crmSyncLogsTable.$inferSelect) => l.status === 'success');
   const creds = await sf.getCredentials();
 
   res.json({

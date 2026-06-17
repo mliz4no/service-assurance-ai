@@ -30,42 +30,42 @@ router.get('/device-events', requireAuth, async (req, res): Promise<void> => {
     .from(deviceEventsTable)
     .orderBy(desc(deviceEventsTable.occurredAt));
 
-  if (controllerId) events = events.filter((e) => e.controllerId === controllerId);
-  if (customerId) events = events.filter((e) => e.customerId === customerId);
-  if (siteId) events = events.filter((e) => e.siteId === siteId);
-  if (severity) events = events.filter((e) => e.severity === severity);
+  if (controllerId) events = events.filter((e: typeof deviceEventsTable.$inferSelect) => e.controllerId === controllerId);
+  if (customerId) events = events.filter((e: typeof deviceEventsTable.$inferSelect) => e.customerId === customerId);
+  if (siteId) events = events.filter((e: typeof deviceEventsTable.$inferSelect) => e.siteId === siteId);
+  if (severity) events = events.filter((e: typeof deviceEventsTable.$inferSelect) => e.severity === severity);
   if (search) {
     const q = search.toLowerCase();
     events = events.filter(
-      (e) =>
+      (e: typeof deviceEventsTable.$inferSelect) =>
         e.title.toLowerCase().includes(q) ||
         (e.description ?? '').toLowerCase().includes(q) ||
         e.eventType.toLowerCase().includes(q),
     );
   }
 
-  const controllerIds = [...new Set(events.map((e) => e.controllerId))];
-  const customerIds = [...new Set(events.map((e) => e.customerId).filter(Boolean))] as string[];
+  const controllerIds = [...new Set(events.map((e: typeof deviceEventsTable.$inferSelect) => e.controllerId))];
+  const customerIds = [...new Set(events.map((e: typeof deviceEventsTable.$inferSelect) => e.customerId).filter(Boolean))] as string[];
 
   const [controllers, customers] = await Promise.all([
     controllerIds.length
       ? db
           .select()
           .from(controllersTable)
-          .where(or(...controllerIds.map((id) => eq(controllersTable.id, id))))
+          .where(or(...controllerIds.map((id: string) => eq(controllersTable.id, id))))
       : [],
     customerIds.length
       ? db
           .select()
           .from(customersTable)
-          .where(or(...customerIds.map((id) => eq(customersTable.id, id))))
+          .where(or(...customerIds.map((id: string) => eq(customersTable.id, id))))
       : [],
   ]);
 
-  const enriched = events.map((e) => ({
+  const enriched = events.map((e: typeof deviceEventsTable.$inferSelect) => ({
     ...e,
-    controller: controllers.find((c) => c.id === e.controllerId) ?? null,
-    customer: customers.find((c) => c.id === e.customerId) ?? null,
+    controller: controllers.find((c: typeof controllersTable.$inferSelect) => c.id === e.controllerId) ?? null,
+    customer: customers.find((c: typeof customersTable.$inferSelect) => c.id === e.customerId) ?? null,
   }));
 
   res.json(enriched);
@@ -87,27 +87,27 @@ router.get('/device-events/:id', requireAuth, async (req, res): Promise<void> =>
       .select()
       .from(controllersTable)
       .where(eq(controllersTable.id, event.controllerId))
-      .then((r) => r[0] ?? null),
+      .then((r: Array<typeof controllersTable.$inferSelect>) => r[0] ?? null),
     event.managedDeviceId
       ? db
           .select()
           .from(managedDevicesTable)
           .where(eq(managedDevicesTable.id, event.managedDeviceId))
-          .then((r) => r[0] ?? null)
+          .then((r: Array<typeof managedDevicesTable.$inferSelect>) => r[0] ?? null)
       : Promise.resolve(null),
     event.customerId
       ? db
           .select()
           .from(customersTable)
           .where(eq(customersTable.id, event.customerId))
-          .then((r) => r[0] ?? null)
+          .then((r: Array<typeof customersTable.$inferSelect>) => r[0] ?? null)
       : Promise.resolve(null),
     event.siteId
       ? db
           .select()
           .from(sitesTable)
           .where(eq(sitesTable.id, event.siteId))
-          .then((r) => r[0] ?? null)
+          .then((r: Array<typeof sitesTable.$inferSelect>) => r[0] ?? null)
       : Promise.resolve(null),
   ]);
 
@@ -117,13 +117,13 @@ router.get('/device-events/:id', requireAuth, async (req, res): Promise<void> =>
     .from(incidentCorrelationsTable)
     .where(eq(incidentCorrelationsTable.deviceEventId, event.id));
 
-  const ticketIds = correlations.map((c) => c.ticketId);
+  const ticketIds = correlations.map((c: typeof incidentCorrelationsTable.$inferSelect) => c.ticketId);
   const linkedTickets =
     ticketIds.length > 0
       ? await db
           .select()
           .from(ticketsTable)
-          .where(or(...ticketIds.map((id) => eq(ticketsTable.id, id))))
+          .where(or(...ticketIds.map((id: string) => eq(ticketsTable.id, id))))
       : [];
 
   res.json({ ...event, controller, device, customer, site, linkedTickets, correlations });

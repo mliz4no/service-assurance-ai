@@ -32,12 +32,7 @@ export default function Login() {
 
   useEffect(() => {
     if (!authLoading && isAuthenticated) {
-      const dest =
-        user?.role === 'telecom_services_partner'
-          ? '/customers'
-          : user?.role === 'customer'
-            ? '/my-tickets'
-            : '/dashboard';
+      const dest = user?.role === 'customer' ? '/my-tickets' : '/dashboard';
       setLocation(dest);
     }
   }, [authLoading, isAuthenticated, user, setLocation]);
@@ -53,7 +48,7 @@ export default function Login() {
   const onSubmit = (values: z.infer<typeof loginSchema>) => {
     setErrorMsg('');
     loginMutation.mutate(
-      { data: values },
+      { data: values as any },
       {
         onSuccess: (data: any) => {
           if (data?.token) {

@@ -7,6 +7,7 @@ import {
   getGetServicesQueryKey,
   useGetCustomers,
   useGetSites,
+  getGetSitesQueryKey,
 } from '@workspace/api-client-react';
 import { useQueryClient } from '@tanstack/react-query';
 import { AppLayout } from '@/components/layout/app-layout';
@@ -72,9 +73,7 @@ export default function ServiceNew() {
   const selectedCustomerId = form.watch('customerId');
   const { data: sites } = useGetSites(
     { customerId: selectedCustomerId },
-    {
-      query: { enabled: !!selectedCustomerId },
-    },
+    { query: { queryKey: getGetSitesQueryKey({ customerId: selectedCustomerId }), enabled: !!selectedCustomerId } },
   );
 
   function onSubmit(values: z.infer<typeof formSchema>) {

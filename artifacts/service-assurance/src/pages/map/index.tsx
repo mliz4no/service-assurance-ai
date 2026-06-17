@@ -378,8 +378,9 @@ export default function MapPage() {
   const openTicketCountByDevice = useMemo<Record<string, number>>(() => {
     const map: Record<string, number> = {};
     for (const t of tickets) {
-      if ((t as Record<string, unknown>).deviceId) {
-        const did = (t as Record<string, unknown>).deviceId as string;
+      const tt: any = t;
+      if (tt.deviceId) {
+        const did = tt.deviceId as string;
         map[did] = (map[did] || 0) + 1;
       }
     }

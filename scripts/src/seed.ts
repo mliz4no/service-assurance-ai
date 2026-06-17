@@ -175,13 +175,13 @@ async function seed() {
   // Incident correlations: associate some events to open tickets
   const allTickets = await runDb.select().from(ticketsTable);
   const nexatekOpenTickets = allTickets.filter(
-    (t) => t.customerId === nexatek.id && !['resolved', 'closed'].includes(t.status),
+    (t: any) => t.customerId === nexatek.id && !['resolved', 'closed'].includes(t.status),
   );
   const convergexOpenTickets = allTickets.filter(
-    (t) => t.customerId === convergex.id && !['resolved', 'closed'].includes(t.status),
+    (t: any) => t.customerId === convergex.id && !['resolved', 'closed'].includes(t.status),
   );
   const pinnacleOpenTickets = allTickets.filter(
-    (t) => t.customerId === pinnacle.id && !['resolved', 'closed'].includes(t.status),
+    (t: any) => t.customerId === pinnacle.id && !['resolved', 'closed'].includes(t.status),
   );
 
   const [

@@ -53,7 +53,7 @@ function Dash() {
 
 export default function TicketDetail() {
   const params = useParams();
-  const id = params.id as string;
+  const id = (params as any).id as string;
   const queryClient = useQueryClient();
   const { toast } = useToast();
   const { user: currentUser } = useAuth();
@@ -65,10 +65,10 @@ export default function TicketDetail() {
   const [updateVisibility, setUpdateVisibility] = useState<'internal' | 'customer'>('internal');
 
   const { data: rawTicket, isLoading: isLoadingTicket } = useGetTicket(id, {
-    query: { enabled: !!id },
+    query: { queryKey: getGetTicketQueryKey(id), enabled: !!id },
   });
   const { data: updates, isLoading: isLoadingUpdates } = useGetTicketUpdates(id, {
-    query: { enabled: !!id },
+    query: { queryKey: getGetTicketUpdatesQueryKey(id), enabled: !!id },
   });
   const { data: users } = useGetUsers();
 

@@ -1,6 +1,6 @@
 import { useParams, useLocation } from 'wouter';
 import { AppLayout } from '@/components/layout/app-layout';
-import { useGetService } from '@workspace/api-client-react';
+import { useGetService, getGetServiceQueryKey } from '@workspace/api-client-react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Activity, Globe2, Building2, MapPin, DollarSign, Phone, Ticket } from 'lucide-react';
 import { Link } from 'wouter';
@@ -10,10 +10,10 @@ import { CircuitImpactSelector } from '@/components/CircuitImpactSelector';
 
 export default function ServiceDetail() {
   const params = useParams();
-  const id = params.id as string;
+  const id = (params as any).id as string;
 
   const { data: service, isLoading } = useGetService(id, {
-    query: { enabled: !!id },
+    query: { queryKey: getGetServiceQueryKey(id), enabled: !!id },
   });
 
   if (isLoading)

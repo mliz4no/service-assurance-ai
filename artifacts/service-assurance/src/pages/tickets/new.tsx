@@ -8,7 +8,9 @@ import {
   getGetTicketsQueryKey,
   useGetCustomers,
   useGetSites,
+  getGetSitesQueryKey,
   useGetServices,
+  getGetServicesQueryKey,
   useGetUsers,
 } from '@workspace/api-client-react';
 import { useQueryClient } from '@tanstack/react-query';
@@ -110,9 +112,7 @@ export default function TicketNew() {
 
   const { data: sites } = useGetSites(
     { customerId: selectedCustomerId },
-    {
-      query: { enabled: !!selectedCustomerId },
-    },
+    { query: { queryKey: getGetSitesQueryKey({ customerId: selectedCustomerId }), enabled: !!selectedCustomerId } },
   );
 
   const { data: services } = useGetServices(
@@ -120,9 +120,7 @@ export default function TicketNew() {
       customerId: selectedCustomerId,
       siteId: selectedSiteId && selectedSiteId !== '__none__' ? selectedSiteId : undefined,
     },
-    {
-      query: { enabled: !!selectedCustomerId },
-    },
+    { query: { queryKey: getGetServicesQueryKey({ customerId: selectedCustomerId, siteId: selectedSiteId && selectedSiteId !== '__none__' ? selectedSiteId : undefined }), enabled: !!selectedCustomerId } },
   );
 
   function toNullable(val?: string): string | null {

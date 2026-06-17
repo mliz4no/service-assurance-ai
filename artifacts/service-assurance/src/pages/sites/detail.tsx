@@ -1,6 +1,6 @@
 import { useParams, useLocation } from 'wouter';
 import { AppLayout } from '@/components/layout/app-layout';
-import { useGetSite } from '@workspace/api-client-react';
+import { useGetSite, getGetSiteQueryKey } from '@workspace/api-client-react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Activity, MapPin, Building2, Globe2, Ticket, Phone, Mail, User } from 'lucide-react';
 import { LocationImpactSelector } from '@/components/LocationImpactSelector';
@@ -9,10 +9,10 @@ import { StatusBadge } from '@/components/status-badge';
 
 export default function SiteDetail() {
   const params = useParams();
-  const id = params.id as string;
+  const id = (params as any).id as string;
 
   const { data: site, isLoading } = useGetSite(id, {
-    query: { enabled: !!id },
+    query: { queryKey: getGetSiteQueryKey(id), enabled: !!id },
   });
 
   if (isLoading)

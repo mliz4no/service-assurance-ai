@@ -61,10 +61,10 @@ async function enrichTickets(tickets: (typeof ticketsTable.$inferSelect)[]) {
 
   return tickets.map((ticket) => ({
     ...ticket,
-    customer: customers.find((c) => c.id === ticket.customerId) ?? null,
-    site: sites.find((s) => s.id === ticket.siteId) ?? null,
-    service: services.find((s) => s.id === ticket.serviceId) ?? null,
-    assignedTo: users.find((u) => u.id === ticket.assignedToUserId) ?? null,
+    customer: customers.find((c: typeof customersTable.$inferSelect) => c.id === ticket.customerId) ?? null,
+    site: sites.find((s: typeof sitesTable.$inferSelect) => s.id === ticket.siteId) ?? null,
+    service: services.find((s: typeof servicesTable.$inferSelect) => s.id === ticket.serviceId) ?? null,
+    assignedTo: users.find((u: typeof usersTable.$inferSelect) => u.id === ticket.assignedToUserId) ?? null,
   }));
 }
 
@@ -261,19 +261,19 @@ router.get('/tickets/:id', requireAuth, async (req, res): Promise<void> => {
     .orderBy(asc(ticketUpdatesTable.createdAt));
 
   if (req.user?.role === 'customer') {
-    updates = updates.filter((u) => u.visibility === 'customer');
+    updates = updates.filter((u: typeof ticketUpdatesTable.$inferSelect) => u.visibility === 'customer');
   }
 
   const updateAuthorIds = [
-    ...new Set(updates.map((u) => u.createdByUserId).filter(Boolean) as string[]),
+    ...new Set(updates.map((u: typeof ticketUpdatesTable.$inferSelect) => u.createdByUserId).filter(Boolean) as string[]),
   ];
   const authors = updateAuthorIds.length
     ? await db.select().from(usersTable).where(inArray(usersTable.id, updateAuthorIds))
     : [];
 
-  const updatesWithAuthors = updates.map((u) => ({
+  const updatesWithAuthors = updates.map((u: typeof ticketUpdatesTable.$inferSelect) => ({
     ...u,
-    createdBy: authors.find((a) => a.id === u.createdByUserId) ?? null,
+    createdBy: authors.find((a: typeof usersTable.$inferSelect) => a.id === u.createdByUserId) ?? null,
   }));
 
   const { passwordHash: _1, ...safeCustomer } = customer ?? { passwordHash: undefined };
@@ -360,17 +360,17 @@ router.get('/tickets/:id/updates', requireAuth, async (req, res): Promise<void> 
     .orderBy(asc(ticketUpdatesTable.createdAt));
 
   if (req.user?.role === 'customer') {
-    updates = updates.filter((u) => u.visibility === 'customer');
+    updates = updates.filter((u: typeof ticketUpdatesTable.$inferSelect) => u.visibility === 'customer');
   }
 
-  const authorIds = [...new Set(updates.map((u) => u.createdByUserId).filter(Boolean) as string[])];
+  const authorIds = [...new Set(updates.map((u: typeof ticketUpdatesTable.$inferSelect) => u.createdByUserId).filter(Boolean) as string[])];
   const authors = authorIds.length
     ? await db.select().from(usersTable).where(inArray(usersTable.id, authorIds))
     : [];
 
-  const result = updates.map((u) => ({
+  const result = updates.map((u: typeof ticketUpdatesTable.$inferSelect) => ({
     ...u,
-    createdBy: authors.find((a) => a.id === u.createdByUserId) ?? null,
+    createdBy: authors.find((a: typeof usersTable.$inferSelect) => a.id === u.createdByUserId) ?? null,
   }));
 
   res.json(result);

@@ -2,11 +2,12 @@ import { Router, type IRouter } from 'express';
 import { db, customerContactsTable } from '@workspace/db';
 import { eq } from 'drizzle-orm';
 import { requireAuth } from '../middlewares/auth';
+import { getStringParam } from '../lib/params';
 
 const router: IRouter = Router();
 
 router.get('/customers/:customerId/contacts', requireAuth, async (req, res): Promise<void> => {
-  const { customerId } = req.params;
+  const customerId = getStringParam(req.params.customerId, 'customerId');
 
   if (req.user?.role === 'customer' && req.user.customerId !== customerId) {
     res.status(403).json({ error: 'Forbidden' });
@@ -73,7 +74,7 @@ router.put(
       return;
     }
 
-    const { contactId } = req.params;
+    const contactId = getStringParam(req.params.contactId, 'contactId');
     const {
       name,
       email,
@@ -117,7 +118,7 @@ router.delete(
       return;
     }
 
-    const { contactId } = req.params;
+    const contactId = getStringParam(req.params.contactId, 'contactId');
     await db.delete(customerContactsTable).where(eq(customerContactsTable.id, contactId));
     res.json({ success: true });
   },

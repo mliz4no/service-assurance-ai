@@ -531,7 +531,7 @@ function buildMerakiEventTitle(raw: MerakiApplianceEvent): string {
         (raw.eventData.peerNetworkId as string) ??
         'peer';
       const conn = raw.eventData.connectivity as string;
-      return `AutoVPN ${conn === 'false' || conn === false ? 'tunnel down' : 'tunnel restored'} to ${peer} (${net})`;
+      return `AutoVPN ${conn === 'false' ? 'tunnel down' : 'tunnel restored'} to ${peer} (${net})`;
     }
 
     case 'vpn_registry_change': {
@@ -1096,7 +1096,7 @@ export class MerakiConnector implements BaseConnector {
    * REAL USAGE: Replace config.apiKey with the actual key from the controller record.
    * The key is passed as a custom header — NOT as a Bearer token or query param.
    */
-  private headers(): HeadersInit {
+  private headers(): Record<string, string> {
     return {
       'X-Cisco-Meraki-API-Key': this.config.apiKey,
       'Content-Type': 'application/json',

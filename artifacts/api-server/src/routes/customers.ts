@@ -39,7 +39,7 @@ router.get('/customers', requireAuth, async (req, res): Promise<void> => {
 
   const customers = await query.orderBy(customersTable.name);
   const isPartner = req.user?.role === 'telecom_services_partner';
-  res.json(isPartner ? customers.map(({ notes: _notes, ...rest }) => rest) : customers);
+  res.json(isPartner ? customers.map(({ notes: _notes, ...rest }: typeof customersTable.$inferSelect) => rest) : customers);
 });
 
 router.post('/customers', requireAuth, async (req, res): Promise<void> => {

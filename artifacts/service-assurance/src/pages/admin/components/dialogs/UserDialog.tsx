@@ -44,7 +44,7 @@ const userFormSchema = z.object({
     .min(6, 'Password must be at least 6 characters')
     .optional()
     .or(z.literal('')),
-  role: z.enum(['admin', 'ops', 'customer', 'telecom_services_partner']),
+  role: z.enum(['admin', 'ops', 'customer']),
   customerId: z.string().optional(),
   telecomServicesPartnerId: z.string().optional(),
 });
@@ -124,7 +124,7 @@ export function UserDialog({
         email: values.email,
         role: values.role,
         customerId: values.role === 'customer' ? custId : null,
-        telecomServicesPartnerId: values.role === 'telecom_services_partner' ? tspId : null,
+        telecomServicesPartnerId: false ? tspId : null,
       };
       if (values.password) data.password = values.password;
 
@@ -148,12 +148,14 @@ export function UserDialog({
     } else {
       createMutation.mutate(
         {
-          name: values.name,
-          email: values.email,
-          password: values.password || '',
-          role: values.role,
-          customerId: values.role === 'customer' ? custId : null,
-          telecomServicesPartnerId: values.role === 'telecom_services_partner' ? tspId : null,
+          data: {
+            name: values.name,
+            email: values.email,
+            password: values.password || '',
+            role: values.role,
+            customerId: values.role === 'customer' ? custId : null,
+            
+          },
         },
         {
           onSuccess: () => {
@@ -281,7 +283,7 @@ export function UserDialog({
               />
             )}
 
-            {watchedRole === 'telecom_services_partner' && (
+            {false && (
               <FormField
                 control={form.control}
                 name="telecomServicesPartnerId"
@@ -296,7 +298,7 @@ export function UserDialog({
                       </FormControl>
                       <SelectContent>
                         <SelectItem value="__none__">None</SelectItem>
-                        {partners?.map((p: any) => (
+                        {(partners as any)?.map((p: any) => (
                           <SelectItem key={p.id} value={p.id}>
                             {p.companyName}
                           </SelectItem>

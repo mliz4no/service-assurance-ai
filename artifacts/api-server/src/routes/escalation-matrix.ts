@@ -81,7 +81,7 @@ router.delete('/escalation-matrix/override/:id', requireAuth, async (req, res): 
     return;
   }
 
-  const { id } = req.params;
+  const id = Array.isArray(req.params.id) ? req.params.id[0] : req.params.id;
 
   const [row] = await db
     .select({ id: escalationMatrixOverridesTable.id })

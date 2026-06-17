@@ -30,18 +30,18 @@ router.get('/dashboard/summary', requireAuth, async (req, res): Promise<void> =>
     'dispatch_scheduled',
     'monitoring',
   ];
-  const openTickets = allTickets.filter((t) => openStatuses.includes(t.status));
+  const openTickets = allTickets.filter((t: typeof ticketsTable.$inferSelect) => openStatuses.includes(t.status));
   const criticalTickets = allTickets.filter(
-    (t) => t.severity === 'critical' && openStatuses.includes(t.status),
+    (t: typeof ticketsTable.$inferSelect) => t.severity === 'critical' && openStatuses.includes(t.status),
   );
   const now = new Date();
   const slaBreachingTickets = openTickets.filter(
-    (t) => t.nextEscalationAt && t.nextEscalationAt < now,
+    (t: typeof ticketsTable.$inferSelect) => t.nextEscalationAt && t.nextEscalationAt < now,
   );
 
   const ticketsByStatus: Record<string, number> = {};
   const ticketsBySeverity: Record<string, number> = {};
-  for (const t of allTickets) {
+  for (const t of allTickets as Array<typeof ticketsTable.$inferSelect>) {
     ticketsByStatus[t.status] = (ticketsByStatus[t.status] ?? 0) + 1;
     ticketsBySeverity[t.severity] = (ticketsBySeverity[t.severity] ?? 0) + 1;
   }
@@ -80,21 +80,21 @@ router.get('/dashboard/recent-tickets', requireAuth, async (req, res): Promise<v
     .limit(limit);
 
   const { inArray } = await import('drizzle-orm');
-  const customerIds = [...new Set(tickets.map((t) => t.customerId))];
+  const customerIds = [...new Set(tickets.map((t: typeof ticketsTable.$inferSelect) => t.customerId).filter(Boolean) as string[])];
   const customers = customerIds.length
     ? await db.select().from(customersTable).where(inArray(customersTable.id, customerIds))
     : [];
 
-  const siteIds = [...new Set(tickets.map((t) => t.siteId).filter(Boolean) as string[])];
+  const siteIds = [...new Set(tickets.map((t: typeof ticketsTable.$inferSelect) => t.siteId).filter(Boolean) as string[])];
   const { sitesTable } = await import('@workspace/db');
   const sites = siteIds.length
     ? await db.select().from(sitesTable).where(inArray(sitesTable.id, siteIds))
     : [];
 
-  const enriched = tickets.map((t) => ({
+  const enriched = tickets.map((t: typeof ticketsTable.$inferSelect) => ({
     ...t,
-    customer: customers.find((c) => c.id === t.customerId) ?? null,
-    site: sites.find((s) => s.id === t.siteId) ?? null,
+    customer: customers.find((c: typeof customersTable.$inferSelect) => c.id === t.customerId) ?? null,
+    site: sites.find((s: typeof sitesTable.$inferSelect) => s.id === t.siteId) ?? null,
     service: null,
     assignedTo: null,
   }));
@@ -125,17 +125,17 @@ router.get('/dashboard/escalation-needed', requireAuth, async (req, res): Promis
     .orderBy(ticketsTable.nextEscalationAt);
 
   const escalationNeeded = tickets.filter(
-    (t) => openStatuses.includes(t.status) && t.nextEscalationAt && t.nextEscalationAt < now,
+    (t: typeof ticketsTable.$inferSelect) => openStatuses.includes(t.status) && t.nextEscalationAt && t.nextEscalationAt < now,
   );
 
-  const customerIds = [...new Set(escalationNeeded.map((t) => t.customerId))];
+  const customerIds = [...new Set(escalationNeeded.map((t: typeof ticketsTable.$inferSelect) => t.customerId).filter(Boolean) as string[])];
   const customers = customerIds.length
     ? await db.select().from(customersTable).where(inArray(customersTable.id, customerIds))
     : [];
 
-  const enriched = escalationNeeded.map((t) => ({
+  const enriched = escalationNeeded.map((t: typeof ticketsTable.$inferSelect) => ({
     ...t,
-    customer: customers.find((c) => c.id === t.customerId) ?? null,
+    customer: customers.find((c: typeof customersTable.$inferSelect) => c.id === t.customerId) ?? null,
     site: null,
     service: null,
     assignedTo: null,

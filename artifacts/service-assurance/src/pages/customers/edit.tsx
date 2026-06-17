@@ -44,7 +44,7 @@ const formSchema = z.object({
 
 export default function CustomerEdit() {
   const params = useParams();
-  const id = params.id as string;
+  const id = (params as any).id as string;
   const [, setLocation] = useLocation();
   const { toast } = useToast();
   const queryClient = useQueryClient();

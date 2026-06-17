@@ -33,7 +33,7 @@ export async function requireAuth(req: Request, res: Response, next: NextFunctio
       .select({ id: customersTable.id })
       .from(customersTable)
       .where(eq(customersTable.telecomServicesPartnerId, user.telecomServicesPartnerId));
-    req.partnerCustomerIds = rows.map((r) => r.id);
+    req.partnerCustomerIds = rows.map((r: typeof customersTable.$inferSelect) => r.id);
   }
 
   next();

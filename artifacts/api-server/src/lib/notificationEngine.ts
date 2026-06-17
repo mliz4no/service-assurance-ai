@@ -96,7 +96,7 @@ export async function evaluateEscalation(
     .where(eq(escalationNotificationsTable.ticketId, ticket.id));
 
   const alreadyNotifiedBySeverity = new Set(
-    existing.filter((e) => e.reason === 'severity_threshold').map((e) => e.contactId),
+    existing.filter((e: typeof escalationNotificationsTable.$inferSelect) => e.reason === 'severity_threshold').map((e: typeof escalationNotificationsTable.$inferSelect) => e.contactId),
   );
 
   let ruleDescription: string | undefined;
@@ -155,7 +155,7 @@ export async function evaluateEscalation(
       });
     } else if (meetsDuration) {
       const alreadyEscalated = existing.some(
-        (e) => e.contactId === contact.id && e.reason === 'duration_threshold',
+        (e: typeof escalationNotificationsTable.$inferSelect) => e.contactId === contact.id && e.reason === 'duration_threshold',
       );
       if (!alreadyEscalated) {
         const reason = 'duration_threshold' as const;

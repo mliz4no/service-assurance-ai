@@ -7,6 +7,7 @@ import {
   useUpdateCustomerContact,
   useDeleteCustomerContact,
   getGetCustomerContactsQueryKey,
+  getGetCustomerQueryKey,
 } from '@workspace/api-client-react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -412,11 +413,11 @@ function ContactsTab({ customerId }: { customerId: string }) {
 
 export default function CustomerDetail() {
   const params = useParams();
-  const id = params.id as string;
+  const id = (params as any).id as string;
   const [, setLocation] = useLocation();
 
   const { data: customer, isLoading } = useGetCustomer(id, {
-    query: { enabled: !!id },
+    query: { queryKey: getGetCustomerQueryKey(id), enabled: !!id },
   });
 
   if (isLoading) {
