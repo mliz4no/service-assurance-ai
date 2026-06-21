@@ -110,6 +110,9 @@ export default function Dashboard() {
   const { data: recentTickets, isLoading: isLoadingTickets } = useGetRecentTickets({ limit: 8 });
   const { data: escalations, isLoading: isLoadingEscalations } = useGetEscalationNeeded();
 
+  const recentTicketsList = Array.isArray(recentTickets) ? recentTickets : [];
+  const escalationList = Array.isArray(escalations) ? escalations : [];
+
   const ticketsByStatus = summary?.ticketsByStatus as Record<string, number> | undefined;
   const ticketsBySeverity = summary?.ticketsBySeverity as Record<string, number> | undefined;
 
@@ -254,13 +257,13 @@ export default function Dashboard() {
                   <div className="py-12 flex justify-center">
                     <Activity className="w-6 h-6 animate-spin text-muted-foreground" />
                   </div>
-                ) : !recentTickets?.length ? (
+                ) : recentTicketsList.length === 0 ? (
                   <div className="py-12 text-center text-sm text-muted-foreground">
                     No tickets yet.
                   </div>
                 ) : (
                   <div className="divide-y divide-border/50">
-                    {recentTickets.map((t) => {
+                    {recentTicketsList.map((t) => {
                       const isBreached =
                         t.nextEscalationAt && new Date(t.nextEscalationAt) < new Date();
                       return (
@@ -325,9 +328,9 @@ export default function Dashboard() {
                     SLA breach — requires immediate action
                   </p>
                 </div>
-                {escalations && escalations.length > 0 && (
+                {escalationList.length > 0 && (
                   <span className="text-xs font-bold bg-red-100 text-red-700 rounded-full px-2 py-0.5">
-                    {escalations.length}
+                    {escalationList.length}
                   </span>
                 )}
               </CardHeader>
@@ -336,14 +339,14 @@ export default function Dashboard() {
                   <div className="py-12 flex justify-center">
                     <Activity className="w-6 h-6 animate-spin text-muted-foreground" />
                   </div>
-                ) : !escalations?.length ? (
+                ) : escalationList.length === 0 ? (
                   <div className="py-12 text-center">
                     <CheckCircle2 className="w-8 h-8 text-green-400 mx-auto mb-2" />
                     <p className="text-sm text-muted-foreground">All SLAs on track</p>
                   </div>
                 ) : (
                   <div className="space-y-3">
-                    {escalations.map((t) => {
+                    {escalationList.map((t) => {
                       const isBreached =
                         t.nextEscalationAt && new Date(t.nextEscalationAt) < new Date();
                       const escalationLabel = t.nextEscalationAt

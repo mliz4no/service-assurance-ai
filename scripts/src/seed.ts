@@ -184,19 +184,14 @@ async function seed() {
     (t: any) => t.customerId === pinnacle.id && !['resolved', 'closed'].includes(t.status),
   );
 
-  const [
-    wanConnLostEvt,
-    wanDownEvt,
-    lteFoEvt,
-    austinVpnEvt,
-    phoenixFwEvt,
-    hqArpEvt,
-    fgtHaEvt,
-    degradedEvt,
-  ] = deviceEvents;
+  const eventByType = new Map(deviceEvents.map((evt: any) => [evt.eventType, evt]));
+  const wanConnLostEvt = eventByType.get('uplink_connectivity_change') ?? deviceEvents[0];
+  const wanDownEvt = eventByType.get('wan_status_change') ?? deviceEvents[1] ?? deviceEvents[0];
+  const fgtHaEvt = eventByType.get('ha_status_change');
+  const degradedEvt = eventByType.get('latency_degraded') ?? deviceEvents[0];
 
   if (nexatekOpenTickets.length > 0) {
-    await runDb.insert(incidentCorrelationsTable).values([
+    const nexatekCorrelations = [
       {
         ticketId: nexatekOpenTickets[0].id,
         deviceEventId: wanConnLostEvt?.id,
@@ -207,7 +202,14 @@ async function seed() {
         deviceEventId: wanDownEvt?.id,
         correlationType: 'related',
       },
-    ]);
+    ].filter((row) => Boolean(row.deviceEventId));
+
+    if (nexatekCorrelations.length > 0) {
+      await runDb.insert(incidentCorrelationsTable).values(nexatekCorrelations);
+    } else {
+      console.warn('Skipping Nexatek incident correlations: no matching device events found.');
+    }
+
     await runDb
       .update(ticketsTable)
       .set({
@@ -219,19 +221,27 @@ async function seed() {
   }
 
   if (convergexOpenTickets.length > 0) {
-    await runDb.insert(incidentCorrelationsTable).values({
-      ticketId: convergexOpenTickets[0].id,
-      deviceEventId: fgtHaEvt?.id,
-      correlationType: 'trigger',
-    });
+    if (fgtHaEvt?.id) {
+      await runDb.insert(incidentCorrelationsTable).values({
+        ticketId: convergexOpenTickets[0].id,
+        deviceEventId: fgtHaEvt.id,
+        correlationType: 'trigger',
+      });
+    } else {
+      console.warn('Skipping ConvergeX incident correlation: no ha_status_change event found.');
+    }
   }
 
   if (pinnacleOpenTickets.length > 0) {
-    await runDb.insert(incidentCorrelationsTable).values({
-      ticketId: pinnacleOpenTickets[0].id,
-      deviceEventId: degradedEvt?.id,
-      correlationType: 'related',
-    });
+    if (degradedEvt?.id) {
+      await runDb.insert(incidentCorrelationsTable).values({
+        ticketId: pinnacleOpenTickets[0].id,
+        deviceEventId: degradedEvt.id,
+        correlationType: 'related',
+      });
+    } else {
+      console.warn('Skipping Pinnacle incident correlation: no suitable device event found.');
+    }
   }
 
   console.log('\nSeed complete! Login credentials:');

@@ -39,10 +39,11 @@
       "cwd": "${workspaceFolder}",
       "console": "integratedTerminal",
       "internalConsoleOptions": "neverOpen"
-    },
+    }
+  ],
+  "compounds": [
     {
       "name": "Dev: All (API + Frontend)",
-      "type": "compound",
       "configurations": ["Build & Dev: API Server", "Dev: service-assurance (Vite)"],
       "stopAll": true
     }
