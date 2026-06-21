@@ -155,3 +155,51 @@ pnpm db:seed
 
 - `.env` is ignored by Git; use `.env.example` as template.
 - `pnpm` is required; npm/yarn are blocked by `preinstall` safeguards.
+
+## InvoxAI Integration
+
+The API supports machine-to-machine sync from InvoxAI without user session login.
+
+Required environment variables:
+
+- `INVOXAI_API_KEY` or `INVOXAI_API_KEYS` (comma-separated)
+- `INVOXAI_API_SCOPES` (default: `integrations:create,integrations:read`)
+
+Authentication:
+
+- Use header `x-api-key: <invoxai-key>`
+- Session auth for UI users continues to work unchanged
+
+Idempotency:
+
+- For integration calls to create endpoints, send `Idempotency-Key`
+- Supported endpoints:
+	- `POST /api/customers`
+	- `POST /api/sites`
+	- `POST /api/services`
+	- `POST /api/tickets`
+- Same key + same payload returns the original success response
+- Same key + different payload returns `409 CONFLICT`
+
+External identity tracking:
+
+- Customer, site, service, and ticket records now support:
+	- `externalSource`
+	- `externalId`
+	- `externalSyncedAt`
+	- `externalSyncStatus`
+
+Upsert endpoints (InvoxAI):
+
+- `POST /api/integrations/invoxai/customers/upsert`
+- `POST /api/integrations/invoxai/sites/upsert`
+- `POST /api/integrations/invoxai/services/upsert`
+- `POST /api/integrations/invoxai/tickets/upsert`
+
+Lookup by external identity:
+
+- `GET /api/customers?externalSource=invoxai&externalId=...`
+- `GET /api/sites?externalSource=invoxai&externalId=...`
+- `GET /api/services?externalSource=invoxai&externalId=...`
+- `GET /api/tickets?externalSource=invoxai&externalId=...`
+- Add `compact=true` for a compact integration-friendly payload

@@ -1,12 +1,25 @@
 import { Router, type IRouter } from 'express';
 import { db, sitesTable, customersTable, servicesTable, ticketsTable } from '@workspace/db';
 import { eq, and, ilike, or, inArray } from 'drizzle-orm';
-import { requireAuth } from '../middlewares/auth';
+import { requireAuth, requireScope } from '../middlewares/auth';
+import { sendBadRequest, sendForbidden } from '../lib/http';
+import {
+  getIntegrationExternalSource,
+  handleIdempotentCreate,
+  logIntegrationMutation,
+  validateRequiredFields,
+} from '../lib/integration';
 
 const router: IRouter = Router();
 
 router.get('/sites', requireAuth, async (req, res): Promise<void> => {
-  const { customerId, search } = req.query as { customerId?: string; search?: string };
+  const { customerId, search, externalSource, externalId, compact } = req.query as {
+    customerId?: string;
+    search?: string;
+    externalSource?: string;
+    externalId?: string;
+    compact?: string;
+  };
   const conditions = [];
 
   if (req.user?.role === 'customer' && req.user.customerId) {
@@ -26,6 +39,12 @@ router.get('/sites', requireAuth, async (req, res): Promise<void> => {
     conditions.push(
       or(ilike(sitesTable.siteName, `%${search}%`), ilike(sitesTable.siteCode, `%${search}%`)),
     );
+  }
+  if (externalSource) {
+    conditions.push(eq(sitesTable.externalSource, externalSource));
+  }
+  if (externalId) {
+    conditions.push(eq(sitesTable.externalId, externalId));
   }
 
   const sites = await db
@@ -48,6 +67,10 @@ router.get('/sites', requireAuth, async (req, res): Promise<void> => {
       latitude: sitesTable.latitude,
       longitude: sitesTable.longitude,
       geoSource: sitesTable.geoSource,
+      externalSource: sitesTable.externalSource,
+      externalId: sitesTable.externalId,
+      externalSyncedAt: sitesTable.externalSyncedAt,
+      externalSyncStatus: sitesTable.externalSyncStatus,
       createdAt: sitesTable.createdAt,
       updatedAt: sitesTable.updatedAt,
       customer: {
@@ -68,12 +91,34 @@ router.get('/sites', requireAuth, async (req, res): Promise<void> => {
     .where(conditions.length > 0 ? and(...conditions) : undefined)
     .orderBy(sitesTable.siteName);
 
+  if (compact === 'true' && req.integration) {
+    res.json(
+      sites.map((site: (typeof sites)[number]) => ({
+        id: site.id,
+        customerId: site.customerId,
+        siteName: site.siteName,
+        externalSource: site.externalSource,
+        externalId: site.externalId,
+      })),
+    );
+    return;
+  }
+
   res.json(sites);
 });
 
-router.post('/sites', requireAuth, async (req, res): Promise<void> => {
+router.post('/sites', requireAuth, requireScope('integrations:create'), async (req, res): Promise<void> => {
   if (req.user?.role === 'customer') {
-    res.status(403).json({ error: 'Forbidden' });
+    sendForbidden(res);
+    return;
+  }
+
+  const fieldErrors = validateRequiredFields(req.body as Record<string, unknown>, [
+    'customerId',
+    'siteName',
+  ]);
+  if (Object.keys(fieldErrors).length > 0) {
+    sendBadRequest(res, 'Validation failed', fieldErrors);
     return;
   }
 
@@ -95,35 +140,51 @@ router.post('/sites', requireAuth, async (req, res): Promise<void> => {
     latitude,
     longitude,
     geoSource,
-  } = req.body;
-  if (!customerId || !siteName) {
-    res.status(400).json({ error: 'Bad Request', message: 'customerId and siteName are required' });
-    return;
-  }
+    externalSource,
+    externalId,
+    externalSyncedAt,
+    externalSyncStatus,
+  } = req.body as Record<string, string | number | null | undefined>;
 
-  const [site] = await db
-    .insert(sitesTable)
-    .values({
-      customerId,
-      siteName,
-      address1,
-      address2,
-      city,
-      state,
-      postalCode,
-      country,
-      timezone,
-      siteCode,
-      notes,
-      lconName,
-      lconPhone,
-      lconEmail,
-      latitude,
-      longitude,
-      geoSource,
-    })
-    .returning();
-  res.status(201).json(site);
+  const result = await handleIdempotentCreate(req, res, 'sites', async () => {
+    const [site] = await db
+      .insert(sitesTable)
+      .values({
+        customerId: customerId as string,
+        siteName: siteName as string,
+        address1: address1 as string | undefined,
+        address2: address2 as string | undefined,
+        city: city as string | undefined,
+        state: state as string | undefined,
+        postalCode: postalCode as string | undefined,
+        country: country as string | undefined,
+        timezone: timezone as string | undefined,
+        siteCode: siteCode as string | undefined,
+        notes: notes as string | undefined,
+        lconName: lconName as string | undefined,
+        lconPhone: lconPhone as string | undefined,
+        lconEmail: lconEmail as string | undefined,
+        latitude: latitude as number | undefined,
+        longitude: longitude as number | undefined,
+        geoSource: geoSource as 'manual' | 'geocoded' | 'imported' | undefined,
+        externalSource: (externalSource as string | undefined) ?? getIntegrationExternalSource(req),
+        externalId: externalId as string | undefined,
+        externalSyncedAt: externalSyncedAt ? new Date(externalSyncedAt as string) : undefined,
+        externalSyncStatus: externalSyncStatus as string | undefined,
+      })
+      .returning();
+
+    logIntegrationMutation(req, 'create', 'sites', site.id);
+
+    return {
+      statusCode: 201,
+      body: site,
+      resourceId: site.id,
+    };
+  });
+
+  if (!result) return;
+  res.status(result.statusCode).json(result.body);
 });
 
 router.get('/sites/:id', requireAuth, async (req, res): Promise<void> => {
@@ -165,7 +226,7 @@ router.get('/sites/:id', requireAuth, async (req, res): Promise<void> => {
 
 router.put('/sites/:id', requireAuth, async (req, res): Promise<void> => {
   if (req.user?.role === 'customer' || req.user?.role === 'telecom_services_partner') {
-    res.status(403).json({ error: 'Forbidden' });
+    sendForbidden(res);
     return;
   }
 

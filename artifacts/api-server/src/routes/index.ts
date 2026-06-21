@@ -17,6 +17,7 @@ import escalationNotificationsRouter from './escalation-notifications';
 import escalationMatrixRouter from './escalation-matrix';
 import partnersRouter from './partners';
 import salesforceRouter from './salesforce';
+import integrationsInvoxaiRouter from './integrations-invoxai';
 
 const router: IRouter = Router();
 
@@ -38,5 +39,6 @@ router.use(escalationNotificationsRouter);
 router.use(escalationMatrixRouter);
 router.use(partnersRouter);
 router.use(salesforceRouter);
+router.use(integrationsInvoxaiRouter);
 
 export default router;

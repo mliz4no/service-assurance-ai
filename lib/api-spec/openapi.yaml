@@ -163,6 +163,18 @@ paths:
           in: query
           schema:
             type: string
+        - name: externalSource
+          in: query
+          schema:
+            type: string
+        - name: externalId
+          in: query
+          schema:
+            type: string
+        - name: compact
+          in: query
+          schema:
+            type: boolean
       responses:
         "200":
           description: List of customers
@@ -176,6 +188,12 @@ paths:
       operationId: createCustomer
       tags: [customers]
       summary: Create a customer
+      parameters:
+        - name: Idempotency-Key
+          in: header
+          required: true
+          schema:
+            type: string
       requestBody:
         required: true
         content:
@@ -269,6 +287,18 @@ paths:
           in: query
           schema:
             type: string
+        - name: externalSource
+          in: query
+          schema:
+            type: string
+        - name: externalId
+          in: query
+          schema:
+            type: string
+        - name: compact
+          in: query
+          schema:
+            type: boolean
       responses:
         "200":
           description: List of sites
@@ -282,6 +312,12 @@ paths:
       operationId: createSite
       tags: [sites]
       summary: Create a site
+      parameters:
+        - name: Idempotency-Key
+          in: header
+          required: true
+          schema:
+            type: string
       requestBody:
         required: true
         content:
@@ -387,6 +423,18 @@ paths:
           in: query
           schema:
             type: string
+        - name: externalSource
+          in: query
+          schema:
+            type: string
+        - name: externalId
+          in: query
+          schema:
+            type: string
+        - name: compact
+          in: query
+          schema:
+            type: boolean
       responses:
         "200":
           description: List of services
@@ -400,6 +448,12 @@ paths:
       operationId: createService
       tags: [services]
       summary: Create a service
+      parameters:
+        - name: Idempotency-Key
+          in: header
+          required: true
+          schema:
+            type: string
       requestBody:
         required: true
         content:
@@ -517,6 +571,18 @@ paths:
           in: query
           schema:
             type: string
+        - name: externalSource
+          in: query
+          schema:
+            type: string
+        - name: externalId
+          in: query
+          schema:
+            type: string
+        - name: compact
+          in: query
+          schema:
+            type: boolean
       responses:
         "200":
           description: List of tickets
@@ -530,6 +596,12 @@ paths:
       operationId: createTicket
       tags: [tickets]
       summary: Create a ticket
+      parameters:
+        - name: Idempotency-Key
+          in: header
+          required: true
+          schema:
+            type: string
       requestBody:
         required: true
         content:
@@ -692,6 +764,130 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/AiCustomerUpdateResponse"
+
+  /integrations/invoxai/customers/upsert:
+    post:
+      operationId: upsertInvoxaiCustomer
+      tags: [customers]
+      summary: Upsert customer by InvoxAI external identity
+      parameters:
+        - name: Idempotency-Key
+          in: header
+          required: false
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateCustomerRequest"
+      responses:
+        "200":
+          description: Updated customer
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Customer"
+        "201":
+          description: Created customer
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Customer"
+
+  /integrations/invoxai/sites/upsert:
+    post:
+      operationId: upsertInvoxaiSite
+      tags: [sites]
+      summary: Upsert site by InvoxAI external identity
+      parameters:
+        - name: Idempotency-Key
+          in: header
+          required: false
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateSiteRequest"
+      responses:
+        "200":
+          description: Updated site
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Site"
+        "201":
+          description: Created site
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Site"
+
+  /integrations/invoxai/services/upsert:
+    post:
+      operationId: upsertInvoxaiService
+      tags: [services]
+      summary: Upsert service by InvoxAI external identity
+      parameters:
+        - name: Idempotency-Key
+          in: header
+          required: false
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateServiceRequest"
+      responses:
+        "200":
+          description: Updated service
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Service"
+        "201":
+          description: Created service
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Service"
+
+  /integrations/invoxai/tickets/upsert:
+    post:
+      operationId: upsertInvoxaiTicket
+      tags: [tickets]
+      summary: Upsert ticket by InvoxAI external identity
+      parameters:
+        - name: Idempotency-Key
+          in: header
+          required: false
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateTicketRequest"
+      responses:
+        "200":
+          description: Updated ticket
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Ticket"
+        "201":
+          description: Created ticket
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Ticket"
 
   /sla-policies:
     get:
@@ -897,9 +1093,22 @@ components:
       type: object
       properties:
         error:
-          type: string
-        message:
-          type: string
+          oneOf:
+            - type: string
+            - type: object
+              properties:
+                code:
+                  type: string
+                message:
+                  type: string
+                details:
+                  type: object
+                  additionalProperties:
+                    oneOf:
+                      - type: string
+                      - type: array
+                        items:
+                          type: string
       required:
         - error
 
@@ -1016,6 +1225,19 @@ components:
         notes:
           type: string
           nullable: true
+        externalSource:
+          type: string
+          nullable: true
+        externalId:
+          type: string
+          nullable: true
+        externalSyncedAt:
+          type: string
+          format: date-time
+          nullable: true
+        externalSyncStatus:
+          type: string
+          nullable: true
         createdAt:
           type: string
           format: date-time
@@ -1068,6 +1290,19 @@ components:
           type: string
           nullable: true
         notes:
+          type: string
+          nullable: true
+        externalSource:
+          type: string
+          nullable: true
+        externalId:
+          type: string
+          nullable: true
+        externalSyncedAt:
+          type: string
+          format: date-time
+          nullable: true
+        externalSyncStatus:
           type: string
           nullable: true
       required:
@@ -1154,6 +1389,19 @@ components:
         geoSource:
           type: string
           enum: [manual, geocoded, imported]
+          nullable: true
+        externalSource:
+          type: string
+          nullable: true
+        externalId:
+          type: string
+          nullable: true
+        externalSyncedAt:
+          type: string
+          format: date-time
+          nullable: true
+        externalSyncStatus:
+          type: string
           nullable: true
         createdAt:
           type: string
@@ -1247,6 +1495,19 @@ components:
           type: string
           enum: [manual, geocoded, imported]
           nullable: true
+        externalSource:
+          type: string
+          nullable: true
+        externalId:
+          type: string
+          nullable: true
+        externalSyncedAt:
+          type: string
+          format: date-time
+          nullable: true
+        externalSyncStatus:
+          type: string
+          nullable: true
       required:
         - customerId
         - siteName
@@ -1281,6 +1542,19 @@ components:
           type: string
           nullable: true
         notes:
+          type: string
+          nullable: true
+        externalSource:
+          type: string
+          nullable: true
+        externalId:
+          type: string
+          nullable: true
+        externalSyncedAt:
+          type: string
+          format: date-time
+          nullable: true
+        externalSyncStatus:
           type: string
           nullable: true
         lconName:
@@ -1338,6 +1612,19 @@ components:
           type: string
           nullable: true
         notes:
+          type: string
+          nullable: true
+        externalSource:
+          type: string
+          nullable: true
+        externalId:
+          type: string
+          nullable: true
+        externalSyncedAt:
+          type: string
+          format: date-time
+          nullable: true
+        externalSyncStatus:
           type: string
           nullable: true
         createdAt:
@@ -1504,6 +1791,19 @@ components:
           type: string
           format: date-time
           nullable: true
+        externalSource:
+          type: string
+          nullable: true
+        externalId:
+          type: string
+          nullable: true
+        externalSyncedAt:
+          type: string
+          format: date-time
+          nullable: true
+        externalSyncStatus:
+          type: string
+          nullable: true
         createdAt:
           type: string
           format: date-time
@@ -1584,6 +1884,19 @@ components:
           nullable: true
         slaTargetMinutes:
           type: number
+          nullable: true
+        externalSource:
+          type: string
+          nullable: true
+        externalId:
+          type: string
+          nullable: true
+        externalSyncedAt:
+          type: string
+          format: date-time
+          nullable: true
+        externalSyncStatus:
+          type: string
           nullable: true
       required:
         - customerId

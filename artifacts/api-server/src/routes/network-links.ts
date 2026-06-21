@@ -79,10 +79,11 @@ router.get('/network-links', requireAuth, async (req, res): Promise<void> => {
 });
 
 router.get('/network-links/:id', requireAuth, async (req, res): Promise<void> => {
+  const id = Array.isArray(req.params.id) ? req.params.id[0] : req.params.id;
   const [link] = await db
     .select()
     .from(networkLinksTable)
-    .where(eq(networkLinksTable.id, req.params.id));
+    .where(eq(networkLinksTable.id, id));
   if (!link) {
     res.status(404).json({ error: 'Link not found' });
     return;
