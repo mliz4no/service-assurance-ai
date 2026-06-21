@@ -1,30 +1,30 @@
-export type ImpactLevel = "low" | "medium" | "high";
-export type UrgencyLevel = "low" | "medium" | "high";
-export type SeverityLevel = "low" | "medium" | "high" | "critical";
+export type ImpactLevel = 'low' | 'medium' | 'high';
+export type UrgencyLevel = 'low' | 'medium' | 'high';
+export type SeverityLevel = 'low' | 'medium' | 'high' | 'critical';
 
 const SEVERITY_MATRIX: Record<ImpactLevel, Record<UrgencyLevel, SeverityLevel>> = {
   high: {
-    high: "critical",
-    medium: "high",
-    low: "medium",
+    high: 'critical',
+    medium: 'high',
+    low: 'medium',
   },
   medium: {
-    high: "high",
-    medium: "medium",
-    low: "low",
+    high: 'high',
+    medium: 'medium',
+    low: 'low',
   },
   low: {
-    high: "medium",
-    medium: "low",
-    low: "low",
+    high: 'medium',
+    medium: 'low',
+    low: 'low',
   },
 };
 
 export function buildDefaultMatrix(): Record<ImpactLevel, Record<UrgencyLevel, SeverityLevel>> {
   return {
-    high: { high: "critical", medium: "high", low: "medium" },
-    medium: { high: "high", medium: "medium", low: "low" },
-    low: { high: "medium", medium: "low", low: "low" },
+    high: { high: 'critical', medium: 'high', low: 'medium' },
+    medium: { high: 'high', medium: 'medium', low: 'low' },
+    low: { high: 'medium', medium: 'low', low: 'low' },
   };
 }
 
@@ -32,8 +32,11 @@ export function calculateSeverity(impact: ImpactLevel, urgency: UrgencyLevel): S
   return SEVERITY_MATRIX[impact][urgency];
 }
 
-const SEVERITY_ORDER: SeverityLevel[] = ["low", "medium", "high", "critical"];
+const SEVERITY_ORDER: SeverityLevel[] = ['low', 'medium', 'high', 'critical'];
 
-export function severityMeetsThreshold(ticketSeverity: SeverityLevel, threshold: SeverityLevel): boolean {
+export function severityMeetsThreshold(
+  ticketSeverity: SeverityLevel,
+  threshold: SeverityLevel,
+): boolean {
   return SEVERITY_ORDER.indexOf(ticketSeverity) >= SEVERITY_ORDER.indexOf(threshold);
 }

@@ -10,6 +10,6 @@ export type CreateCustomerRequestStatus =
   (typeof CreateCustomerRequestStatus)[keyof typeof CreateCustomerRequestStatus];
 
 export const CreateCustomerRequestStatus = {
-  active: "active",
-  inactive: "inactive",
+  active: 'active',
+  inactive: 'inactive',
 } as const;

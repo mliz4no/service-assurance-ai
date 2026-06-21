@@ -8,12 +8,19 @@
  * - Do nothing (informational event)
  */
 
-import { db, ticketsTable, incidentCorrelationsTable, deviceEventsTable, managedDevicesTable, networkLinksTable } from "@workspace/db";
-import { eq, and, inArray, isNull } from "drizzle-orm";
-import { logger } from "./logger";
+import {
+  db,
+  ticketsTable,
+  incidentCorrelationsTable,
+  deviceEventsTable,
+  managedDevicesTable,
+  networkLinksTable,
+} from '@workspace/db';
+import { eq, and, inArray, isNull } from 'drizzle-orm';
+import { logger } from './logger';
 
 export interface CorrelationResult {
-  action: "created" | "attached" | "skipped";
+  action: 'created' | 'attached' | 'skipped';
   ticketId?: string;
   ticketNumber?: string;
   reason: string;
@@ -21,33 +28,45 @@ export interface CorrelationResult {
 
 /** Rules for when to auto-create a ticket from a device event */
 function shouldCreateTicket(event: { severity: string; eventType: string }): boolean {
-  if (event.severity === "informational") return false;
-  if (event.eventType === "device_checkin") return false;
-  return ["high", "critical", "medium"].includes(event.severity);
+  if (event.severity === 'informational') return false;
+  if (event.eventType === 'device_checkin') return false;
+  return ['high', 'critical', 'medium'].includes(event.severity);
 }
 
 /** Map controller event severity to ticket severity */
-function mapSeverity(eventSeverity: string): "low" | "medium" | "high" | "critical" {
+function mapSeverity(eventSeverity: string): 'low' | 'medium' | 'high' | 'critical' {
   switch (eventSeverity) {
-    case "critical": return "critical";
-    case "high": return "high";
-    case "medium": return "medium";
-    default: return "low";
+    case 'critical':
+      return 'critical';
+    case 'high':
+      return 'high';
+    case 'medium':
+      return 'medium';
+    default:
+      return 'low';
   }
 }
 
 /** Determine outage type from event */
-function mapOutageType(eventType: string): "outage" | "impairment" | "informational" | "unknown" {
-  if (eventType.includes("down") || eventType.includes("offline")) return "outage";
-  if (eventType.includes("degrad") || eventType.includes("quality") || eventType.includes("failover") || eventType.includes("ha_")) return "impairment";
-  if (eventType.includes("checkin") || eventType.includes("info")) return "informational";
-  return "unknown";
+function mapOutageType(eventType: string): 'outage' | 'impairment' | 'informational' | 'unknown' {
+  if (eventType.includes('down') || eventType.includes('offline')) return 'outage';
+  if (
+    eventType.includes('degrad') ||
+    eventType.includes('quality') ||
+    eventType.includes('failover') ||
+    eventType.includes('ha_')
+  )
+    return 'impairment';
+  if (eventType.includes('checkin') || eventType.includes('info')) return 'informational';
+  return 'unknown';
 }
 
 /** Generate a unique ticket number by scanning all existing tickets */
 async function getNextTicketNumber(): Promise<string> {
-  const allNumbers = await db.select({ ticketNumber: ticketsTable.ticketNumber }).from(ticketsTable);
-  if (allNumbers.length === 0) return "SA-1001";
+  const allNumbers = await db
+    .select({ ticketNumber: ticketsTable.ticketNumber })
+    .from(ticketsTable);
+  if (allNumbers.length === 0) return 'SA-1001';
   let max = 1000;
   for (const row of allNumbers) {
     const match = row.ticketNumber.match(/SA-(\d+)/);
@@ -78,16 +97,22 @@ export async function correlateEvent(params: {
 }): Promise<CorrelationResult> {
   // Skip informational events
   if (!shouldCreateTicket(params)) {
-    return { action: "skipped", reason: "Informational event — no ticket needed" };
+    return { action: 'skipped', reason: 'Informational event — no ticket needed' };
   }
 
   // Skip if no customer context
   if (!params.customerId) {
-    return { action: "skipped", reason: "No customer context — cannot create or correlate ticket" };
+    return { action: 'skipped', reason: 'No customer context — cannot create or correlate ticket' };
   }
 
   // Look for an existing open ticket for the same customer/site/service
-  const openStatuses = ["new", "investigating", "vendor_engaged", "dispatch_scheduled", "monitoring"];
+  const openStatuses = [
+    'new',
+    'investigating',
+    'vendor_engaged',
+    'dispatch_scheduled',
+    'monitoring',
+  ] as const;
 
   let existingTickets = await db
     .select()
@@ -95,29 +120,35 @@ export async function correlateEvent(params: {
     .where(
       and(
         eq(ticketsTable.customerId, params.customerId),
-        inArray(ticketsTable.status, openStatuses)
-      )
+        inArray(ticketsTable.status, openStatuses),
+      ),
     )
     .limit(5);
 
   // Prefer matching by siteId then serviceId for closer correlation
-  let matchedTicket = existingTickets.find(
-    (t) =>
-      (params.siteId && t.siteId === params.siteId) ||
-      (params.serviceId && t.serviceId === params.serviceId)
-  ) ?? existingTickets[0] ?? null;
+  let matchedTicket =
+    existingTickets.find(
+      (t: typeof ticketsTable.$inferSelect) =>
+        (params.siteId && t.siteId === params.siteId) ||
+        (params.serviceId && t.serviceId === params.serviceId),
+    ) ??
+    existingTickets[0] ??
+    null;
 
   if (matchedTicket) {
     // Attach event to existing ticket
     await db.insert(incidentCorrelationsTable).values({
       ticketId: matchedTicket.id,
       deviceEventId: params.eventId,
-      correlationType: "related",
+      correlationType: 'related',
     });
 
-    logger.info({ ticketId: matchedTicket.id, eventId: params.eventId }, "Controller event correlated to existing ticket");
+    logger.info(
+      { ticketId: matchedTicket.id, eventId: params.eventId },
+      'Controller event correlated to existing ticket',
+    );
     return {
-      action: "attached",
+      action: 'attached',
       ticketId: matchedTicket.id,
       ticketNumber: matchedTicket.ticketNumber,
       reason: `Correlated to existing open ticket ${matchedTicket.ticketNumber}`,
@@ -139,11 +170,11 @@ export async function correlateEvent(params: {
       serviceId: params.serviceId ?? null,
       title: params.title,
       description: params.description ?? null,
-      source: "controller",
+      source: 'controller',
       severity,
-      status: "new",
+      status: 'new',
       outageType,
-      incidentSource: "controller",
+      incidentSource: 'controller',
       impactedDeviceId: params.managedDeviceId ?? null,
       failoverActive,
     })
@@ -153,12 +184,15 @@ export async function correlateEvent(params: {
   await db.insert(incidentCorrelationsTable).values({
     ticketId: newTicket.id,
     deviceEventId: params.eventId,
-    correlationType: "trigger",
+    correlationType: 'trigger',
   });
 
-  logger.info({ ticketId: newTicket.id, ticketNumber, eventId: params.eventId }, "Controller event created new ticket");
+  logger.info(
+    { ticketId: newTicket.id, ticketNumber, eventId: params.eventId },
+    'Controller event created new ticket',
+  );
   return {
-    action: "created",
+    action: 'created',
     ticketId: newTicket.id,
     ticketNumber,
     reason: `New ticket ${ticketNumber} created from controller event`,

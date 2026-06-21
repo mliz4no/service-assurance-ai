@@ -9,9 +9,9 @@
 export type ServiceStatus = (typeof ServiceStatus)[keyof typeof ServiceStatus];
 
 export const ServiceStatus = {
-  active: "active",
-  pending: "pending",
-  down: "down",
-  impaired: "impaired",
-  disconnected: "disconnected",
+  active: 'active',
+  pending: 'pending',
+  down: 'down',
+  impaired: 'impaired',
+  disconnected: 'disconnected',
 } as const;

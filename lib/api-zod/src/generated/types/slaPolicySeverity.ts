@@ -6,12 +6,11 @@
  * OpenAPI spec version: 0.1.0
  */
 
-export type SlaPolicySeverity =
-  (typeof SlaPolicySeverity)[keyof typeof SlaPolicySeverity];
+export type SlaPolicySeverity = (typeof SlaPolicySeverity)[keyof typeof SlaPolicySeverity];
 
 export const SlaPolicySeverity = {
-  low: "low",
-  medium: "medium",
-  high: "high",
-  critical: "critical",
+  low: 'low',
+  medium: 'medium',
+  high: 'high',
+  critical: 'critical',
 } as const;

@@ -10,9 +10,9 @@ export type TicketUpdateUpdateType =
   (typeof TicketUpdateUpdateType)[keyof typeof TicketUpdateUpdateType];
 
 export const TicketUpdateUpdateType = {
-  internal_note: "internal_note",
-  vendor_update: "vendor_update",
-  customer_update: "customer_update",
-  system_event: "system_event",
-  ai_generated: "ai_generated",
+  internal_note: 'internal_note',
+  vendor_update: 'vendor_update',
+  customer_update: 'customer_update',
+  system_event: 'system_event',
+  ai_generated: 'ai_generated',
 } as const;

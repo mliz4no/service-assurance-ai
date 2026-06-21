@@ -68,9 +68,7 @@
         "users_email_unique": {
           "name": "users_email_unique",
           "nullsNotDistinct": false,
-          "columns": [
-            "email"
-          ]
+          "columns": ["email"]
         }
       },
       "policies": {},
@@ -252,12 +250,8 @@
           "name": "sites_customer_id_customers_id_fk",
           "tableFrom": "sites",
           "tableTo": "customers",
-          "columnsFrom": [
-            "customer_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["customer_id"],
+          "columnsTo": ["id"],
           "onDelete": "cascade",
           "onUpdate": "no action"
         }
@@ -373,12 +367,8 @@
           "name": "services_customer_id_customers_id_fk",
           "tableFrom": "services",
           "tableTo": "customers",
-          "columnsFrom": [
-            "customer_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["customer_id"],
+          "columnsTo": ["id"],
           "onDelete": "cascade",
           "onUpdate": "no action"
         },
@@ -386,12 +376,8 @@
           "name": "services_site_id_sites_id_fk",
           "tableFrom": "services",
           "tableTo": "sites",
-          "columnsFrom": [
-            "site_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["site_id"],
+          "columnsTo": ["id"],
           "onDelete": "cascade",
           "onUpdate": "no action"
         }
@@ -692,12 +678,8 @@
           "name": "tickets_customer_id_customers_id_fk",
           "tableFrom": "tickets",
           "tableTo": "customers",
-          "columnsFrom": [
-            "customer_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["customer_id"],
+          "columnsTo": ["id"],
           "onDelete": "cascade",
           "onUpdate": "no action"
         },
@@ -705,12 +687,8 @@
           "name": "tickets_site_id_sites_id_fk",
           "tableFrom": "tickets",
           "tableTo": "sites",
-          "columnsFrom": [
-            "site_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["site_id"],
+          "columnsTo": ["id"],
           "onDelete": "set null",
           "onUpdate": "no action"
         },
@@ -718,12 +696,8 @@
           "name": "tickets_service_id_services_id_fk",
           "tableFrom": "tickets",
           "tableTo": "services",
-          "columnsFrom": [
-            "service_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["service_id"],
+          "columnsTo": ["id"],
           "onDelete": "set null",
           "onUpdate": "no action"
         },
@@ -731,12 +705,8 @@
           "name": "tickets_assigned_to_user_id_users_id_fk",
           "tableFrom": "tickets",
           "tableTo": "users",
-          "columnsFrom": [
-            "assigned_to_user_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["assigned_to_user_id"],
+          "columnsTo": ["id"],
           "onDelete": "set null",
           "onUpdate": "no action"
         }
@@ -746,9 +716,7 @@
         "tickets_ticket_number_unique": {
           "name": "tickets_ticket_number_unique",
           "nullsNotDistinct": false,
-          "columns": [
-            "ticket_number"
-          ]
+          "columns": ["ticket_number"]
         }
       },
       "policies": {},
@@ -823,12 +791,8 @@
           "name": "ticket_updates_ticket_id_tickets_id_fk",
           "tableFrom": "ticket_updates",
           "tableTo": "tickets",
-          "columnsFrom": [
-            "ticket_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["ticket_id"],
+          "columnsTo": ["id"],
           "onDelete": "cascade",
           "onUpdate": "no action"
         },
@@ -836,12 +800,8 @@
           "name": "ticket_updates_created_by_user_id_users_id_fk",
           "tableFrom": "ticket_updates",
           "tableTo": "users",
-          "columnsFrom": [
-            "created_by_user_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["created_by_user_id"],
+          "columnsTo": ["id"],
           "onDelete": "set null",
           "onUpdate": "no action"
         }
@@ -1084,12 +1044,8 @@
           "name": "managed_devices_controller_id_controllers_id_fk",
           "tableFrom": "managed_devices",
           "tableTo": "controllers",
-          "columnsFrom": [
-            "controller_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["controller_id"],
+          "columnsTo": ["id"],
           "onDelete": "cascade",
           "onUpdate": "no action"
         },
@@ -1097,12 +1053,8 @@
           "name": "managed_devices_customer_id_customers_id_fk",
           "tableFrom": "managed_devices",
           "tableTo": "customers",
-          "columnsFrom": [
-            "customer_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["customer_id"],
+          "columnsTo": ["id"],
           "onDelete": "set null",
           "onUpdate": "no action"
         },
@@ -1110,12 +1062,8 @@
           "name": "managed_devices_site_id_sites_id_fk",
           "tableFrom": "managed_devices",
           "tableTo": "sites",
-          "columnsFrom": [
-            "site_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["site_id"],
+          "columnsTo": ["id"],
           "onDelete": "set null",
           "onUpdate": "no action"
         }
@@ -1263,12 +1211,8 @@
           "name": "network_links_managed_device_id_managed_devices_id_fk",
           "tableFrom": "network_links",
           "tableTo": "managed_devices",
-          "columnsFrom": [
-            "managed_device_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["managed_device_id"],
+          "columnsTo": ["id"],
           "onDelete": "cascade",
           "onUpdate": "no action"
         },
@@ -1276,12 +1220,8 @@
           "name": "network_links_service_id_services_id_fk",
           "tableFrom": "network_links",
           "tableTo": "services",
-          "columnsFrom": [
-            "service_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["service_id"],
+          "columnsTo": ["id"],
           "onDelete": "set null",
           "onUpdate": "no action"
         },
@@ -1289,12 +1229,8 @@
           "name": "network_links_customer_id_customers_id_fk",
           "tableFrom": "network_links",
           "tableTo": "customers",
-          "columnsFrom": [
-            "customer_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["customer_id"],
+          "columnsTo": ["id"],
           "onDelete": "set null",
           "onUpdate": "no action"
         },
@@ -1302,12 +1238,8 @@
           "name": "network_links_site_id_sites_id_fk",
           "tableFrom": "network_links",
           "tableTo": "sites",
-          "columnsFrom": [
-            "site_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["site_id"],
+          "columnsTo": ["id"],
           "onDelete": "set null",
           "onUpdate": "no action"
         }
@@ -1459,12 +1391,8 @@
           "name": "device_events_controller_id_controllers_id_fk",
           "tableFrom": "device_events",
           "tableTo": "controllers",
-          "columnsFrom": [
-            "controller_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["controller_id"],
+          "columnsTo": ["id"],
           "onDelete": "cascade",
           "onUpdate": "no action"
         },
@@ -1472,12 +1400,8 @@
           "name": "device_events_managed_device_id_managed_devices_id_fk",
           "tableFrom": "device_events",
           "tableTo": "managed_devices",
-          "columnsFrom": [
-            "managed_device_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["managed_device_id"],
+          "columnsTo": ["id"],
           "onDelete": "set null",
           "onUpdate": "no action"
         },
@@ -1485,12 +1409,8 @@
           "name": "device_events_customer_id_customers_id_fk",
           "tableFrom": "device_events",
           "tableTo": "customers",
-          "columnsFrom": [
-            "customer_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["customer_id"],
+          "columnsTo": ["id"],
           "onDelete": "set null",
           "onUpdate": "no action"
         },
@@ -1498,12 +1418,8 @@
           "name": "device_events_site_id_sites_id_fk",
           "tableFrom": "device_events",
           "tableTo": "sites",
-          "columnsFrom": [
-            "site_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["site_id"],
+          "columnsTo": ["id"],
           "onDelete": "set null",
           "onUpdate": "no action"
         },
@@ -1511,12 +1427,8 @@
           "name": "device_events_service_id_services_id_fk",
           "tableFrom": "device_events",
           "tableTo": "services",
-          "columnsFrom": [
-            "service_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["service_id"],
+          "columnsTo": ["id"],
           "onDelete": "set null",
           "onUpdate": "no action"
         }
@@ -1597,12 +1509,8 @@
           "name": "controller_sync_logs_controller_id_controllers_id_fk",
           "tableFrom": "controller_sync_logs",
           "tableTo": "controllers",
-          "columnsFrom": [
-            "controller_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["controller_id"],
+          "columnsTo": ["id"],
           "onDelete": "cascade",
           "onUpdate": "no action"
         }
@@ -1657,12 +1565,8 @@
           "name": "incident_correlations_ticket_id_tickets_id_fk",
           "tableFrom": "incident_correlations",
           "tableTo": "tickets",
-          "columnsFrom": [
-            "ticket_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["ticket_id"],
+          "columnsTo": ["id"],
           "onDelete": "cascade",
           "onUpdate": "no action"
         },
@@ -1670,12 +1574,8 @@
           "name": "incident_correlations_device_event_id_device_events_id_fk",
           "tableFrom": "incident_correlations",
           "tableTo": "device_events",
-          "columnsFrom": [
-            "device_event_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["device_event_id"],
+          "columnsTo": ["id"],
           "onDelete": "cascade",
           "onUpdate": "no action"
         }

@@ -5,7 +5,7 @@
  * Service Assurance AI API
  * OpenAPI spec version: 0.1.0
  */
-import type { CreateUserRequestRole } from "./createUserRequestRole";
+import type { CreateUserRequestRole } from './createUserRequestRole';
 
 export interface CreateUserRequest {
   name: string;

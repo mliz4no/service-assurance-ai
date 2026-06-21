@@ -9,13 +9,13 @@
 export interface NormalizedDevice {
   controllerDeviceId: string;
   hostname: string;
-  deviceType: "firewall" | "sdwan_edge" | "appliance" | "switch" | "gateway";
+  deviceType: 'firewall' | 'sdwan_edge' | 'appliance' | 'switch' | 'gateway';
   vendor: string;
   serialNumber?: string;
   model?: string;
   mgmtIp?: string;
-  status: "online" | "offline" | "degraded" | "unknown";
-  haState?: "active" | "standby" | "standalone" | "unknown";
+  status: 'online' | 'offline' | 'degraded' | 'unknown';
+  haState?: 'active' | 'standby' | 'standalone' | 'unknown';
   lastSeenAt?: Date;
   /**
    * Human-readable network/site name from the controller.
@@ -30,11 +30,18 @@ export interface NormalizedDevice {
 
 export interface NormalizedLink {
   linkName: string;
-  linkType: "internet" | "mpls" | "lte" | "broadband" | "wan_uplink" | "vpn_tunnel" | "sdwan_transport";
+  linkType:
+    | 'internet'
+    | 'mpls'
+    | 'lte'
+    | 'broadband'
+    | 'wan_uplink'
+    | 'vpn_tunnel'
+    | 'sdwan_transport';
   providerName?: string;
   circuitId?: string;
-  role: "primary" | "backup" | "unknown";
-  status: "up" | "down" | "degraded" | "unknown";
+  role: 'primary' | 'backup' | 'unknown';
+  status: 'up' | 'down' | 'degraded' | 'unknown';
   latencyMs?: number;
   jitterMs?: number;
   packetLossPct?: number;
@@ -57,7 +64,7 @@ export interface NormalizedLink {
 export interface NormalizedEvent {
   rawEventId: string;
   eventSource: string;
-  severity: "informational" | "low" | "medium" | "high" | "critical";
+  severity: 'informational' | 'low' | 'medium' | 'high' | 'critical';
   eventType: string;
   title: string;
   description?: string;

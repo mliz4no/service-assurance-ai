@@ -25,6 +25,7 @@ A full-stack enterprise telecom service assurance and ticket orchestration platf
 - **Admin panel**: SLA policy CRUD, user management, partner management, config health, AI test panel
 
 ### Network Map (new)
+
 - **Map page** (`/map`) — Interactive Leaflet map with all sites as colored teardrop pin markers
   - Color-coded by device status: green=online, amber=degraded, red=offline, gray=unknown
   - Clustering via `react-leaflet-cluster` for dense areas
@@ -36,6 +37,7 @@ A full-stack enterprise telecom service assurance and ticket orchestration platf
 - **API**: `GET /api/sites` now returns lat/lng; `POST/PUT /api/sites` accept lat/lng
 
 ### Controller Integrations (new)
+
 - **Controllers** (`/controllers`) — Cisco Meraki and Fortinet controller CRUD, test connection, sync now
 - **Managed Devices** (`/devices`) — Devices registered from controllers; status online/offline/degraded, HA state, customer/site mapping
 - **Network Links** (`/network-links`) — WAN uplinks, VPN tunnels, LTE backup, SD-WAN transports; real-time metrics (latency, jitter, packet loss)
@@ -43,6 +45,7 @@ A full-stack enterprise telecom service assurance and ticket orchestration platf
 - **Incident Correlator** — Auto-correlates controller events to existing tickets; writes `incidentCorrelations` rows and flags tickets as controller-sourced with failover state
 
 ### Telecom Services Partner RBAC (new)
+
 - **New role**: `telecom_services_partner` — scoped multi-customer portal access for resellers/aggregators
 - **`telecom_services_partners` table**: id, name, companyName, email, phone, status, notes
 - **Customer scoping**: `customers.telecomServicesPartnerId` links customers to a partner; `users.telecomServicesPartnerId` links user accounts to a partner org
@@ -57,18 +60,22 @@ A full-stack enterprise telecom service assurance and ticket orchestration platf
 - **Demo credentials**: `partneradmin@nexatek.com` / `Acme123!` (linked to Nexatek Solutions Ltd., sees 2 customers)
 
 ### New DB Tables (controller module)
+
 `controllers`, `managed_devices`, `network_links`, `device_events`, `controller_sync_logs`, `incident_correlations`
 
 ### New API Routes
+
 - `GET/POST /api/controllers`, `GET/PUT/DELETE /api/controllers/:id`, `POST /api/controllers/:id/test`, `POST /api/controllers/:id/sync`
 - `GET /api/devices`, `GET/PUT /api/devices/:id`
 - `GET /api/network-links`
 - `GET /api/device-events`, `GET /api/device-events/:id`, `POST /api/device-events/:id/ai-analyze`
 
 ### Custom Frontend Hooks
+
 `artifacts/service-assurance/src/lib/controller-hooks.ts` — hand-written React Query hooks for controller module endpoints (not in OpenAPI spec/generated client)
 
 ### ITIL Escalation & Notification System (new)
+
 - **ITIL severity matrix** on tickets: `impactLevel` × `urgencyLevel` → auto-derived `severity` (high+high=critical, etc.)
 - **Customer escalation contacts** (`customer_contacts` table): per-customer contacts with role (noc/manager/director/executive), `notifyOnSeverity` threshold, and optional `notifyOnDurationMinutes`
 - **Notification engine** (`artifacts/api-server/src/lib/notificationEngine.ts`): evaluates contacts on ticket POST (fire-and-forget) and on `POST /api/tickets/:id/evaluate-escalation`; deduplicates by contact+reason per ticket; logs simulated emails to `escalation_notifications` table and writes system_event to ticket timeline
@@ -77,18 +84,22 @@ A full-stack enterprise telecom service assurance and ticket orchestration platf
 - **Ticket new form**: Impact + Urgency selectors in Classification section; Severity auto-derives and locks when both are set
 
 #### New DB tables
+
 `customer_contacts`, `escalation_notifications`
 
 #### New API routes
+
 - `GET/POST /api/customers/:id/contacts`
 - `GET/PUT/DELETE /api/customers/:id/contacts/:contactId`
 - `GET /api/tickets/:id/notifications`
 - `POST /api/tickets/:id/evaluate-escalation`
 
 #### Custom hooks
+
 `lib/api-client-react/src/escalation-hooks.ts` — 6 hooks: `useGetCustomerContacts`, `useCreateCustomerContact`, `useUpdateCustomerContact`, `useDeleteCustomerContact`, `useGetTicketNotifications`, `useEvaluateEscalation`; all exported from `lib/api-client-react/src/index.ts`
 
 #### Seeded contacts
+
 10 contacts seeded across Nexatek and Broadfields customers (see `scripts/src/seed.ts`)
 
 ## Auth
@@ -100,14 +111,15 @@ A full-stack enterprise telecom service assurance and ticket orchestration platf
 
 ## Seed Credentials
 
-| Role     | Email                          | Password  |
-|----------|-------------------------------|-----------|
-| Admin    | admin@serviceassurance.ai     | Admin123! |
-| Ops      | ops@serviceassurance.ai       | Ops123!   |
-| Customer | portal@nexatek.com            | Acme123!  |
-| Customer | portal@broadfields.com        | Acme123!  |
+| Role     | Email                     | Password  |
+| -------- | ------------------------- | --------- |
+| Admin    | admin@serviceassurance.ai | Admin123! |
+| Ops      | ops@serviceassurance.ai   | Ops123!   |
+| Customer | portal@nexatek.com        | Acme123!  |
+| Customer | portal@broadfields.com    | Acme123!  |
 
 ### Escalation Matrix Overrides (new)
+
 - **Configurable ITIL severity matrix** — the Impact × Urgency → Severity mapping is now editable and overridable per scope
 - **Scope hierarchy**: Global baseline → Customer override → Location (site) override → Circuit (service) override. Most specific scope wins per-cell.
 - **DB**: `escalation_matrix_overrides` table stores non-default cells only (`scopeType`, `scopeId`, `impactLevel`, `urgencyLevel`, `derivedSeverity`)
@@ -147,6 +159,7 @@ A full-stack enterprise telecom service assurance and ticket orchestration platf
 ## Ticket Detail Component Structure
 
 `artifacts/service-assurance/src/pages/tickets/detail.tsx` is the orchestration layer only (~300 lines). Sub-components:
+
 - `TicketHeader.tsx` — escalation banners + header card + status stepper + assignee/status controls
 - `AIPanels.tsx` — AI Insights card (executive summary, normalized status, customer update draft)
 - `UpdateTimeline.tsx` — description card + activity timeline + post-update form
@@ -161,6 +174,7 @@ PostgreSQL via `DATABASE_URL` environment variable. Schema pushed with `pnpm --f
 Schema baseline snapshot is at `lib/db/drizzle/0000_simple_rafael_vega.sql` (generated by `drizzle-kit generate`). All 13 tables are captured. Future schema changes should go through `drizzle-kit generate` + `drizzle-kit migrate` rather than raw SQL.
 
 ### Salesforce Integration (new)
+
 - **Read-only CRM sync** — pulls Accounts → customers and Contacts → customer_contacts
 - **Auth**: OAuth 2.0 Username-Password flow; token cached in memory with 1-hour TTL; auto-refresh on 401
 - **Connector**: `artifacts/api-server/src/connectors/salesforce.ts` — `testConnection()`, `syncAccounts()`, `syncContacts()`, `fullSync()`
@@ -186,6 +200,7 @@ Schema baseline snapshot is at `lib/db/drizzle/0000_simple_rafael_vega.sql` (gen
 ## Running
 
 All three workflows run automatically:
+
 1. `artifacts/api-server: API Server` — builds and starts the API
 2. `artifacts/service-assurance: web` — Vite dev server for the frontend
 3. `artifacts/mockup-sandbox: Component Preview Server` — Canvas mockup server (unused in production)

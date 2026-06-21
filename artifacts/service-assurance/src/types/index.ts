@@ -5,7 +5,7 @@
  * These are additive — they extend generated types, never replace them.
  */
 
-import type { TicketWithRelations } from "@workspace/api-client-react";
+import type { TicketWithRelations } from '@workspace/api-client-react';
 
 /**
  * Per-action AI timestamps written by the tickets route when each

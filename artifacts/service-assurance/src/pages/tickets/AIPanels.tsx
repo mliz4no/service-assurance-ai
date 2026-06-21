@@ -1,15 +1,15 @@
-import { ClipboardCopy, RefreshCw, Sparkles } from "lucide-react";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
-import { cn } from "@/lib/utils";
-import { timeAgo } from "./ticket-utils";
-import type { TicketWithAI } from "@/types";
+import { ClipboardCopy, RefreshCw, Sparkles } from 'lucide-react';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
+import { Badge } from '@/components/ui/badge';
+import { cn } from '@/lib/utils';
+import { timeAgo } from './ticket-utils';
+import type { TicketWithAI } from '@/types';
 import type {
   useAiSummarizeTicket,
   useAiNormalizeLatestUpdate,
   useAiGenerateCustomerUpdate,
-} from "@workspace/api-client-react";
+} from '@workspace/api-client-react';
 
 type SummarizeMutation = ReturnType<typeof useAiSummarizeTicket>;
 type NormalizeMutation = ReturnType<typeof useAiNormalizeLatestUpdate>;
@@ -20,7 +20,7 @@ interface Props {
   summarizeMutation: SummarizeMutation;
   normalizeMutation: NormalizeMutation;
   customerUpdateMutation: CustomerUpdateMutation;
-  onRunAi: (action: "summarize" | "normalize" | "customer_update") => void;
+  onRunAi: (action: 'summarize' | 'normalize' | 'customer_update') => void;
   onCopyToClipboard: (text: string) => void;
   onUseAsUpdate: (text: string) => void;
 }
@@ -39,18 +39,16 @@ export function AIPanels({
       <CardHeader className="pb-0 pt-4 px-5">
         <div className="flex items-center gap-2 flex-wrap">
           <Sparkles className="w-4 h-4 text-indigo-600 shrink-0" />
-          <CardTitle className="text-sm font-semibold text-indigo-900">
-            AI Insights
-          </CardTitle>
+          <CardTitle className="text-sm font-semibold text-indigo-900">AI Insights</CardTitle>
           {ticket.aiConfidence != null && (
             <span
               className={cn(
-                "text-xs font-bold px-1.5 py-0.5 rounded",
+                'text-xs font-bold px-1.5 py-0.5 rounded',
                 ticket.aiConfidence >= 80
-                  ? "bg-green-100 text-green-800"
+                  ? 'bg-green-100 text-green-800'
                   : ticket.aiConfidence >= 50
-                  ? "bg-yellow-100 text-yellow-800"
-                  : "bg-red-100 text-red-800"
+                    ? 'bg-yellow-100 text-yellow-800'
+                    : 'bg-red-100 text-red-800',
               )}
             >
               {ticket.aiConfidence}% confidence
@@ -65,7 +63,6 @@ export function AIPanels({
       </CardHeader>
       <CardContent className="px-5 pt-3 pb-4">
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
-
           {/* Executive Summary */}
           <div className="space-y-2">
             <div className="flex items-center justify-between">
@@ -83,13 +80,19 @@ export function AIPanels({
                 size="sm"
                 variant="ghost"
                 className="h-6 px-2 text-xs text-indigo-600 hover:bg-indigo-100"
-                onClick={() => onRunAi("summarize")}
+                onClick={() => onRunAi('summarize')}
                 disabled={summarizeMutation.isPending}
               >
                 {summarizeMutation.isPending ? (
-                  <><RefreshCw className="w-3 h-3 mr-1 animate-spin" />Generating</>
+                  <>
+                    <RefreshCw className="w-3 h-3 mr-1 animate-spin" />
+                    Generating
+                  </>
                 ) : (
-                  <><RefreshCw className="w-3 h-3 mr-1" />Regenerate</>
+                  <>
+                    <RefreshCw className="w-3 h-3 mr-1" />
+                    Regenerate
+                  </>
                 )}
               </Button>
             </div>
@@ -99,7 +102,7 @@ export function AIPanels({
               </p>
             ) : (
               <button
-                onClick={() => onRunAi("summarize")}
+                onClick={() => onRunAi('summarize')}
                 className="w-full text-sm text-indigo-500 italic bg-white rounded-md border border-dashed border-indigo-200 p-3 text-left hover:bg-indigo-50 transition-colors"
               >
                 Click to generate summary...
@@ -124,13 +127,19 @@ export function AIPanels({
                 size="sm"
                 variant="ghost"
                 className="h-6 px-2 text-xs text-indigo-600 hover:bg-indigo-100"
-                onClick={() => onRunAi("normalize")}
+                onClick={() => onRunAi('normalize')}
                 disabled={normalizeMutation.isPending}
               >
                 {normalizeMutation.isPending ? (
-                  <><RefreshCw className="w-3 h-3 mr-1 animate-spin" />Generating</>
+                  <>
+                    <RefreshCw className="w-3 h-3 mr-1 animate-spin" />
+                    Generating
+                  </>
                 ) : (
-                  <><RefreshCw className="w-3 h-3 mr-1" />Regenerate</>
+                  <>
+                    <RefreshCw className="w-3 h-3 mr-1" />
+                    Regenerate
+                  </>
                 )}
               </Button>
             </div>
@@ -142,7 +151,7 @@ export function AIPanels({
               </div>
             ) : (
               <button
-                onClick={() => onRunAi("normalize")}
+                onClick={() => onRunAi('normalize')}
                 className="w-full text-sm text-indigo-500 italic bg-white rounded-md border border-dashed border-indigo-200 p-3 text-left hover:bg-indigo-50 transition-colors"
               >
                 Click to normalize latest vendor update...
@@ -178,13 +187,19 @@ export function AIPanels({
                   size="sm"
                   variant="ghost"
                   className="h-6 px-2 text-xs text-indigo-600 hover:bg-indigo-100"
-                  onClick={() => onRunAi("customer_update")}
+                  onClick={() => onRunAi('customer_update')}
                   disabled={customerUpdateMutation.isPending}
                 >
                   {customerUpdateMutation.isPending ? (
-                    <><RefreshCw className="w-3 h-3 mr-1 animate-spin" />Generating</>
+                    <>
+                      <RefreshCw className="w-3 h-3 mr-1 animate-spin" />
+                      Generating
+                    </>
                   ) : (
-                    <><RefreshCw className="w-3 h-3 mr-1" />Regenerate</>
+                    <>
+                      <RefreshCw className="w-3 h-3 mr-1" />
+                      Regenerate
+                    </>
                   )}
                 </Button>
               </div>
@@ -205,14 +220,13 @@ export function AIPanels({
               </div>
             ) : (
               <button
-                onClick={() => onRunAi("customer_update")}
+                onClick={() => onRunAi('customer_update')}
                 className="w-full text-sm text-indigo-500 italic bg-white rounded-md border border-dashed border-indigo-200 p-3 text-left hover:bg-indigo-50 transition-colors"
               >
                 Click to draft customer-facing update...
               </button>
             )}
           </div>
-
         </div>
       </CardContent>
     </Card>

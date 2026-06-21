@@ -52,7 +52,7 @@ import type {
   NormalizedLink,
   NormalizedEvent,
   ConnectorSyncResult,
-} from "./base";
+} from './base';
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Meraki API response shape types
@@ -66,9 +66,9 @@ import type {
  * GET /organizations/{orgId}
  */
 export interface MerakiOrganization {
-  id: string;          // "123456"
-  name: string;        // "Nexatek Corp"
-  url: string;         // Meraki dashboard URL for this org
+  id: string; // "123456"
+  name: string; // "Nexatek Corp"
+  url: string; // Meraki dashboard URL for this org
   api: {
     enabled: boolean;
   };
@@ -79,13 +79,13 @@ export interface MerakiOrganization {
  * Each network corresponds to a physical site (branch, HQ, DC, etc.)
  */
 export interface MerakiNetwork {
-  id: string;            // "N_123456789"
+  id: string; // "N_123456789"
   organizationId: string;
-  name: string;          // "Nexatek - HQ Chicago"
+  name: string; // "Nexatek - HQ Chicago"
   productTypes: string[]; // ["appliance", "switch", "wireless"]
-  timeZone: string;      // "America/Chicago"
-  tags: string[];        // ["branch", "critical"]
-  url: string;           // Dashboard URL for this network
+  timeZone: string; // "America/Chicago"
+  tags: string[]; // ["branch", "critical"]
+  url: string; // Dashboard URL for this network
 }
 
 /**
@@ -96,18 +96,18 @@ export interface MerakiNetwork {
  * We map these to our own status enum in mapMerakiDeviceStatus().
  */
 export interface MerakiDeviceStatus {
-  serial: string;            // "Q2TN-XXXX-0001" — unique identifier
-  name: string;              // "MX-HQ-01" — device name set in dashboard
-  model: string;             // "MX84", "MX67", "MX450", "MS225-48FP", "MR46"
-  networkId: string;         // "N_123456789" — which network this device belongs to
-  mac: string;               // "00:11:22:33:44:55"
-  lanIp: string | null;      // "192.168.1.1" — management/LAN IP
-  publicIp: string | null;   // "203.0.113.5" — current public IP (WAN1)
-  lastReportedAt: string;    // ISO 8601 timestamp
-  status: "online" | "alerting" | "offline" | "dormant";
-  productType: "appliance" | "switch" | "wireless" | "camera";
+  serial: string; // "Q2TN-XXXX-0001" — unique identifier
+  name: string; // "MX-HQ-01" — device name set in dashboard
+  model: string; // "MX84", "MX67", "MX450", "MS225-48FP", "MR46"
+  networkId: string; // "N_123456789" — which network this device belongs to
+  mac: string; // "00:11:22:33:44:55"
+  lanIp: string | null; // "192.168.1.1" — management/LAN IP
+  publicIp: string | null; // "203.0.113.5" — current public IP (WAN1)
+  lastReportedAt: string; // ISO 8601 timestamp
+  status: 'online' | 'alerting' | 'offline' | 'dormant';
+  productType: 'appliance' | 'switch' | 'wireless' | 'camera';
   components?: {
-    powerSupplies: Array<{ slot: number; model: string; status: "powering" | "not connected" }>;
+    powerSupplies: Array<{ slot: number; model: string; status: 'powering' | 'not connected' }>;
   };
 }
 
@@ -119,25 +119,25 @@ export interface MerakiDeviceStatus {
  * We map these in mapMerakiUplinkStatus().
  */
 export interface MerakiUplinkEntry {
-  interface: "WAN1" | "WAN2" | "Cellular";  // Physical interface name
-  status: "active" | "ready" | "connecting" | "not connected" | "failed";
-  ip: string | null;           // IP address assigned to this uplink
-  gateway: string | null;      // Default gateway
-  publicIp: string | null;     // Public-facing IP (after NAT)
+  interface: 'WAN1' | 'WAN2' | 'Cellular'; // Physical interface name
+  status: 'active' | 'ready' | 'connecting' | 'not connected' | 'failed';
+  ip: string | null; // IP address assigned to this uplink
+  gateway: string | null; // Default gateway
+  publicIp: string | null; // Public-facing IP (after NAT)
   primaryDns: string | null;
   secondaryDns: string | null;
-  ipAssignedBy: "static" | "dhcp" | "pppoe";
-  provider: string | null;     // ISP name if detected ("AT&T", "Comcast", etc.)
+  ipAssignedBy: 'static' | 'dhcp' | 'pppoe';
+  provider: string | null; // ISP name if detected ("AT&T", "Comcast", etc.)
 }
 
 export interface MerakiUplinkStatusRecord {
   networkId: string;
-  networkName?: string;          // Populated when merged with network list
-  serial: string;                // Device serial — links back to MerakiDeviceStatus
-  model: string;                 // "MX84"
+  networkName?: string; // Populated when merged with network list
+  serial: string; // Device serial — links back to MerakiDeviceStatus
+  model: string; // "MX84"
   highAvailability?: {
     enabled: boolean;
-    role: "primary" | "spare";   // In Meraki warm-spare HA
+    role: 'primary' | 'spare'; // In Meraki warm-spare HA
   };
   uplinks: MerakiUplinkEntry[];
 }
@@ -150,8 +150,8 @@ export interface MerakiUplinkUsageByNetwork {
   networkId: string;
   byUplink: Array<{
     interface: string;
-    sent: number;      // bytes
-    received: number;  // bytes
+    sent: number; // bytes
+    received: number; // bytes
   }>;
 }
 
@@ -177,18 +177,18 @@ export interface MerakiUplinkUsageByNetwork {
  *   uplink_connectivity_change — Uplink failover/failback
  */
 export interface MerakiApplianceEvent {
-  occurredAt: string;        // ISO 8601
-  networkId: string;         // "N_123456789"
-  networkName?: string;      // Populated when merged with network list
-  type: string;              // "wan_status_change", "vpn_connectivity_change", etc.
-  description: string;       // Human-readable event description from Meraki
-  category: string;          // "appliance_connectivity", "vpn", "dhcp", etc.
-  clientId?: string;         // Client mac if client-related event
+  occurredAt: string; // ISO 8601
+  networkId: string; // "N_123456789"
+  networkName?: string; // Populated when merged with network list
+  type: string; // "wan_status_change", "vpn_connectivity_change", etc.
+  description: string; // Human-readable event description from Meraki
+  category: string; // "appliance_connectivity", "vpn", "dhcp", etc.
+  clientId?: string; // Client mac if client-related event
   clientDescription?: string;
-  deviceSerial?: string;     // Device serial if device-related
-  deviceName?: string;       // Device name if device-related
-  ssidNumber?: number;       // For wireless events
-  eventData: Record<string, unknown>;  // Event-specific structured data
+  deviceSerial?: string; // Device serial if device-related
+  deviceName?: string; // Device name if device-related
+  ssidNumber?: number; // For wireless events
+  eventData: Record<string, unknown>; // Event-specific structured data
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -238,14 +238,19 @@ export interface MerakiConnectorConfig {
  *   "dormant"  → device has never reported or was manually deactivated
  */
 function mapMerakiDeviceStatus(
-  merakiStatus: MerakiDeviceStatus["status"]
-): NormalizedDevice["status"] {
+  merakiStatus: MerakiDeviceStatus['status'],
+): NormalizedDevice['status'] {
   switch (merakiStatus) {
-    case "online":   return "online";
-    case "alerting": return "degraded";   // online but has active alerts
-    case "offline":  return "offline";
-    case "dormant":  return "unknown";
-    default:         return "unknown";
+    case 'online':
+      return 'online';
+    case 'alerting':
+      return 'degraded'; // online but has active alerts
+    case 'offline':
+      return 'offline';
+    case 'dormant':
+      return 'unknown';
+    default:
+      return 'unknown';
   }
 }
 
@@ -260,15 +265,21 @@ function mapMerakiDeviceStatus(
  *   "failed"         → uplink was active but lost connectivity
  */
 function mapMerakiUplinkStatus(
-  merakiStatus: MerakiUplinkEntry["status"]
-): NormalizedLink["status"] {
+  merakiStatus: MerakiUplinkEntry['status'],
+): NormalizedLink['status'] {
   switch (merakiStatus) {
-    case "active":        return "up";
-    case "ready":         return "up";       // standby but healthy
-    case "connecting":    return "degraded"; // transitional
-    case "not connected": return "down";
-    case "failed":        return "down";
-    default:              return "unknown";
+    case 'active':
+      return 'up';
+    case 'ready':
+      return 'up'; // standby but healthy
+    case 'connecting':
+      return 'degraded'; // transitional
+    case 'not connected':
+      return 'down';
+    case 'failed':
+      return 'down';
+    default:
+      return 'unknown';
   }
 }
 
@@ -276,10 +287,10 @@ function mapMerakiUplinkStatus(
  * Map Meraki WAN interface name → our link role.
  * Convention: WAN1 is always the primary circuit. WAN2/Cellular are backup.
  */
-function mapMerakiInterfaceRole(iface: string): NormalizedLink["role"] {
-  if (iface === "WAN1") return "primary";
-  if (iface === "WAN2" || iface === "Cellular") return "backup";
-  return "unknown";
+function mapMerakiInterfaceRole(iface: string): NormalizedLink['role'] {
+  if (iface === 'WAN1') return 'primary';
+  if (iface === 'WAN2' || iface === 'Cellular') return 'backup';
+  return 'unknown';
 }
 
 /**
@@ -289,11 +300,11 @@ function mapMerakiInterfaceRole(iface: string): NormalizedLink["role"] {
  */
 function mapMerakiInterfaceLinkType(
   iface: string,
-  providerHint?: string | null
-): NormalizedLink["linkType"] {
-  if (iface === "Cellular") return "lte";
-  if (providerHint?.toLowerCase().includes("mpls")) return "mpls";
-  return "internet";
+  providerHint?: string | null,
+): NormalizedLink['linkType'] {
+  if (iface === 'Cellular') return 'lte';
+  if (providerHint?.toLowerCase().includes('mpls')) return 'mpls';
+  return 'internet';
 }
 
 /**
@@ -304,12 +315,15 @@ function mapMerakiInterfaceLinkType(
  * MV = camera
  * MT = sensor
  */
-function mapMerakiModelToDeviceType(model: string): NormalizedDevice["deviceType"] {
+function mapMerakiModelToDeviceType(model: string): NormalizedDevice['deviceType'] {
   const prefix = model.slice(0, 2).toUpperCase();
   switch (prefix) {
-    case "MX": return "appliance";
-    case "MS": return "switch";
-    default:   return "appliance";
+    case 'MX':
+      return 'appliance';
+    case 'MS':
+      return 'switch';
+    default:
+      return 'appliance';
   }
 }
 
@@ -320,33 +334,37 @@ function mapMerakiModelToDeviceType(model: string): NormalizedDevice["deviceType
  * the event type. This is the same logic an NOC would apply when triaging
  * Meraki webhook payloads.
  */
-function inferMerakiEventSeverity(eventType: string): NormalizedEvent["severity"] {
+function inferMerakiEventSeverity(eventType: string): NormalizedEvent['severity'] {
   if (
-    eventType === "wan_status_change" ||
-    eventType === "uplink_connectivity_change" ||
-    eventType === "vpn_registry_change"
-  ) return "high";
+    eventType === 'wan_status_change' ||
+    eventType === 'uplink_connectivity_change' ||
+    eventType === 'vpn_registry_change'
+  )
+    return 'high';
 
   if (
-    eventType === "vpn_connectivity_change" ||
-    eventType === "ids_alert" ||
-    eventType === "arp_inspection_block"
-  ) return "medium";
+    eventType === 'vpn_connectivity_change' ||
+    eventType === 'ids_alert' ||
+    eventType === 'arp_inspection_block'
+  )
+    return 'medium';
 
   if (
-    eventType === "firmware_upgrade_start" ||
-    eventType === "firmware_upgrade_complete" ||
-    eventType === "dhcp_lease" ||
-    eventType === "port_forwarding"
-  ) return "low";
+    eventType === 'firmware_upgrade_start' ||
+    eventType === 'firmware_upgrade_complete' ||
+    eventType === 'dhcp_lease' ||
+    eventType === 'port_forwarding'
+  )
+    return 'low';
 
   if (
-    eventType === "device_checkin" ||
-    eventType === "device_connected" ||
-    eventType === "splash_auth"
-  ) return "informational";
+    eventType === 'device_checkin' ||
+    eventType === 'device_connected' ||
+    eventType === 'splash_auth'
+  )
+    return 'informational';
 
-  return "low";
+  return 'low';
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -367,7 +385,7 @@ export function mapMerakiDevice(raw: MerakiDeviceStatus): NormalizedDevice {
     controllerDeviceId: raw.serial,
     hostname: raw.name,
     deviceType: mapMerakiModelToDeviceType(raw.model),
-    vendor: "Meraki",
+    vendor: 'Meraki',
     serialNumber: raw.serial,
     model: raw.model,
     mgmtIp: raw.lanIp ?? undefined,
@@ -397,7 +415,7 @@ export function mapMerakiUplink(
   networkName: string,
   circuitIdHint?: string,
   /** Pass true when a backup/cellular uplink is "active" due to primary failure */
-  isFailoverActive?: boolean
+  isFailoverActive?: boolean,
 ): NormalizedLink {
   const iface = raw.interface;
   const status = mapMerakiUplinkStatus(raw.status);
@@ -406,8 +424,8 @@ export function mapMerakiUplink(
 
   // Build a human-readable link name:
   //   "WAN1 — AT&T Business Fiber" or "Cellular — Verizon LTE (Failover Active)"
-  const providerPart = raw.provider ? ` — ${raw.provider}` : "";
-  const failoverPart = isFailoverActive ? " [Failover Active]" : "";
+  const providerPart = raw.provider ? ` — ${raw.provider}` : '';
+  const failoverPart = isFailoverActive ? ' [Failover Active]' : '';
   const linkName = `${iface}${providerPart}${failoverPart}`;
 
   return {
@@ -415,10 +433,10 @@ export function mapMerakiUplink(
     linkName,
     linkType,
     providerName: raw.provider ?? undefined,
-    circuitId: circuitIdHint,   // Meraki doesn't return circuit IDs — must be set manually or from service record
+    circuitId: circuitIdHint, // Meraki doesn't return circuit IDs — must be set manually or from service record
     role,
     status,
-    networkName,                // top-level controller-native network name
+    networkName, // top-level controller-native network name
     failoverActive: isFailoverActive ?? false,
     // Meraki does NOT return real-time latency/jitter/loss from this endpoint.
     // For performance metrics, poll:
@@ -430,7 +448,7 @@ export function mapMerakiUplink(
     packetLossPct: undefined,
     metadataJson: {
       interface: iface,
-      merakiStatus: raw.status,          // raw Meraki status string (before normalization)
+      merakiStatus: raw.status, // raw Meraki status string (before normalization)
       ip: raw.ip ?? null,
       publicIp: raw.publicIp ?? null,
       gateway: raw.gateway ?? null,
@@ -460,10 +478,10 @@ export function mapMerakiEvent(raw: MerakiApplianceEvent): NormalizedEvent {
 
   return {
     rawEventId: `meraki-${raw.networkId}-${raw.type}-${new Date(raw.occurredAt).getTime()}`,
-    eventSource: "meraki_dashboard",
+    eventSource: 'meraki_dashboard',
     severity,
     eventType: raw.type,
-    category: raw.category,    // Meraki event category (appliance_connectivity, vpn, security, device, etc.)
+    category: raw.category, // Meraki event category (appliance_connectivity, vpn, security, device, etc.)
     title,
     description: buildMerakiEventDescription(raw),
     occurredAt: new Date(raw.occurredAt),
@@ -482,61 +500,64 @@ export function mapMerakiEvent(raw: MerakiApplianceEvent): NormalizedEvent {
 
 function buildMerakiEventTitle(raw: MerakiApplianceEvent): string {
   const net = raw.networkName ?? raw.networkId;
-  const dev = raw.deviceName ?? raw.deviceSerial ?? "";
-  const devPart = dev ? ` — ${dev}` : "";
+  const dev = raw.deviceName ?? raw.deviceSerial ?? '';
+  const devPart = dev ? ` — ${dev}` : '';
 
   switch (raw.type) {
-    case "wan_status_change": {
-      const uplink = (raw.eventData.uplink as string) ?? "WAN";
+    case 'wan_status_change': {
+      const uplink = (raw.eventData.uplink as string) ?? 'WAN';
       const prev = raw.eventData.prevStatus ?? raw.eventData.from;
       const next = raw.eventData.newStatus ?? raw.eventData.to;
-      if (next === "failed" || next === "not connected") {
+      if (next === 'failed' || next === 'not connected') {
         return `${uplink} link down${devPart} (${net})`;
       }
-      if (prev === "failed" && (next === "active" || next === "ready")) {
+      if (prev === 'failed' && (next === 'active' || next === 'ready')) {
         return `${uplink} link restored${devPart} (${net})`;
       }
       return `${uplink} status changed: ${prev} → ${next}${devPart}`;
     }
 
-    case "uplink_connectivity_change": {
-      const iface = raw.eventData.uplinkInterface ?? "uplink";
+    case 'uplink_connectivity_change': {
+      const iface = raw.eventData.uplinkInterface ?? 'uplink';
       const after = raw.eventData.connectivityAfter as string;
-      if (after === "lost") return `${iface} connectivity lost${devPart} (${net})`;
-      if (after === "restored") return `${iface} connectivity restored${devPart} (${net})`;
+      if (after === 'lost') return `${iface} connectivity lost${devPart} (${net})`;
+      if (after === 'restored') return `${iface} connectivity restored${devPart} (${net})`;
       return `${iface} connectivity changed${devPart} (${net})`;
     }
 
-    case "vpn_connectivity_change": {
-      const peer = (raw.eventData.peerNetworkName as string) ?? (raw.eventData.peerNetworkId as string) ?? "peer";
+    case 'vpn_connectivity_change': {
+      const peer =
+        (raw.eventData.peerNetworkName as string) ??
+        (raw.eventData.peerNetworkId as string) ??
+        'peer';
       const conn = raw.eventData.connectivity as string;
-      return `AutoVPN ${conn === "false" || conn === false ? "tunnel down" : "tunnel restored"} to ${peer} (${net})`;
+      return `AutoVPN ${conn === 'false' ? 'tunnel down' : 'tunnel restored'} to ${peer} (${net})`;
     }
 
-    case "vpn_registry_change": {
+    case 'vpn_registry_change': {
       const mode = raw.eventData.newMode ?? raw.eventData.mode;
       return `VPN registry changed: ${mode}${devPart} (${net})`;
     }
 
-    case "firmware_upgrade_start":
+    case 'firmware_upgrade_start':
       return `Firmware upgrade started${devPart} (${net})`;
 
-    case "firmware_upgrade_complete":
+    case 'firmware_upgrade_complete':
       return `Firmware upgrade completed${devPart} (${net})`;
 
-    case "device_checkin":
+    case 'device_checkin':
       return `Device check-in${devPart} (${net})`;
 
-    case "ids_alert": {
-      const sig = raw.eventData.signature ?? "unknown";
+    case 'ids_alert': {
+      const sig = raw.eventData.signature ?? 'unknown';
       return `IDS alert: ${sig}${devPart} (${net})`;
     }
 
-    case "arp_inspection_block":
+    case 'arp_inspection_block':
       return `ARP spoofing blocked${devPart} (${net})`;
 
     default:
-      return `${raw.type.replace(/_/g, " ")}${devPart} (${net})`;
+      return `${raw.type.replace(/_/g, ' ')}${devPart} (${net})`;
   }
 }
 
@@ -548,17 +569,19 @@ function buildMerakiEventDescription(raw: MerakiApplianceEvent): string {
 
   // Add structured context from eventData
   switch (raw.type) {
-    case "wan_status_change":
-    case "uplink_connectivity_change": {
+    case 'wan_status_change':
+    case 'uplink_connectivity_change': {
       const uplink = raw.eventData.uplink ?? raw.eventData.uplinkInterface;
-      const prevStatus = raw.eventData.prevStatus ?? raw.eventData.from ?? raw.eventData.connectivityBefore;
-      const newStatus = raw.eventData.newStatus ?? raw.eventData.to ?? raw.eventData.connectivityAfter;
+      const prevStatus =
+        raw.eventData.prevStatus ?? raw.eventData.from ?? raw.eventData.connectivityBefore;
+      const newStatus =
+        raw.eventData.newStatus ?? raw.eventData.to ?? raw.eventData.connectivityAfter;
       if (uplink) parts.push(`Interface: ${uplink}`);
       if (prevStatus && newStatus) parts.push(`Status transition: ${prevStatus} → ${newStatus}`);
       break;
     }
 
-    case "vpn_connectivity_change": {
+    case 'vpn_connectivity_change': {
       const peer = raw.eventData.peerNetworkName ?? raw.eventData.peerNetworkId;
       const conn = raw.eventData.connectivity;
       if (peer) parts.push(`VPN peer: ${peer}`);
@@ -566,7 +589,7 @@ function buildMerakiEventDescription(raw: MerakiApplianceEvent): string {
       break;
     }
 
-    case "ids_alert": {
+    case 'ids_alert': {
       const { signature, message, priority, protocol, destPort } = raw.eventData as any;
       if (signature) parts.push(`Signature: ${signature}`);
       if (message) parts.push(`Message: ${message}`);
@@ -576,7 +599,7 @@ function buildMerakiEventDescription(raw: MerakiApplianceEvent): string {
     }
   }
 
-  return parts.join(" | ");
+  return parts.join(' | ');
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -595,320 +618,320 @@ function buildMerakiEventDescription(raw: MerakiApplianceEvent): string {
 // ─────────────────────────────────────────────────────────────────────────────
 
 const MOCK_ORG: MerakiOrganization = {
-  id: "NXT-ORG-12345",
-  name: "Nexatek Corporation",
-  url: "https://n123.meraki.com/o/NXT-ORG-12345/manage/organization/overview",
+  id: 'NXT-ORG-12345',
+  name: 'Nexatek Corporation',
+  url: 'https://n123.meraki.com/o/NXT-ORG-12345/manage/organization/overview',
   api: { enabled: true },
 };
 
 const MOCK_NETWORKS: MerakiNetwork[] = [
   {
-    id: "N_001",
-    organizationId: "NXT-ORG-12345",
-    name: "Nexatek — HQ Chicago",
-    productTypes: ["appliance", "switch", "wireless"],
-    timeZone: "America/Chicago",
-    tags: ["hq", "critical"],
-    url: "https://n123.meraki.com/o/NXT-ORG-12345/manage/network/N_001",
+    id: 'N_001',
+    organizationId: 'NXT-ORG-12345',
+    name: 'Nexatek — HQ Chicago',
+    productTypes: ['appliance', 'switch', 'wireless'],
+    timeZone: 'America/Chicago',
+    tags: ['hq', 'critical'],
+    url: 'https://n123.meraki.com/o/NXT-ORG-12345/manage/network/N_001',
   },
   {
-    id: "N_002",
-    organizationId: "NXT-ORG-12345",
-    name: "Nexatek — Denver Warehouse",
-    productTypes: ["appliance"],
-    timeZone: "America/Denver",
-    tags: ["branch", "warehouse"],
-    url: "https://n123.meraki.com/o/NXT-ORG-12345/manage/network/N_002",
+    id: 'N_002',
+    organizationId: 'NXT-ORG-12345',
+    name: 'Nexatek — Denver Warehouse',
+    productTypes: ['appliance'],
+    timeZone: 'America/Denver',
+    tags: ['branch', 'warehouse'],
+    url: 'https://n123.meraki.com/o/NXT-ORG-12345/manage/network/N_002',
   },
   {
-    id: "N_003",
-    organizationId: "NXT-ORG-12345",
-    name: "Nexatek — Austin Office",
-    productTypes: ["appliance", "wireless"],
-    timeZone: "America/Chicago",
-    tags: ["branch"],
-    url: "https://n123.meraki.com/o/NXT-ORG-12345/manage/network/N_003",
+    id: 'N_003',
+    organizationId: 'NXT-ORG-12345',
+    name: 'Nexatek — Austin Office',
+    productTypes: ['appliance', 'wireless'],
+    timeZone: 'America/Chicago',
+    tags: ['branch'],
+    url: 'https://n123.meraki.com/o/NXT-ORG-12345/manage/network/N_003',
   },
   {
-    id: "N_004",
-    organizationId: "NXT-ORG-12345",
-    name: "Nexatek — Phoenix Retail",
-    productTypes: ["appliance", "switch"],
-    timeZone: "America/Phoenix",
-    tags: ["branch", "retail"],
-    url: "https://n123.meraki.com/o/NXT-ORG-12345/manage/network/N_004",
+    id: 'N_004',
+    organizationId: 'NXT-ORG-12345',
+    name: 'Nexatek — Phoenix Retail',
+    productTypes: ['appliance', 'switch'],
+    timeZone: 'America/Phoenix',
+    tags: ['branch', 'retail'],
+    url: 'https://n123.meraki.com/o/NXT-ORG-12345/manage/network/N_004',
   },
   {
-    id: "N_005",
-    organizationId: "NXT-ORG-12345",
-    name: "Nexatek — Dallas DC",
-    productTypes: ["appliance"],
-    timeZone: "America/Chicago",
-    tags: ["datacenter", "critical"],
-    url: "https://n123.meraki.com/o/NXT-ORG-12345/manage/network/N_005",
+    id: 'N_005',
+    organizationId: 'NXT-ORG-12345',
+    name: 'Nexatek — Dallas DC',
+    productTypes: ['appliance'],
+    timeZone: 'America/Chicago',
+    tags: ['datacenter', 'critical'],
+    url: 'https://n123.meraki.com/o/NXT-ORG-12345/manage/network/N_005',
   },
 ];
 
 // Network lookup for enriching device/link/event records
 const NETWORK_MAP: Record<string, MerakiNetwork> = Object.fromEntries(
-  MOCK_NETWORKS.map((n) => [n.id, n])
+  MOCK_NETWORKS.map((n) => [n.id, n]),
 );
 
 const MOCK_DEVICE_STATUSES: MerakiDeviceStatus[] = [
   // HQ — MX85 warm-spare HA pair
   {
-    serial: "Q2TN-XXXX-NXT1",
-    name: "MX85-NXT-HQ-Active",
-    model: "MX85",
-    networkId: "N_001",
-    mac: "e0:55:3d:10:01:01",
-    lanIp: "10.0.1.1",
-    publicIp: "203.0.113.5",
+    serial: 'Q2TN-XXXX-NXT1',
+    name: 'MX85-NXT-HQ-Active',
+    model: 'MX85',
+    networkId: 'N_001',
+    mac: 'e0:55:3d:10:01:01',
+    lanIp: '10.0.1.1',
+    publicIp: '203.0.113.5',
     lastReportedAt: new Date(Date.now() - 90 * 1000).toISOString(),
-    status: "online",
-    productType: "appliance",
+    status: 'online',
+    productType: 'appliance',
   },
   {
-    serial: "Q2TN-XXXX-NXT1S",
-    name: "MX85-NXT-HQ-Spare",
-    model: "MX85",
-    networkId: "N_001",
-    mac: "e0:55:3d:10:01:02",
-    lanIp: "10.0.1.2",
+    serial: 'Q2TN-XXXX-NXT1S',
+    name: 'MX85-NXT-HQ-Spare',
+    model: 'MX85',
+    networkId: 'N_001',
+    mac: 'e0:55:3d:10:01:02',
+    lanIp: '10.0.1.2',
     publicIp: null,
     lastReportedAt: new Date(Date.now() - 95 * 1000).toISOString(),
-    status: "online",
-    productType: "appliance",
+    status: 'online',
+    productType: 'appliance',
   },
   // Denver Warehouse — MX67 offline (primary WAN down, LTE failover active)
   {
-    serial: "Q2TN-XXXX-NXT2",
-    name: "MX67-NXT-Denver",
-    model: "MX67",
-    networkId: "N_002",
-    mac: "e0:55:3d:20:02:01",
-    lanIp: "10.1.1.1",
-    publicIp: "72.14.195.201",   // LTE public IP (not DIA)
+    serial: 'Q2TN-XXXX-NXT2',
+    name: 'MX67-NXT-Denver',
+    model: 'MX67',
+    networkId: 'N_002',
+    mac: 'e0:55:3d:20:02:01',
+    lanIp: '10.1.1.1',
+    publicIp: '72.14.195.201', // LTE public IP (not DIA)
     lastReportedAt: new Date(Date.now() - 2.5 * 3600 * 1000).toISOString(),
-    status: "alerting",           // Online via LTE but has active alerts
-    productType: "appliance",
+    status: 'alerting', // Online via LTE but has active alerts
+    productType: 'appliance',
   },
   // Austin Office — MX68 online, AutoVPN degraded
   {
-    serial: "Q2TN-XXXX-NXT3",
-    name: "MX68-NXT-Austin",
-    model: "MX68",
-    networkId: "N_003",
-    mac: "e0:55:3d:30:03:01",
-    lanIp: "10.2.1.1",
-    publicIp: "12.141.99.44",
+    serial: 'Q2TN-XXXX-NXT3',
+    name: 'MX68-NXT-Austin',
+    model: 'MX68',
+    networkId: 'N_003',
+    mac: 'e0:55:3d:30:03:01',
+    lanIp: '10.2.1.1',
+    publicIp: '12.141.99.44',
     lastReportedAt: new Date(Date.now() - 60 * 1000).toISOString(),
-    status: "online",
-    productType: "appliance",
+    status: 'online',
+    productType: 'appliance',
   },
   // Phoenix Retail — MX67 online, recently upgraded firmware
   {
-    serial: "Q2TN-XXXX-NXT4",
-    name: "MX67-NXT-Phoenix",
-    model: "MX67",
-    networkId: "N_004",
-    mac: "e0:55:3d:40:04:01",
-    lanIp: "10.3.1.1",
-    publicIp: "67.199.143.88",
+    serial: 'Q2TN-XXXX-NXT4',
+    name: 'MX67-NXT-Phoenix',
+    model: 'MX67',
+    networkId: 'N_004',
+    mac: 'e0:55:3d:40:04:01',
+    lanIp: '10.3.1.1',
+    publicIp: '67.199.143.88',
     lastReportedAt: new Date(Date.now() - 45 * 1000).toISOString(),
-    status: "online",
-    productType: "appliance",
+    status: 'online',
+    productType: 'appliance',
   },
   // Dallas DC — MX450 high-capacity appliance
   {
-    serial: "Q2TN-XXXX-NXT5",
-    name: "MX450-NXT-DC-Dallas",
-    model: "MX450",
-    networkId: "N_005",
-    mac: "e0:55:3d:50:05:01",
-    lanIp: "10.4.1.1",
-    publicIp: "208.55.248.12",
+    serial: 'Q2TN-XXXX-NXT5',
+    name: 'MX450-NXT-DC-Dallas',
+    model: 'MX450',
+    networkId: 'N_005',
+    mac: 'e0:55:3d:50:05:01',
+    lanIp: '10.4.1.1',
+    publicIp: '208.55.248.12',
     lastReportedAt: new Date(Date.now() - 30 * 1000).toISOString(),
-    status: "online",
-    productType: "appliance",
+    status: 'online',
+    productType: 'appliance',
   },
 ];
 
 const MOCK_UPLINK_STATUSES: MerakiUplinkStatusRecord[] = [
   // HQ: Zayo 1G primary + Comcast backup (warm spare HA, both on active unit)
   {
-    networkId: "N_001",
-    networkName: "Nexatek — HQ Chicago",
-    serial: "Q2TN-XXXX-NXT1",
-    model: "MX85",
-    highAvailability: { enabled: true, role: "primary" },
+    networkId: 'N_001',
+    networkName: 'Nexatek — HQ Chicago',
+    serial: 'Q2TN-XXXX-NXT1',
+    model: 'MX85',
+    highAvailability: { enabled: true, role: 'primary' },
     uplinks: [
       {
-        interface: "WAN1",
-        status: "active",
-        ip: "203.0.113.5",
-        publicIp: "203.0.113.5",
-        gateway: "203.0.113.1",
-        primaryDns: "8.8.8.8",
-        secondaryDns: "8.8.4.4",
-        ipAssignedBy: "static",
-        provider: "Zayo",
+        interface: 'WAN1',
+        status: 'active',
+        ip: '203.0.113.5',
+        publicIp: '203.0.113.5',
+        gateway: '203.0.113.1',
+        primaryDns: '8.8.8.8',
+        secondaryDns: '8.8.4.4',
+        ipAssignedBy: 'static',
+        provider: 'Zayo',
       },
       {
-        interface: "WAN2",
-        status: "ready",
-        ip: "98.27.44.190",
-        publicIp: "98.27.44.190",
-        gateway: "98.27.44.1",
-        primaryDns: "75.75.75.75",
-        secondaryDns: "75.75.76.76",
-        ipAssignedBy: "dhcp",
-        provider: "Comcast Business",
+        interface: 'WAN2',
+        status: 'ready',
+        ip: '98.27.44.190',
+        publicIp: '98.27.44.190',
+        gateway: '98.27.44.1',
+        primaryDns: '75.75.75.75',
+        secondaryDns: '75.75.76.76',
+        ipAssignedBy: 'dhcp',
+        provider: 'Comcast Business',
       },
     ],
   },
   // HQ Spare: same links, standby role
   {
-    networkId: "N_001",
-    networkName: "Nexatek — HQ Chicago",
-    serial: "Q2TN-XXXX-NXT1S",
-    model: "MX85",
-    highAvailability: { enabled: true, role: "spare" },
+    networkId: 'N_001',
+    networkName: 'Nexatek — HQ Chicago',
+    serial: 'Q2TN-XXXX-NXT1S',
+    model: 'MX85',
+    highAvailability: { enabled: true, role: 'spare' },
     uplinks: [
       {
-        interface: "WAN1",
-        status: "ready",
+        interface: 'WAN1',
+        status: 'ready',
         ip: null,
         publicIp: null,
         gateway: null,
         primaryDns: null,
         secondaryDns: null,
-        ipAssignedBy: "dhcp",
+        ipAssignedBy: 'dhcp',
         provider: null,
       },
     ],
   },
   // Denver: primary WAN failed, cellular active (incident in progress)
   {
-    networkId: "N_002",
-    networkName: "Nexatek — Denver Warehouse",
-    serial: "Q2TN-XXXX-NXT2",
-    model: "MX67",
+    networkId: 'N_002',
+    networkName: 'Nexatek — Denver Warehouse',
+    serial: 'Q2TN-XXXX-NXT2',
+    model: 'MX67',
     uplinks: [
       {
-        interface: "WAN1",
-        status: "failed",
+        interface: 'WAN1',
+        status: 'failed',
         ip: null,
         publicIp: null,
         gateway: null,
         primaryDns: null,
         secondaryDns: null,
-        ipAssignedBy: "dhcp",
-        provider: "Comcast Business",
+        ipAssignedBy: 'dhcp',
+        provider: 'Comcast Business',
       },
       {
-        interface: "Cellular",
-        status: "active",   // LTE failover is now carrying traffic
-        ip: "10.128.0.5",
-        publicIp: "72.14.195.201",
-        gateway: "10.128.0.1",
-        primaryDns: "8.8.8.8",
-        secondaryDns: "8.8.4.4",
-        ipAssignedBy: "dhcp",
-        provider: "AT&T",
+        interface: 'Cellular',
+        status: 'active', // LTE failover is now carrying traffic
+        ip: '10.128.0.5',
+        publicIp: '72.14.195.201',
+        gateway: '10.128.0.1',
+        primaryDns: '8.8.8.8',
+        secondaryDns: '8.8.4.4',
+        ipAssignedBy: 'dhcp',
+        provider: 'AT&T',
       },
     ],
   },
   // Austin: WAN1 up, WAN2 ready standby
   {
-    networkId: "N_003",
-    networkName: "Nexatek — Austin Office",
-    serial: "Q2TN-XXXX-NXT3",
-    model: "MX68",
+    networkId: 'N_003',
+    networkName: 'Nexatek — Austin Office',
+    serial: 'Q2TN-XXXX-NXT3',
+    model: 'MX68',
     uplinks: [
       {
-        interface: "WAN1",
-        status: "active",
-        ip: "12.141.99.44",
-        publicIp: "12.141.99.44",
-        gateway: "12.141.99.1",
-        primaryDns: "8.8.8.8",
-        secondaryDns: "1.1.1.1",
-        ipAssignedBy: "static",
-        provider: "AT&T Business Fiber",
+        interface: 'WAN1',
+        status: 'active',
+        ip: '12.141.99.44',
+        publicIp: '12.141.99.44',
+        gateway: '12.141.99.1',
+        primaryDns: '8.8.8.8',
+        secondaryDns: '1.1.1.1',
+        ipAssignedBy: 'static',
+        provider: 'AT&T Business Fiber',
       },
       {
-        interface: "WAN2",
-        status: "ready",
-        ip: "76.220.14.88",
-        publicIp: "76.220.14.88",
-        gateway: "76.220.14.1",
-        primaryDns: "75.75.75.75",
+        interface: 'WAN2',
+        status: 'ready',
+        ip: '76.220.14.88',
+        publicIp: '76.220.14.88',
+        gateway: '76.220.14.1',
+        primaryDns: '75.75.75.75',
         secondaryDns: null,
-        ipAssignedBy: "dhcp",
-        provider: "Spectrum Business",
+        ipAssignedBy: 'dhcp',
+        provider: 'Spectrum Business',
       },
     ],
   },
   // Phoenix: WAN1 up, WAN2 ready
   {
-    networkId: "N_004",
-    networkName: "Nexatek — Phoenix Retail",
-    serial: "Q2TN-XXXX-NXT4",
-    model: "MX67",
+    networkId: 'N_004',
+    networkName: 'Nexatek — Phoenix Retail',
+    serial: 'Q2TN-XXXX-NXT4',
+    model: 'MX67',
     uplinks: [
       {
-        interface: "WAN1",
-        status: "active",
-        ip: "67.199.143.88",
-        publicIp: "67.199.143.88",
-        gateway: "67.199.143.1",
-        primaryDns: "8.8.8.8",
-        secondaryDns: "8.8.4.4",
-        ipAssignedBy: "dhcp",
-        provider: "Cox Business",
+        interface: 'WAN1',
+        status: 'active',
+        ip: '67.199.143.88',
+        publicIp: '67.199.143.88',
+        gateway: '67.199.143.1',
+        primaryDns: '8.8.8.8',
+        secondaryDns: '8.8.4.4',
+        ipAssignedBy: 'dhcp',
+        provider: 'Cox Business',
       },
       {
-        interface: "WAN2",
-        status: "ready",
-        ip: "172.58.99.4",
-        publicIp: "172.58.99.4",
-        gateway: "172.58.99.1",
-        primaryDns: "208.67.222.222",
+        interface: 'WAN2',
+        status: 'ready',
+        ip: '172.58.99.4',
+        publicIp: '172.58.99.4',
+        gateway: '172.58.99.1',
+        primaryDns: '208.67.222.222',
         secondaryDns: null,
-        ipAssignedBy: "dhcp",
-        provider: "Verizon LTE",
+        ipAssignedBy: 'dhcp',
+        provider: 'Verizon LTE',
       },
     ],
   },
   // Dallas DC: Zayo 10G primary + Lumen MPLS backup (both active, critical)
   {
-    networkId: "N_005",
-    networkName: "Nexatek — Dallas DC",
-    serial: "Q2TN-XXXX-NXT5",
-    model: "MX450",
+    networkId: 'N_005',
+    networkName: 'Nexatek — Dallas DC',
+    serial: 'Q2TN-XXXX-NXT5',
+    model: 'MX450',
     uplinks: [
       {
-        interface: "WAN1",
-        status: "active",
-        ip: "208.55.248.12",
-        publicIp: "208.55.248.12",
-        gateway: "208.55.248.1",
-        primaryDns: "8.8.8.8",
-        secondaryDns: "8.8.4.4",
-        ipAssignedBy: "static",
-        provider: "Zayo 10G",
+        interface: 'WAN1',
+        status: 'active',
+        ip: '208.55.248.12',
+        publicIp: '208.55.248.12',
+        gateway: '208.55.248.1',
+        primaryDns: '8.8.8.8',
+        secondaryDns: '8.8.4.4',
+        ipAssignedBy: 'static',
+        provider: 'Zayo 10G',
       },
       {
-        interface: "WAN2",
-        status: "active",    // Both WAN active on DC (dual-homed, not failover)
-        ip: "66.28.112.44",
-        publicIp: "66.28.112.44",
-        gateway: "66.28.112.1",
-        primaryDns: "4.2.2.2",
-        secondaryDns: "4.2.2.1",
-        ipAssignedBy: "static",
-        provider: "Lumen MPLS",
+        interface: 'WAN2',
+        status: 'active', // Both WAN active on DC (dual-homed, not failover)
+        ip: '66.28.112.44',
+        publicIp: '66.28.112.44',
+        gateway: '66.28.112.1',
+        primaryDns: '4.2.2.2',
+        secondaryDns: '4.2.2.1',
+        ipAssignedBy: 'static',
+        provider: 'Lumen MPLS',
       },
     ],
   },
@@ -918,70 +941,70 @@ const MOCK_EVENTS: MerakiApplianceEvent[] = [
   // Denver branch: WAN1 failure (incident in progress)
   {
     occurredAt: new Date(Date.now() - 2.5 * 3600 * 1000).toISOString(),
-    networkId: "N_002",
-    networkName: "Nexatek — Denver Warehouse",
-    type: "uplink_connectivity_change",
-    description: "WAN1 uplink connectivity changed from \"good\" to \"lost\"",
-    category: "appliance_connectivity",
-    deviceSerial: "Q2TN-XXXX-NXT2",
-    deviceName: "MX67-NXT-Denver",
+    networkId: 'N_002',
+    networkName: 'Nexatek — Denver Warehouse',
+    type: 'uplink_connectivity_change',
+    description: 'WAN1 uplink connectivity changed from "good" to "lost"',
+    category: 'appliance_connectivity',
+    deviceSerial: 'Q2TN-XXXX-NXT2',
+    deviceName: 'MX67-NXT-Denver',
     eventData: {
-      uplinkInterface: "WAN1",
-      uplinkIp: "10.1.1.254",
-      connectivityBefore: "good",
-      connectivityAfter: "lost",
-      alertType: "uplink_connectivity_change",
+      uplinkInterface: 'WAN1',
+      uplinkIp: '10.1.1.254',
+      connectivityBefore: 'good',
+      connectivityAfter: 'lost',
+      alertType: 'uplink_connectivity_change',
     },
   },
   // Denver: LTE failover activated (follows WAN1 failure)
   {
     occurredAt: new Date(Date.now() - 2.5 * 3600 * 1000 + 12000).toISOString(),
-    networkId: "N_002",
-    networkName: "Nexatek — Denver Warehouse",
-    type: "wan_status_change",
-    description: "WAN status changed from active to failed on WAN1; Cellular failover activated",
-    category: "appliance_connectivity",
-    deviceSerial: "Q2TN-XXXX-NXT2",
-    deviceName: "MX67-NXT-Denver",
+    networkId: 'N_002',
+    networkName: 'Nexatek — Denver Warehouse',
+    type: 'wan_status_change',
+    description: 'WAN status changed from active to failed on WAN1; Cellular failover activated',
+    category: 'appliance_connectivity',
+    deviceSerial: 'Q2TN-XXXX-NXT2',
+    deviceName: 'MX67-NXT-Denver',
     eventData: {
-      uplink: "WAN1",
-      prevStatus: "active",
-      newStatus: "failed",
-      activeFailover: "Cellular",
-      provider: "Comcast Business",
-      circuitId: "CMC-BIZ-190224-B",
+      uplink: 'WAN1',
+      prevStatus: 'active',
+      newStatus: 'failed',
+      activeFailover: 'Cellular',
+      provider: 'Comcast Business',
+      circuitId: 'CMC-BIZ-190224-B',
     },
   },
   // Austin: AutoVPN degraded to HQ (packet loss on primary WAN)
   {
     occurredAt: new Date(Date.now() - 45 * 60 * 1000).toISOString(),
-    networkId: "N_003",
-    networkName: "Nexatek — Austin Office",
-    type: "vpn_connectivity_change",
-    description: "VPN connectivity to hub changed",
-    category: "vpn",
-    deviceSerial: "Q2TN-XXXX-NXT3",
-    deviceName: "MX68-NXT-Austin",
+    networkId: 'N_003',
+    networkName: 'Nexatek — Austin Office',
+    type: 'vpn_connectivity_change',
+    description: 'VPN connectivity to hub changed',
+    category: 'vpn',
+    deviceSerial: 'Q2TN-XXXX-NXT3',
+    deviceName: 'MX68-NXT-Austin',
     eventData: {
-      peerNetworkId: "N_001",
-      peerNetworkName: "Nexatek — HQ Chicago",
-      connectivity: "false",
-      reason: "Packet loss on primary uplink exceeded threshold (8.3%)",
+      peerNetworkId: 'N_001',
+      peerNetworkName: 'Nexatek — HQ Chicago',
+      connectivity: 'false',
+      reason: 'Packet loss on primary uplink exceeded threshold (8.3%)',
     },
   },
   // Phoenix: firmware upgrade completed (informational)
   {
     occurredAt: new Date(Date.now() - 4 * 3600 * 1000).toISOString(),
-    networkId: "N_004",
-    networkName: "Nexatek — Phoenix Retail",
-    type: "firmware_upgrade_complete",
-    description: "Firmware upgrade to MX 18.211 completed successfully",
-    category: "device",
-    deviceSerial: "Q2TN-XXXX-NXT4",
-    deviceName: "MX67-NXT-Phoenix",
+    networkId: 'N_004',
+    networkName: 'Nexatek — Phoenix Retail',
+    type: 'firmware_upgrade_complete',
+    description: 'Firmware upgrade to MX 18.211 completed successfully',
+    category: 'device',
+    deviceSerial: 'Q2TN-XXXX-NXT4',
+    deviceName: 'MX67-NXT-Phoenix',
     eventData: {
-      fromVersion: "MX 18.107.2",
-      toVersion: "MX 18.211",
+      fromVersion: 'MX 18.107.2',
+      toVersion: 'MX 18.211',
       durationSeconds: 247,
       restartRequired: true,
     },
@@ -989,52 +1012,52 @@ const MOCK_EVENTS: MerakiApplianceEvent[] = [
   // HQ: ARP inspection block (security event)
   {
     occurredAt: new Date(Date.now() - 22 * 60 * 1000).toISOString(),
-    networkId: "N_001",
-    networkName: "Nexatek — HQ Chicago",
-    type: "arp_inspection_block",
-    description: "ARP packet blocked by dynamic ARP inspection",
-    category: "security",
-    deviceSerial: "Q2TN-XXXX-NXT1",
-    deviceName: "MX85-NXT-HQ-Active",
+    networkId: 'N_001',
+    networkName: 'Nexatek — HQ Chicago',
+    type: 'arp_inspection_block',
+    description: 'ARP packet blocked by dynamic ARP inspection',
+    category: 'security',
+    deviceSerial: 'Q2TN-XXXX-NXT1',
+    deviceName: 'MX85-NXT-HQ-Active',
     eventData: {
-      senderIp: "10.0.1.155",
-      senderMac: "aa:bb:cc:dd:ee:ff",
-      targetIp: "10.0.1.1",
+      senderIp: '10.0.1.155',
+      senderMac: 'aa:bb:cc:dd:ee:ff',
+      targetIp: '10.0.1.1',
       vlanId: 100,
-      port: "eth3",
+      port: 'eth3',
     },
   },
   // HQ: Device check-in (informational)
   {
     occurredAt: new Date(Date.now() - 5 * 60 * 1000).toISOString(),
-    networkId: "N_001",
-    networkName: "Nexatek — HQ Chicago",
-    type: "device_checkin",
-    description: "Scheduled device check-in completed",
-    category: "device",
-    deviceSerial: "Q2TN-XXXX-NXT1",
-    deviceName: "MX85-NXT-HQ-Active",
+    networkId: 'N_001',
+    networkName: 'Nexatek — HQ Chicago',
+    type: 'device_checkin',
+    description: 'Scheduled device check-in completed',
+    category: 'device',
+    deviceSerial: 'Q2TN-XXXX-NXT1',
+    deviceName: 'MX85-NXT-HQ-Active',
     eventData: {
-      checkStatus: "ok",
-      firmware: "MX 18.211",
-      uptime: 1209600,  // 14 days in seconds
+      checkStatus: 'ok',
+      firmware: 'MX 18.211',
+      uptime: 1209600, // 14 days in seconds
     },
   },
   // Dallas DC: VPN registry change (spoke site came online)
   {
     occurredAt: new Date(Date.now() - 90 * 60 * 1000).toISOString(),
-    networkId: "N_005",
-    networkName: "Nexatek — Dallas DC",
-    type: "vpn_registry_change",
-    description: "VPN registry updated: Phoenix Retail registered as spoke",
-    category: "vpn",
-    deviceSerial: "Q2TN-XXXX-NXT5",
-    deviceName: "MX450-NXT-DC-Dallas",
+    networkId: 'N_005',
+    networkName: 'Nexatek — Dallas DC',
+    type: 'vpn_registry_change',
+    description: 'VPN registry updated: Phoenix Retail registered as spoke',
+    category: 'vpn',
+    deviceSerial: 'Q2TN-XXXX-NXT5',
+    deviceName: 'MX450-NXT-DC-Dallas',
     eventData: {
-      newMode: "spoke",
-      registeredSpokeNetworkId: "N_004",
-      registeredSpokeNetworkName: "Nexatek — Phoenix Retail",
-      hubNetworkId: "N_005",
+      newMode: 'spoke',
+      registeredSpokeNetworkId: 'N_004',
+      registeredSpokeNetworkName: 'Nexatek — Phoenix Retail',
+      hubNetworkId: 'N_005',
     },
   },
 ];
@@ -1044,11 +1067,11 @@ const MOCK_EVENTS: MerakiApplianceEvent[] = [
 // In production, operators set these in the service record or controller config.
 // ─────────────────────────────────────────────────────────────────────────────
 const CIRCUIT_ID_HINTS: Record<string, Record<string, string>> = {
-  "Q2TN-XXXX-NXT1": { WAN1: "ZYO-DIA-HQ-001", WAN2: "CMC-BIZ-HQ-002" },
-  "Q2TN-XXXX-NXT2": { WAN1: "CMC-BIZ-190224-B" },
-  "Q2TN-XXXX-NXT3": { WAN1: "ATT-BIZ-AUS-101" },
-  "Q2TN-XXXX-NXT4": { WAN1: "COX-BIZ-PHX-044" },
-  "Q2TN-XXXX-NXT5": { WAN1: "ZYO-DIA-DAL-10G-005", WAN2: "LMN-MPLS-DAL-006" },
+  'Q2TN-XXXX-NXT1': { WAN1: 'ZYO-DIA-HQ-001', WAN2: 'CMC-BIZ-HQ-002' },
+  'Q2TN-XXXX-NXT2': { WAN1: 'CMC-BIZ-190224-B' },
+  'Q2TN-XXXX-NXT3': { WAN1: 'ATT-BIZ-AUS-101' },
+  'Q2TN-XXXX-NXT4': { WAN1: 'COX-BIZ-PHX-044' },
+  'Q2TN-XXXX-NXT5': { WAN1: 'ZYO-DIA-DAL-10G-005', WAN2: 'LMN-MPLS-DAL-006' },
 };
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -1056,7 +1079,7 @@ const CIRCUIT_ID_HINTS: Record<string, Record<string, string>> = {
 // ─────────────────────────────────────────────────────────────────────────────
 
 export class MerakiConnector implements BaseConnector {
-  readonly vendor = "meraki";
+  readonly vendor = 'meraki';
   private readonly config: MerakiConnectorConfig;
 
   constructor(config: MerakiConnectorConfig) {
@@ -1064,7 +1087,7 @@ export class MerakiConnector implements BaseConnector {
   }
 
   private get isDemoMode(): boolean {
-    return !this.config.apiKey || this.config.apiKey === "placeholder";
+    return !this.config.apiKey || this.config.apiKey === 'placeholder';
   }
 
   /**
@@ -1073,11 +1096,11 @@ export class MerakiConnector implements BaseConnector {
    * REAL USAGE: Replace config.apiKey with the actual key from the controller record.
    * The key is passed as a custom header — NOT as a Bearer token or query param.
    */
-  private headers(): HeadersInit {
+  private headers(): Record<string, string> {
     return {
-      "X-Cisco-Meraki-API-Key": this.config.apiKey,
-      "Content-Type": "application/json",
-      "Accept": "application/json",
+      'X-Cisco-Meraki-API-Key': this.config.apiKey,
+      'Content-Type': 'application/json',
+      Accept: 'application/json',
     };
   }
 
@@ -1094,7 +1117,7 @@ export class MerakiConnector implements BaseConnector {
 
     // Handle Meraki rate limiting (300 req/min per org)
     if (resp.status === 429) {
-      const retryAfter = parseInt(resp.headers.get("Retry-After") ?? "1", 10);
+      const retryAfter = parseInt(resp.headers.get('Retry-After') ?? '1', 10);
       await new Promise((r) => setTimeout(r, retryAfter * 1000));
       const retried = await fetch(url, { headers: this.headers() });
       if (!retried.ok) throw new Error(`Meraki API error: ${retried.status} ${retried.statusText}`);
@@ -1130,7 +1153,7 @@ export class MerakiConnector implements BaseConnector {
     try {
       // REAL MERAKI API CALL:
       const org = await this.merakiGet<MerakiOrganization>(
-        `/organizations/${this.config.organizationId}`
+        `/organizations/${this.config.organizationId}`,
       );
       return {
         ok: true,
@@ -1158,9 +1181,7 @@ export class MerakiConnector implements BaseConnector {
     if (this.isDemoMode) return MOCK_NETWORKS;
 
     // REAL MERAKI API CALL:
-    return this.merakiGet<MerakiNetwork[]>(
-      `/organizations/${this.config.organizationId}/networks`
-    );
+    return this.merakiGet<MerakiNetwork[]>(`/organizations/${this.config.organizationId}/networks`);
   }
 
   /**
@@ -1189,18 +1210,18 @@ export class MerakiConnector implements BaseConnector {
     // REAL MERAKI API CALL:
     const [rawDevices, networks] = await Promise.all([
       this.merakiGet<MerakiDeviceStatus[]>(
-        `/organizations/${this.config.organizationId}/devices/statuses`
+        `/organizations/${this.config.organizationId}/devices/statuses`,
       ),
       this.syncNetworks(),
     ]);
 
     const networkNameMap: Record<string, string> = Object.fromEntries(
-      networks.map((n) => [n.id, n.name])
+      networks.map((n) => [n.id, n.name]),
     );
 
     // Filter to appliances only, map, then enrich with network name
     return rawDevices
-      .filter((d) => d.productType === "appliance")
+      .filter((d) => d.productType === 'appliance')
       .map((d) => ({
         ...mapMerakiDevice(d),
         networkName: networkNameMap[d.networkId],
@@ -1231,7 +1252,7 @@ export class MerakiConnector implements BaseConnector {
       return MOCK_UPLINK_STATUSES.flatMap((record) => {
         // Detect failover: any WAN1 on this device is "failed" or "not connected"
         const primaryFailed = record.uplinks.some(
-          (u) => u.interface === "WAN1" && (u.status === "failed" || u.status === "not connected")
+          (u) => u.interface === 'WAN1' && (u.status === 'failed' || u.status === 'not connected'),
         );
         return record.uplinks.map((uplink) => {
           // A backup/cellular uplink is "failover active" when:
@@ -1239,16 +1260,14 @@ export class MerakiConnector implements BaseConnector {
           //   2. The primary WAN failed
           //   3. This uplink is "active" (carrying traffic)
           const isFailoverActive =
-            uplink.interface !== "WAN1" &&
-            primaryFailed &&
-            uplink.status === "active";
+            uplink.interface !== 'WAN1' && primaryFailed && uplink.status === 'active';
 
           return mapMerakiUplink(
             uplink,
             record.serial,
             record.networkName ?? record.networkId,
             CIRCUIT_ID_HINTS[record.serial]?.[uplink.interface],
-            isFailoverActive
+            isFailoverActive,
           );
         });
       });
@@ -1257,13 +1276,13 @@ export class MerakiConnector implements BaseConnector {
     // REAL MERAKI API CALL:
     const [uplinkStatuses, networks] = await Promise.all([
       this.merakiGet<MerakiUplinkStatusRecord[]>(
-        `/organizations/${this.config.organizationId}/appliance/uplink/statuses`
+        `/organizations/${this.config.organizationId}/appliance/uplink/statuses`,
       ),
       this.syncNetworks(),
     ]);
 
     const networkNameMap: Record<string, string> = Object.fromEntries(
-      networks.map((n) => [n.id, n.name])
+      networks.map((n) => [n.id, n.name]),
     );
 
     return uplinkStatuses.flatMap((record) =>
@@ -1272,9 +1291,9 @@ export class MerakiConnector implements BaseConnector {
           uplink,
           record.serial,
           networkNameMap[record.networkId] ?? record.networkId,
-          CIRCUIT_ID_HINTS[record.serial]?.[uplink.interface]
-        )
-      )
+          CIRCUIT_ID_HINTS[record.serial]?.[uplink.interface],
+        ),
+      ),
     );
   }
 
@@ -1307,9 +1326,7 @@ export class MerakiConnector implements BaseConnector {
 
     // REAL MERAKI API CALL (per-network):
     const networks = await this.syncNetworks();
-    const applianceNetworks = networks.filter((n) =>
-      n.productTypes.includes("appliance")
-    );
+    const applianceNetworks = networks.filter((n) => n.productTypes.includes('appliance'));
 
     const allEvents: NormalizedEvent[] = [];
 
@@ -1322,16 +1339,16 @@ export class MerakiConnector implements BaseConnector {
         batch.map(async (network) => {
           try {
             const resp = await this.merakiGet<{ events: MerakiApplianceEvent[] }>(
-              `/networks/${network.id}/events?productTypes[]=appliance&perPage=100`
+              `/networks/${network.id}/events?productTypes[]=appliance&perPage=100`,
             );
             return (resp.events ?? []).map((evt) => ({
               ...evt,
-              networkName: network.name,  // enrich with human-readable name
+              networkName: network.name, // enrich with human-readable name
             }));
           } catch {
-            return [];  // Don't fail entire sync if one network errors
+            return []; // Don't fail entire sync if one network errors
           }
-        })
+        }),
       );
       allEvents.push(...batchResults.flat().map(mapMerakiEvent));
     }
@@ -1353,9 +1370,18 @@ export class MerakiConnector implements BaseConnector {
     ]);
 
     return {
-      devices: devices.status === "fulfilled" ? devices.value : (errors.push(`devices: ${(devices as any).reason}`), []),
-      links:   links.status   === "fulfilled" ? links.value   : (errors.push(`links: ${(links as any).reason}`), []),
-      events:  events.status  === "fulfilled" ? events.value  : (errors.push(`events: ${(events as any).reason}`), []),
+      devices:
+        devices.status === 'fulfilled'
+          ? devices.value
+          : (errors.push(`devices: ${(devices as any).reason}`), []),
+      links:
+        links.status === 'fulfilled'
+          ? links.value
+          : (errors.push(`links: ${(links as any).reason}`), []),
+      events:
+        events.status === 'fulfilled'
+          ? events.value
+          : (errors.push(`events: ${(events as any).reason}`), []),
       errors,
     };
   }

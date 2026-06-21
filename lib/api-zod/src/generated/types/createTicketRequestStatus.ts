@@ -10,11 +10,11 @@ export type CreateTicketRequestStatus =
   (typeof CreateTicketRequestStatus)[keyof typeof CreateTicketRequestStatus];
 
 export const CreateTicketRequestStatus = {
-  new: "new",
-  investigating: "investigating",
-  vendor_engaged: "vendor_engaged",
-  dispatch_scheduled: "dispatch_scheduled",
-  monitoring: "monitoring",
-  resolved: "resolved",
-  closed: "closed",
+  new: 'new',
+  investigating: 'investigating',
+  vendor_engaged: 'vendor_engaged',
+  dispatch_scheduled: 'dispatch_scheduled',
+  monitoring: 'monitoring',
+  resolved: 'resolved',
+  closed: 'closed',
 } as const;

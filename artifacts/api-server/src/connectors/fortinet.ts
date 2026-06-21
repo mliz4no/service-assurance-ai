@@ -28,18 +28,24 @@
  * ─────────────────────────────────────────────────────────────────────────────
  */
 
-import type { BaseConnector, NormalizedDevice, NormalizedLink, NormalizedEvent, ConnectorSyncResult } from "./base";
+import type {
+  BaseConnector,
+  NormalizedDevice,
+  NormalizedLink,
+  NormalizedEvent,
+  ConnectorSyncResult,
+} from './base';
 
 export interface FortinetConnectorConfig {
   apiKey: string;
   baseUrl: string;
   organizationIdOrTenant?: string;
   /** "fortimanager" uses JSON-RPC, "fortigate" uses REST API directly */
-  managerType: "fortimanager" | "fortigate";
+  managerType: 'fortimanager' | 'fortigate';
 }
 
 export class FortinetConnector implements BaseConnector {
-  readonly vendor = "fortinet";
+  readonly vendor = 'fortinet';
   private readonly config: FortinetConnectorConfig;
 
   constructor(config: FortinetConnectorConfig) {
@@ -59,15 +65,85 @@ export class FortinetConnector implements BaseConnector {
    * Returns: { "results": { "hostname": "...", "serial": "...", "version": "..." } }
    */
   async testConnection(): Promise<{ ok: boolean; message: string }> {
-    if (!this.config.apiKey || this.config.apiKey === "placeholder") {
-      return { ok: true, message: "Demo mode: Fortinet connection simulated (no real API key)" };
+    if (!this.config.baseUrl) {
+      return { ok: false, message: 'Fortinet baseUrl is not configured.' };
     }
 
-    // TODO: Implement real FortiManager/FortiGate connection test here
-    return {
-      ok: true,
-      message: `Fortinet ${this.config.managerType} API key present — configure live URL to enable real polling`,
-    };
+    if (!this.config.apiKey || this.config.apiKey === 'placeholder') {
+      return { ok: true, message: 'Demo mode: Fortinet connection simulated (no real API key)' };
+    }
+
+    const baseUrl = this.config.baseUrl.replace(/\/+$/, '');
+
+    try {
+      if (this.config.managerType === 'fortimanager') {
+        const loginUrl = `${baseUrl}/sys/login/user`;
+        const response = await fetch(loginUrl, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            id: 1,
+            method: 'exec',
+            params: [
+              {
+                url: 'sys/login/user',
+                data: { user: 'admin', passwd: this.config.apiKey },
+              },
+            ],
+          }),
+        });
+
+        if (!response.ok) {
+          return {
+            ok: false,
+            message: `FortiManager connection failed: ${response.status} ${response.statusText}`,
+          };
+        }
+
+        const json = (await response.json()) as unknown;
+        const status = (json as any)?.result?.[0]?.status;
+        if (!status || status.code !== 0) {
+          return {
+            ok: false,
+            message: `FortiManager login failed: ${status?.message ?? JSON.stringify(json)}`,
+          };
+        }
+
+        return {
+          ok: true,
+          message: `FortiManager connection successful: ${baseUrl}`,
+        };
+      }
+
+      const statusUrl = `${baseUrl}/api/v2/monitor/system/status?access_token=${encodeURIComponent(
+        this.config.apiKey,
+      )}`;
+      const response = await fetch(statusUrl, { method: 'GET' });
+      if (!response.ok) {
+        return {
+          ok: false,
+          message: `FortiGate connection failed: ${response.status} ${response.statusText}`,
+        };
+      }
+
+      const json = (await response.json()) as any;
+      if (!json?.results?.hostname) {
+        return {
+          ok: false,
+          message: 'FortiGate status returned an unexpected payload.',
+        };
+      }
+
+      return {
+        ok: true,
+        message: `FortiGate connection successful: ${json.results.hostname} (${json.results.version ?? 'unknown version'})`,
+      };
+    } catch (error: any) {
+      return {
+        ok: false,
+        message: `Fortinet connection failed: ${error?.message ?? String(error)}`,
+      };
+    }
   }
 
   /**
@@ -134,43 +210,43 @@ export class FortinetConnector implements BaseConnector {
   private mockDevices(): NormalizedDevice[] {
     return [
       {
-        controllerDeviceId: "FGT60F-FAKESERIAL01",
-        hostname: "FGT-HQ-Firewall-01",
-        deviceType: "firewall",
-        vendor: "Fortinet",
-        serialNumber: "FGT60F-FAKESERIAL01",
-        model: "FortiGate 60F",
-        mgmtIp: "192.168.1.254",
-        status: "online",
-        haState: "active",
+        controllerDeviceId: 'FGT60F-FAKESERIAL01',
+        hostname: 'FGT-HQ-Firewall-01',
+        deviceType: 'firewall',
+        vendor: 'Fortinet',
+        serialNumber: 'FGT60F-FAKESERIAL01',
+        model: 'FortiGate 60F',
+        mgmtIp: '192.168.1.254',
+        status: 'online',
+        haState: 'active',
         lastSeenAt: new Date(),
-        metadataJson: { osVersion: "FortiOS 7.4.2", vdom: "root" },
+        metadataJson: { osVersion: 'FortiOS 7.4.2', vdom: 'root' },
       },
       {
-        controllerDeviceId: "FGT60F-FAKESERIAL02",
-        hostname: "FGT-HQ-Firewall-02",
-        deviceType: "firewall",
-        vendor: "Fortinet",
-        serialNumber: "FGT60F-FAKESERIAL02",
-        model: "FortiGate 60F",
-        mgmtIp: "192.168.1.253",
-        status: "online",
-        haState: "standby",
+        controllerDeviceId: 'FGT60F-FAKESERIAL02',
+        hostname: 'FGT-HQ-Firewall-02',
+        deviceType: 'firewall',
+        vendor: 'Fortinet',
+        serialNumber: 'FGT60F-FAKESERIAL02',
+        model: 'FortiGate 60F',
+        mgmtIp: '192.168.1.253',
+        status: 'online',
+        haState: 'standby',
         lastSeenAt: new Date(),
-        metadataJson: { osVersion: "FortiOS 7.4.2", vdom: "root", haRole: "standby" },
+        metadataJson: { osVersion: 'FortiOS 7.4.2', vdom: 'root', haRole: 'standby' },
       },
       {
-        controllerDeviceId: "FGT40F-FAKESERIAL03",
-        hostname: "FGT-Branch-Chicago",
-        deviceType: "firewall",
-        vendor: "Fortinet",
-        serialNumber: "FGT40F-FAKESERIAL03",
-        model: "FortiGate 40F",
-        mgmtIp: "10.5.1.254",
-        status: "degraded",
-        haState: "standalone",
+        controllerDeviceId: 'FGT40F-FAKESERIAL03',
+        hostname: 'FGT-Branch-Chicago',
+        deviceType: 'firewall',
+        vendor: 'Fortinet',
+        serialNumber: 'FGT40F-FAKESERIAL03',
+        model: 'FortiGate 40F',
+        mgmtIp: '10.5.1.254',
+        status: 'degraded',
+        haState: 'standalone',
         lastSeenAt: new Date(Date.now() - 600000),
-        metadataJson: { osVersion: "FortiOS 7.2.8", vdom: "root" },
+        metadataJson: { osVersion: 'FortiOS 7.2.8', vdom: 'root' },
       },
     ];
   }
@@ -178,43 +254,43 @@ export class FortinetConnector implements BaseConnector {
   private mockLinks(): NormalizedLink[] {
     return [
       {
-        controllerDeviceId: "FGT60F-FAKESERIAL01",
-        linkName: "WAN1 - Zayo Fiber",
-        linkType: "internet",
-        providerName: "Zayo",
-        circuitId: "ZYO-DIA-882901-Z",
-        role: "primary",
-        status: "up",
+        controllerDeviceId: 'FGT60F-FAKESERIAL01',
+        linkName: 'WAN1 - Zayo Fiber',
+        linkType: 'internet',
+        providerName: 'Zayo',
+        circuitId: 'ZYO-DIA-882901-Z',
+        role: 'primary',
+        status: 'up',
         latencyMs: 6.1,
         jitterMs: 0.3,
         packetLossPct: 0.0,
-        metadataJson: { interface: "wan1", sdwanMember: 1 },
+        metadataJson: { interface: 'wan1', sdwanMember: 1 },
       },
       {
-        controllerDeviceId: "FGT60F-FAKESERIAL01",
-        linkName: "WAN2 - Lumen MPLS",
-        linkType: "mpls",
-        providerName: "Lumen",
-        circuitId: "LMN-MPLS-449102-M",
-        role: "backup",
-        status: "up",
+        controllerDeviceId: 'FGT60F-FAKESERIAL01',
+        linkName: 'WAN2 - Lumen MPLS',
+        linkType: 'mpls',
+        providerName: 'Lumen',
+        circuitId: 'LMN-MPLS-449102-M',
+        role: 'backup',
+        status: 'up',
         latencyMs: 15.4,
         jitterMs: 1.2,
         packetLossPct: 0.0,
-        metadataJson: { interface: "wan2", sdwanMember: 2 },
+        metadataJson: { interface: 'wan2', sdwanMember: 2 },
       },
       {
-        controllerDeviceId: "FGT40F-FAKESERIAL03",
-        linkName: "WAN1 - Comcast Fiber",
-        linkType: "internet",
-        providerName: "Comcast Business",
-        circuitId: "CMC-BIZ-551033-D",
-        role: "primary",
-        status: "degraded",
+        controllerDeviceId: 'FGT40F-FAKESERIAL03',
+        linkName: 'WAN1 - Comcast Fiber',
+        linkType: 'internet',
+        providerName: 'Comcast Business',
+        circuitId: 'CMC-BIZ-551033-D',
+        role: 'primary',
+        status: 'degraded',
         latencyMs: 142.8,
         jitterMs: 38.5,
         packetLossPct: 12.3,
-        metadataJson: { interface: "wan1", sdwanHealthCheck: "failing" },
+        metadataJson: { interface: 'wan1', sdwanHealthCheck: 'failing' },
       },
     ];
   }
@@ -223,38 +299,40 @@ export class FortinetConnector implements BaseConnector {
     const now = new Date();
     return [
       {
-        rawEventId: "fgt-evt-001",
-        eventSource: "fortigate_system",
-        severity: "high",
-        eventType: "ha_failover",
-        title: "HA failover detected — FGT-HQ",
-        description: "FortiGate HA cluster performed a failover event. FGT-HQ-Firewall-02 promoted to active role. Traffic interruption estimated 2-5 seconds.",
+        rawEventId: 'fgt-evt-001',
+        eventSource: 'fortigate_system',
+        severity: 'high',
+        eventType: 'ha_failover',
+        title: 'HA failover detected — FGT-HQ',
+        description:
+          'FortiGate HA cluster performed a failover event. FGT-HQ-Firewall-02 promoted to active role. Traffic interruption estimated 2-5 seconds.',
         occurredAt: new Date(now.getTime() - 14400000),
-        controllerDeviceId: "FGT60F-FAKESERIAL01",
+        controllerDeviceId: 'FGT60F-FAKESERIAL01',
         rawPayloadJson: {
-          logid: "0100032001",
-          type: "event",
-          subtype: "ha",
-          level: "warning",
-          msg: "HA master/slave changed",
-          newmaster: "FGT60F-FAKESERIAL02",
+          logid: '0100032001',
+          type: 'event',
+          subtype: 'ha',
+          level: 'warning',
+          msg: 'HA master/slave changed',
+          newmaster: 'FGT60F-FAKESERIAL02',
         },
       },
       {
-        rawEventId: "fgt-evt-002",
-        eventSource: "fortigate_sdwan",
-        severity: "medium",
-        eventType: "sdwan_link_quality",
-        title: "SD-WAN link quality degraded — Chicago Branch",
-        description: "WAN1 health check failing on Chicago FortiGate. Packet loss 12.3%, latency 142ms. SD-WAN policy routing traffic to secondary if available.",
+        rawEventId: 'fgt-evt-002',
+        eventSource: 'fortigate_sdwan',
+        severity: 'medium',
+        eventType: 'sdwan_link_quality',
+        title: 'SD-WAN link quality degraded — Chicago Branch',
+        description:
+          'WAN1 health check failing on Chicago FortiGate. Packet loss 12.3%, latency 142ms. SD-WAN policy routing traffic to secondary if available.',
         occurredAt: new Date(now.getTime() - 900000),
-        controllerDeviceId: "FGT40F-FAKESERIAL03",
+        controllerDeviceId: 'FGT40F-FAKESERIAL03',
         rawPayloadJson: {
-          logid: "0117044545",
-          type: "event",
-          subtype: "sdwan",
-          level: "warning",
-          interface: "wan1",
+          logid: '0117044545',
+          type: 'event',
+          subtype: 'sdwan',
+          level: 'warning',
+          interface: 'wan1',
           packetloss: 12.3,
           latency: 142.8,
         },

@@ -10,10 +10,10 @@ export type CreateServiceRequestServiceType =
   (typeof CreateServiceRequestServiceType)[keyof typeof CreateServiceRequestServiceType];
 
 export const CreateServiceRequestServiceType = {
-  DIA: "DIA",
-  Broadband: "Broadband",
-  "SD-WAN": "SD-WAN",
-  Voice: "Voice",
-  Wireless: "Wireless",
-  Other: "Other",
+  DIA: 'DIA',
+  Broadband: 'Broadband',
+  'SD-WAN': 'SD-WAN',
+  Voice: 'Voice',
+  Wireless: 'Wireless',
+  Other: 'Other',
 } as const;

@@ -9,7 +9,7 @@
 export type TicketSource = (typeof TicketSource)[keyof typeof TicketSource];
 
 export const TicketSource = {
-  manual: "manual",
-  email: "email",
-  api: "api",
+  manual: 'manual',
+  email: 'email',
+  api: 'api',
 } as const;

@@ -1,8 +1,17 @@
-import { db, customerContactsTable, escalationNotificationsTable, ticketUpdatesTable } from "@workspace/db";
-import { eq } from "drizzle-orm";
-import { severityMeetsThreshold, type SeverityLevel } from "./severity";
-import { fetchOverridesForContext, resolveCellFromOverrides, type MatrixScopeType } from "./matrixResolver";
-import type { ImpactLevel, UrgencyLevel } from "./severity";
+import {
+  db,
+  customerContactsTable,
+  escalationNotificationsTable,
+  ticketUpdatesTable,
+} from '@workspace/db';
+import { eq } from 'drizzle-orm';
+import { severityMeetsThreshold, type SeverityLevel } from './severity';
+import {
+  fetchOverridesForContext,
+  resolveCellFromOverrides,
+  type MatrixScopeType,
+} from './matrixResolver';
+import type { ImpactLevel, UrgencyLevel } from './severity';
 
 interface NotificationTicket {
   id: string;
@@ -28,19 +37,19 @@ function buildMessage(
   ticket: NotificationTicket,
   durationMinutes: number,
   reason: string,
-  ruleDescription?: string
+  ruleDescription?: string,
 ): string {
   const durationText =
     durationMinutes < 60
-      ? `${durationMinutes} minute${durationMinutes !== 1 ? "s" : ""}`
-      : `${Math.round(durationMinutes / 60)} hour${Math.round(durationMinutes / 60) !== 1 ? "s" : ""}`;
+      ? `${durationMinutes} minute${durationMinutes !== 1 ? 's' : ''}`
+      : `${Math.round(durationMinutes / 60)} hour${Math.round(durationMinutes / 60) !== 1 ? 's' : ''}`;
 
   const reasonText =
-    reason === "duration_threshold"
+    reason === 'duration_threshold'
       ? `This ticket has been open for ${durationText} and has reached your escalation threshold.`
       : `This ticket meets your severity notification threshold (${ticket.severity}).`;
 
-  const ruleNote = ruleDescription ? `\nMatrix Rule: ${ruleDescription}` : "";
+  const ruleNote = ruleDescription ? `\nMatrix Rule: ${ruleDescription}` : '';
 
   return `[SIMULATED EMAIL — NOT SENT]
 
@@ -54,7 +63,7 @@ You are receiving this notification because a service ticket requires your atten
 Ticket: ${ticket.ticketNumber}
 Title: ${ticket.title}
 Severity: ${ticket.severity.toUpperCase()}
-Status: ${ticket.status.replace(/_/g, " ")}
+Status: ${ticket.status.replace(/_/g, ' ')}
 Duration: ${durationText}${ruleNote}
 
 ${reasonText}
@@ -66,12 +75,10 @@ This is a simulated notification. Real email delivery can be enabled by connecti
 
 export async function evaluateEscalation(
   ticket: NotificationTicket,
-  triggeredBy?: string
+  triggeredBy?: string,
 ): Promise<NotificationResult> {
   const now = new Date();
-  const durationMinutes = Math.floor(
-    (now.getTime() - new Date(ticket.openedAt).getTime()) / 60000
-  );
+  const durationMinutes = Math.floor((now.getTime() - new Date(ticket.openedAt).getTime()) / 60000);
 
   const contacts = await db
     .select()
@@ -89,9 +96,7 @@ export async function evaluateEscalation(
     .where(eq(escalationNotificationsTable.ticketId, ticket.id));
 
   const alreadyNotifiedBySeverity = new Set(
-    existing
-      .filter((e) => e.reason === "severity_threshold")
-      .map((e) => e.contactId)
+    existing.filter((e: typeof escalationNotificationsTable.$inferSelect) => e.reason === 'severity_threshold').map((e: typeof escalationNotificationsTable.$inferSelect) => e.contactId),
   );
 
   let ruleDescription: string | undefined;
@@ -105,7 +110,7 @@ export async function evaluateEscalation(
     const { scopeLabel } = resolveCellFromOverrides(
       ticket.impactLevel as ImpactLevel,
       ticket.urgencyLevel as UrgencyLevel,
-      overrides
+      overrides,
     );
     ruleDescription = `${scopeLabel} · Impact: ${ticket.impactLevel}, Urgency: ${ticket.urgencyLevel} → ${ticket.severity}`;
   }
@@ -121,14 +126,13 @@ export async function evaluateEscalation(
   for (const contact of contacts) {
     const meetsSeverity = severityMeetsThreshold(
       ticket.severity as SeverityLevel,
-      contact.notifyOnSeverity as SeverityLevel
+      contact.notifyOnSeverity as SeverityLevel,
     );
     const meetsDuration =
-      contact.notifyOnDurationMinutes != null &&
-      durationMinutes >= contact.notifyOnDurationMinutes;
+      contact.notifyOnDurationMinutes != null && durationMinutes >= contact.notifyOnDurationMinutes;
 
     if (meetsSeverity && !alreadyNotifiedBySeverity.has(contact.id)) {
-      const reason = "severity_threshold" as const;
+      const reason = 'severity_threshold' as const;
       notifications.push({
         ticketId: ticket.id,
         contactId: contact.id,
@@ -136,11 +140,11 @@ export async function evaluateEscalation(
         contactEmail: contact.email,
         contactRole: contact.role,
         severity: ticket.severity,
-        channel: "email",
+        channel: 'email',
         reason,
         durationMinutes,
         message: buildMessage(contact, ticket, durationMinutes, reason, ruleDescription),
-        status: "simulated",
+        status: 'simulated',
         ruleDescription: ruleDescription ?? null,
       });
       notifiedContacts.push({
@@ -151,10 +155,10 @@ export async function evaluateEscalation(
       });
     } else if (meetsDuration) {
       const alreadyEscalated = existing.some(
-        (e) => e.contactId === contact.id && e.reason === "duration_threshold"
+        (e: typeof escalationNotificationsTable.$inferSelect) => e.contactId === contact.id && e.reason === 'duration_threshold',
       );
       if (!alreadyEscalated) {
-        const reason = "duration_threshold" as const;
+        const reason = 'duration_threshold' as const;
         notifications.push({
           ticketId: ticket.id,
           contactId: contact.id,
@@ -162,11 +166,11 @@ export async function evaluateEscalation(
           contactEmail: contact.email,
           contactRole: contact.role,
           severity: ticket.severity,
-          channel: "email",
+          channel: 'email',
           reason,
           durationMinutes,
           message: buildMessage(contact, ticket, durationMinutes, reason, ruleDescription),
-          status: "simulated",
+          status: 'simulated',
           ruleDescription: ruleDescription ?? null,
         });
         notifiedContacts.push({
@@ -182,18 +186,16 @@ export async function evaluateEscalation(
   if (notifications.length > 0) {
     await db.insert(escalationNotificationsTable).values(notifications);
 
-    const namesText = notifiedContacts
-      .map((c) => `${c.name} (${c.role})`)
-      .join(", ");
+    const namesText = notifiedContacts.map((c) => `${c.name} (${c.role})`).join(', ');
     const logText = triggeredBy
       ? `Escalation evaluated by ${triggeredBy}. Notified ${notifiedContacts.length} contact(s): ${namesText}`
       : `Automatic escalation: Notified ${notifiedContacts.length} contact(s): ${namesText}`;
 
     await db.insert(ticketUpdatesTable).values({
       ticketId: ticket.id,
-      updateType: "system_event",
+      updateType: 'system_event',
       rawText: logText,
-      visibility: "internal",
+      visibility: 'internal',
     });
   }
 

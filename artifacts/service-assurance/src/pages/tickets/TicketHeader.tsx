@@ -6,18 +6,24 @@ import {
   Globe2,
   MapPin,
   User as UserIcon,
-} from "lucide-react";
-import { Badge } from "@/components/ui/badge";
-import { Card, CardContent } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { StatusBadge } from "@/components/status-badge";
-import { SeverityBadge } from "@/components/severity-badge";
-import { Link } from "wouter";
-import { cn } from "@/lib/utils";
-import { STATUS_STEPS, STATUS_ORDER, timeAgo, formatDuration } from "./ticket-utils";
-import type { TicketWithAI } from "@/types";
-import type { User } from "@workspace/api-client-react";
+} from 'lucide-react';
+import { Badge } from '@/components/ui/badge';
+import { Card, CardContent } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
+import { StatusBadge } from '@/components/status-badge';
+import { SeverityBadge } from '@/components/severity-badge';
+import { Link } from 'wouter';
+import { cn } from '@/lib/utils';
+import { STATUS_STEPS, STATUS_ORDER, timeAgo, formatDuration } from './ticket-utils';
+import type { TicketWithAI } from '@/types';
+import type { User } from '@workspace/api-client-react';
 
 interface Props {
   ticket: TicketWithAI;
@@ -55,7 +61,8 @@ export function TicketHeader({
         <div className="flex items-center gap-3 px-5 py-3 mb-4 bg-red-600 text-white rounded-lg text-sm font-medium shadow-sm">
           <AlertTriangle className="w-4 h-4 shrink-0" />
           <span>
-            SLA BREACH — Vendor escalation was due {formatDuration(breachOverdueMs)} ago. Immediate action required.
+            SLA BREACH — Vendor escalation was due {formatDuration(breachOverdueMs)} ago. Immediate
+            action required.
           </span>
         </div>
       )}
@@ -63,7 +70,8 @@ export function TicketHeader({
         <div className="flex items-center gap-3 px-5 py-3 mb-4 bg-orange-500 text-white rounded-lg text-sm font-medium shadow-sm">
           <Clock className="w-4 h-4 shrink-0" />
           <span>
-            Vendor escalation due in {minsUntilBreach}m — {ticket.ticketNumber} requires attention soon.
+            Vendor escalation due in {minsUntilBreach}m — {ticket.ticketNumber} requires attention
+            soon.
           </span>
         </div>
       )}
@@ -80,7 +88,7 @@ export function TicketHeader({
                 </span>
                 <SeverityBadge severity={ticket.severity} />
                 <StatusBadge status={ticket.status} />
-                {ticket.outageType && ticket.outageType !== "unknown" && (
+                {ticket.outageType && ticket.outageType !== 'unknown' && (
                   <Badge variant="outline" className="text-xs capitalize bg-slate-50">
                     {ticket.outageType}
                   </Badge>
@@ -116,7 +124,8 @@ export function TicketHeader({
                     className="flex items-center gap-1 hover:text-primary"
                   >
                     <Globe2 className="w-3.5 h-3.5" />
-                    {ticket.service.vendorName} · {ticket.service.circuitId || ticket.service.serviceType}
+                    {ticket.service.vendorName} ·{' '}
+                    {ticket.service.circuitId || ticket.service.serviceType}
                   </Link>
                 )}
                 <span className="flex items-center gap-1">
@@ -130,7 +139,7 @@ export function TicketHeader({
             {!isCustomer && (
               <div className="flex items-center gap-2 shrink-0">
                 <Select
-                  value={ticket.assignedToUserId || "unassigned"}
+                  value={ticket.assignedToUserId || 'unassigned'}
                   onValueChange={onAssigneeChange}
                   disabled={isUpdating}
                 >
@@ -141,7 +150,7 @@ export function TicketHeader({
                   <SelectContent>
                     <SelectItem value="unassigned">Unassigned</SelectItem>
                     {users
-                      ?.filter((u) => u.role !== "customer")
+                      ?.filter((u) => u.role !== 'customer')
                       .map((u) => (
                         <SelectItem key={u.id} value={u.id}>
                           {u.name}
@@ -150,11 +159,7 @@ export function TicketHeader({
                   </SelectContent>
                 </Select>
 
-                <Select
-                  value={ticket.status}
-                  onValueChange={onStatusChange}
-                  disabled={isUpdating}
-                >
+                <Select value={ticket.status} onValueChange={onStatusChange} disabled={isUpdating}>
                   <SelectTrigger className="w-[170px] h-8 text-sm bg-white">
                     <SelectValue placeholder="Status" />
                   </SelectTrigger>
@@ -185,12 +190,12 @@ export function TicketHeader({
                         variant="ghost"
                         size="sm"
                         className={cn(
-                          "flex items-center gap-1.5 px-3 py-1.5 h-auto rounded text-xs font-medium whitespace-nowrap transition-all",
+                          'flex items-center gap-1.5 px-3 py-1.5 h-auto rounded text-xs font-medium whitespace-nowrap transition-all',
                           isCurrent
-                            ? "bg-primary text-primary-foreground shadow-sm hover:bg-primary/90"
+                            ? 'bg-primary text-primary-foreground shadow-sm hover:bg-primary/90'
                             : isDone
-                            ? "bg-green-50 text-green-700 border border-green-200 hover:bg-green-100"
-                            : "text-muted-foreground hover:text-foreground hover:bg-muted/50"
+                              ? 'bg-green-50 text-green-700 border border-green-200 hover:bg-green-100'
+                              : 'text-muted-foreground hover:text-foreground hover:bg-muted/50',
                         )}
                         onClick={() => onStatusChange(step.value)}
                         disabled={isUpdating}
@@ -200,10 +205,10 @@ export function TicketHeader({
                         ) : (
                           <span
                             className={cn(
-                              "w-4 h-4 rounded-full border-2 flex items-center justify-center text-[9px] font-bold",
+                              'w-4 h-4 rounded-full border-2 flex items-center justify-center text-[9px] font-bold',
                               isCurrent
-                                ? "border-primary-foreground bg-primary-foreground/20 text-primary-foreground"
-                                : "border-current"
+                                ? 'border-primary-foreground bg-primary-foreground/20 text-primary-foreground'
+                                : 'border-current',
                             )}
                           >
                             {idx + 1}
@@ -214,8 +219,8 @@ export function TicketHeader({
                       {!isLast && (
                         <div
                           className={cn(
-                            "h-px w-6 mx-1 shrink-0",
-                            isDone ? "bg-green-300" : "bg-border"
+                            'h-px w-6 mx-1 shrink-0',
+                            isDone ? 'bg-green-300' : 'bg-border',
                           )}
                         />
                       )}

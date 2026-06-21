@@ -5,7 +5,7 @@
  * Service Assurance AI API
  * OpenAPI spec version: 0.1.0
  */
-import type { Ticket } from "./ticket";
+import type { Ticket } from './ticket';
 
 export interface AiSummarizeResponse {
   summary: string;

@@ -10,11 +10,11 @@ export type UpdateTicketRequestStatus =
   (typeof UpdateTicketRequestStatus)[keyof typeof UpdateTicketRequestStatus];
 
 export const UpdateTicketRequestStatus = {
-  new: "new",
-  investigating: "investigating",
-  vendor_engaged: "vendor_engaged",
-  dispatch_scheduled: "dispatch_scheduled",
-  monitoring: "monitoring",
-  resolved: "resolved",
-  closed: "closed",
+  new: 'new',
+  investigating: 'investigating',
+  vendor_engaged: 'vendor_engaged',
+  dispatch_scheduled: 'dispatch_scheduled',
+  monitoring: 'monitoring',
+  resolved: 'resolved',
+  closed: 'closed',
 } as const;

@@ -10,8 +10,8 @@ export type CreateTicketRequestOutageType =
   (typeof CreateTicketRequestOutageType)[keyof typeof CreateTicketRequestOutageType];
 
 export const CreateTicketRequestOutageType = {
-  outage: "outage",
-  impairment: "impairment",
-  informational: "informational",
-  unknown: "unknown",
+  outage: 'outage',
+  impairment: 'impairment',
+  informational: 'informational',
+  unknown: 'unknown',
 } as const;

@@ -5,11 +5,11 @@
  * Service Assurance AI API
  * OpenAPI spec version: 0.1.0
  */
-import type { Customer } from "./customer";
-import type { Service } from "./service";
-import type { Site } from "./site";
-import type { Ticket } from "./ticket";
-import type { User } from "./user";
+import type { Customer } from './customer';
+import type { Service } from './service';
+import type { Site } from './site';
+import type { Ticket } from './ticket';
+import type { User } from './user';
 
 export type TicketWithRelations = Ticket & {
   customer?: Customer;

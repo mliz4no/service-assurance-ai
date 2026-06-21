@@ -10,8 +10,8 @@ export type UpdateTicketRequestOutageType =
   (typeof UpdateTicketRequestOutageType)[keyof typeof UpdateTicketRequestOutageType];
 
 export const UpdateTicketRequestOutageType = {
-  outage: "outage",
-  impairment: "impairment",
-  informational: "informational",
-  unknown: "unknown",
+  outage: 'outage',
+  impairment: 'impairment',
+  informational: 'informational',
+  unknown: 'unknown',
 } as const;

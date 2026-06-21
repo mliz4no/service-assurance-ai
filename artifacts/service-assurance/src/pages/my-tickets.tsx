@@ -1,11 +1,18 @@
-import { useState } from "react";
-import { AppLayout } from "@/components/layout/app-layout";
-import { useGetTickets } from "@workspace/api-client-react";
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { StatusBadge } from "@/components/status-badge";
-import { SeverityBadge } from "@/components/severity-badge";
-import { Activity } from "lucide-react";
-import { Link } from "wouter";
+import { useState } from 'react';
+import { AppLayout } from '@/components/layout/app-layout';
+import { useGetTickets } from '@workspace/api-client-react';
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from '@/components/ui/table';
+import { StatusBadge } from '@/components/status-badge';
+import { SeverityBadge } from '@/components/severity-badge';
+import { Activity } from 'lucide-react';
+import { Link } from 'wouter';
 
 export default function MyTickets() {
   const { data: tickets, isLoading } = useGetTickets({}); // user logic is handled in backend for role=customer
@@ -41,11 +48,17 @@ export default function MyTickets() {
                 tickets.map((t) => (
                   <TableRow key={t.id} className="hover:bg-muted/20">
                     <TableCell className="font-medium">
-                      <Link href={`/tickets/${t.id}`} className="text-primary hover:underline">{t.ticketNumber}</Link>
+                      <Link href={`/tickets/${t.id}`} className="text-primary hover:underline">
+                        {t.ticketNumber}
+                      </Link>
                     </TableCell>
                     <TableCell className="max-w-[300px] truncate">{t.title}</TableCell>
-                    <TableCell><StatusBadge status={t.status} /></TableCell>
-                    <TableCell><SeverityBadge severity={t.severity} /></TableCell>
+                    <TableCell>
+                      <StatusBadge status={t.status} />
+                    </TableCell>
+                    <TableCell>
+                      <SeverityBadge severity={t.severity} />
+                    </TableCell>
                     <TableCell className="text-muted-foreground text-sm">
                       {new Date(t.openedAt).toLocaleDateString()}
                     </TableCell>

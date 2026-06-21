@@ -1,0 +1,51 @@
+{
+  "version": "0.2.0",
+  "configurations": [
+    {
+      "name": "Build & Dev: API Server",
+      "type": "pwa-node",
+      "request": "launch",
+      "runtimeExecutable": "pnpm",
+      "runtimeArgs": ["--filter", "@workspace/api-server", "run", "dev"],
+      "cwd": "${workspaceFolder}",
+      "console": "integratedTerminal",
+      "internalConsoleOptions": "neverOpen",
+      "preLaunchTask": "db:up",
+      "env": {
+        "DATABASE_URL": "postgresql://service_assurance:service_assurance@localhost:5432/service_assurance",
+        "PORT": "8080"
+      }
+    },
+    {
+      "name": "Start: API Server (production)",
+      "type": "pwa-node",
+      "request": "launch",
+      "runtimeExecutable": "pnpm",
+      "runtimeArgs": ["--filter", "@workspace/api-server", "run", "start"],
+      "cwd": "${workspaceFolder}",
+      "console": "integratedTerminal",
+      "internalConsoleOptions": "neverOpen",
+      "env": {
+        "DATABASE_URL": "postgresql://service_assurance:service_assurance@localhost:5432/service_assurance",
+        "PORT": "8080"
+      }
+    },
+    {
+      "name": "Dev: service-assurance (Vite)",
+      "type": "pwa-node",
+      "request": "launch",
+      "runtimeExecutable": "pnpm",
+      "runtimeArgs": ["--filter", "service-assurance", "run", "dev"],
+      "cwd": "${workspaceFolder}",
+      "console": "integratedTerminal",
+      "internalConsoleOptions": "neverOpen"
+    }
+  ],
+  "compounds": [
+    {
+      "name": "Dev: All (API + Frontend)",
+      "configurations": ["Build & Dev: API Server", "Dev: service-assurance (Vite)"],
+      "stopAll": true
+    }
+  ]
+}

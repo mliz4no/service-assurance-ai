@@ -5,8 +5,8 @@
  * Service Assurance AI API
  * OpenAPI spec version: 0.1.0
  */
-import type { DashboardSummaryTicketsBySeverity } from "./dashboardSummaryTicketsBySeverity";
-import type { DashboardSummaryTicketsByStatus } from "./dashboardSummaryTicketsByStatus";
+import type { DashboardSummaryTicketsBySeverity } from './dashboardSummaryTicketsBySeverity';
+import type { DashboardSummaryTicketsByStatus } from './dashboardSummaryTicketsByStatus';
 
 export interface DashboardSummary {
   totalActiveCustomers: number;

@@ -5,9 +5,9 @@
  * Service Assurance AI API
  * OpenAPI spec version: 0.1.0
  */
-import type { UpdateTicketRequestOutageType } from "./updateTicketRequestOutageType";
-import type { UpdateTicketRequestSeverity } from "./updateTicketRequestSeverity";
-import type { UpdateTicketRequestStatus } from "./updateTicketRequestStatus";
+import type { UpdateTicketRequestOutageType } from './updateTicketRequestOutageType';
+import type { UpdateTicketRequestSeverity } from './updateTicketRequestSeverity';
+import type { UpdateTicketRequestStatus } from './updateTicketRequestStatus';
 
 export interface UpdateTicketRequest {
   title?: string;

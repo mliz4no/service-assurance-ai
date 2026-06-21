@@ -5,8 +5,8 @@
  * Service Assurance AI API
  * OpenAPI spec version: 0.1.0
  */
-import type { CreateTicketUpdateRequestUpdateType } from "./createTicketUpdateRequestUpdateType";
-import type { CreateTicketUpdateRequestVisibility } from "./createTicketUpdateRequestVisibility";
+import type { CreateTicketUpdateRequestUpdateType } from './createTicketUpdateRequestUpdateType';
+import type { CreateTicketUpdateRequestVisibility } from './createTicketUpdateRequestVisibility';
 
 export interface CreateTicketUpdateRequest {
   updateType: CreateTicketUpdateRequestUpdateType;

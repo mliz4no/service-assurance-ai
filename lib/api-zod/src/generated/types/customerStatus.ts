@@ -6,10 +6,9 @@
  * OpenAPI spec version: 0.1.0
  */
 
-export type CustomerStatus =
-  (typeof CustomerStatus)[keyof typeof CustomerStatus];
+export type CustomerStatus = (typeof CustomerStatus)[keyof typeof CustomerStatus];
 
 export const CustomerStatus = {
-  active: "active",
-  inactive: "inactive",
+  active: 'active',
+  inactive: 'inactive',
 } as const;

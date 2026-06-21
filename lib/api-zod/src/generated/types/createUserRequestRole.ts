@@ -10,7 +10,7 @@ export type CreateUserRequestRole =
   (typeof CreateUserRequestRole)[keyof typeof CreateUserRequestRole];
 
 export const CreateUserRequestRole = {
-  admin: "admin",
-  ops: "ops",
-  customer: "customer",
+  admin: 'admin',
+  ops: 'ops',
+  customer: 'customer',
 } as const;

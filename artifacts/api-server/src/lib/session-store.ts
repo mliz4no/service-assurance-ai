@@ -1,5 +1,5 @@
-import { db, usersTable } from "@workspace/db";
-import { eq } from "drizzle-orm";
+import { db, usersTable } from '@workspace/db';
+import { eq } from 'drizzle-orm';
 
 interface Session {
   userId: string;
@@ -31,9 +31,6 @@ export function deleteSession(token: string): void {
 export async function getUserFromToken(token: string) {
   const session = getSession(token);
   if (!session) return null;
-  const [user] = await db
-    .select()
-    .from(usersTable)
-    .where(eq(usersTable.id, session.userId));
+  const [user] = await db.select().from(usersTable).where(eq(usersTable.id, session.userId));
   return user || null;
 }

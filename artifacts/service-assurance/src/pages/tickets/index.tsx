@@ -1,24 +1,37 @@
-import { useState } from "react";
-import { AppLayout } from "@/components/layout/app-layout";
-import { useGetTickets } from "@workspace/api-client-react";
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { Input } from "@/components/ui/input";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Button } from "@/components/ui/button";
-import { StatusBadge } from "@/components/status-badge";
-import { SeverityBadge } from "@/components/severity-badge";
-import { Activity, Plus, Search } from "lucide-react";
-import { Link } from "wouter";
+import { useState } from 'react';
+import { AppLayout } from '@/components/layout/app-layout';
+import { useGetTickets } from '@workspace/api-client-react';
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from '@/components/ui/table';
+import { Input } from '@/components/ui/input';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
+import { Button } from '@/components/ui/button';
+import { StatusBadge } from '@/components/status-badge';
+import { SeverityBadge } from '@/components/severity-badge';
+import { Activity, Plus, Search } from 'lucide-react';
+import { Link } from 'wouter';
 
 export default function TicketsList() {
-  const [search, setSearch] = useState("");
-  const [status, setStatus] = useState<string>("all");
-  const [severity, setSeverity] = useState<string>("all");
+  const [search, setSearch] = useState('');
+  const [status, setStatus] = useState<string>('all');
+  const [severity, setSeverity] = useState<string>('all');
 
   const { data: tickets, isLoading } = useGetTickets({
     search: search || undefined,
-    status: status !== "all" ? status : undefined,
-    severity: severity !== "all" ? severity : undefined,
+    status: status !== 'all' ? status : undefined,
+    severity: severity !== 'all' ? severity : undefined,
   });
 
   return (
@@ -99,30 +112,42 @@ export default function TicketsList() {
                 </TableRow>
               ) : (
                 tickets.map((t) => {
-                  const isBreached = t.nextEscalationAt && new Date(t.nextEscalationAt) < new Date();
+                  const isBreached =
+                    t.nextEscalationAt && new Date(t.nextEscalationAt) < new Date();
                   return (
                     <TableRow key={t.id} className="hover:bg-muted/20" data-testid="ticket-row">
                       <TableCell className="font-medium">
-                        <Link href={`/tickets/${t.id}`} className="text-primary hover:underline">{t.ticketNumber}</Link>
+                        <Link href={`/tickets/${t.id}`} className="text-primary hover:underline">
+                          {t.ticketNumber}
+                        </Link>
                       </TableCell>
                       <TableCell className="max-w-[200px] truncate">{t.title}</TableCell>
                       <TableCell>{t.customer?.name}</TableCell>
-                      <TableCell><StatusBadge status={t.status} /></TableCell>
-                      <TableCell><SeverityBadge severity={t.severity} /></TableCell>
+                      <TableCell>
+                        <StatusBadge status={t.status} />
+                      </TableCell>
+                      <TableCell>
+                        <SeverityBadge severity={t.severity} />
+                      </TableCell>
                       <TableCell className="text-muted-foreground text-sm">
                         {new Date(t.openedAt).toLocaleDateString()}
                       </TableCell>
                       <TableCell>
                         {t.nextEscalationAt ? (
-                          <span className={isBreached ? "text-red-600 font-bold" : "text-orange-600"}>
-                            {new Date(t.nextEscalationAt).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}
+                          <span
+                            className={isBreached ? 'text-red-600 font-bold' : 'text-orange-600'}
+                          >
+                            {new Date(t.nextEscalationAt).toLocaleTimeString([], {
+                              hour: '2-digit',
+                              minute: '2-digit',
+                            })}
                           </span>
                         ) : (
                           <span className="text-muted-foreground">-</span>
                         )}
                       </TableCell>
                     </TableRow>
-                  )
+                  );
                 })
               )}
             </TableBody>

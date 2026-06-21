@@ -5,8 +5,8 @@
  * Service Assurance AI API
  * OpenAPI spec version: 0.1.0
  */
-import type { ServiceServiceType } from "./serviceServiceType";
-import type { ServiceStatus } from "./serviceStatus";
+import type { ServiceServiceType } from './serviceServiceType';
+import type { ServiceStatus } from './serviceStatus';
 
 export interface Service {
   id: string;

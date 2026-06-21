@@ -6,12 +6,11 @@
  * OpenAPI spec version: 0.1.0
  */
 
-export type TicketSeverity =
-  (typeof TicketSeverity)[keyof typeof TicketSeverity];
+export type TicketSeverity = (typeof TicketSeverity)[keyof typeof TicketSeverity];
 
 export const TicketSeverity = {
-  low: "low",
-  medium: "medium",
-  high: "high",
-  critical: "critical",
+  low: 'low',
+  medium: 'medium',
+  high: 'high',
+  critical: 'critical',
 } as const;

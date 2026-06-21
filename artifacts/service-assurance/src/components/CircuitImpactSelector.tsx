@@ -1,43 +1,81 @@
-import { useState } from "react";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Badge } from "@/components/ui/badge";
-import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
-import { useToast } from "@/hooks/use-toast";
-import { AlertCircle, ChevronDown, ChevronUp, HelpCircle, Save, Zap } from "lucide-react";
-import { useQueryClient } from "@tanstack/react-query";
-import { cn } from "@/lib/utils";
-import { getGetServiceQueryKey } from "@workspace/api-client-react";
+import { useState } from 'react';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
+import { Badge } from '@/components/ui/badge';
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
+import { useToast } from '@/hooks/use-toast';
+import { AlertCircle, ChevronDown, ChevronUp, HelpCircle, Save, Zap } from 'lucide-react';
+import { useQueryClient } from '@tanstack/react-query';
+import { cn } from '@/lib/utils';
+import { getGetServiceQueryKey } from '@workspace/api-client-react';
 
-type ImpactLevel = "critical" | "high" | "medium" | "low";
+type ImpactLevel = 'critical' | 'high' | 'medium' | 'low';
 
 const IMPACT_OPTIONS: { value: ImpactLevel; label: string; description: string }[] = [
-  { value: "critical", label: "Critical", description: "Core business circuit — any outage causes major disruption." },
-  { value: "high", label: "High", description: "Important circuit — outage significantly impacts operations." },
-  { value: "medium", label: "Medium", description: "Useful circuit — outage causes noticeable but manageable impact." },
-  { value: "low", label: "Low", description: "Non-critical circuit — outage has limited business effect." },
+  {
+    value: 'critical',
+    label: 'Critical',
+    description: 'Core business circuit — any outage causes major disruption.',
+  },
+  {
+    value: 'high',
+    label: 'High',
+    description: 'Important circuit — outage significantly impacts operations.',
+  },
+  {
+    value: 'medium',
+    label: 'Medium',
+    description: 'Useful circuit — outage causes noticeable but manageable impact.',
+  },
+  {
+    value: 'low',
+    label: 'Low',
+    description: 'Non-critical circuit — outage has limited business effect.',
+  },
 ];
 
 const IMPACT_COLORS: Record<ImpactLevel, string> = {
-  critical: "border-red-300 bg-red-50 text-red-900 hover:bg-red-100",
-  high: "border-orange-300 bg-orange-50 text-orange-900 hover:bg-orange-100",
-  medium: "border-yellow-300 bg-yellow-50 text-yellow-900 hover:bg-yellow-100",
-  low: "border-slate-300 bg-slate-50 text-slate-700 hover:bg-slate-100",
+  critical: 'border-red-300 bg-red-50 text-red-900 hover:bg-red-100',
+  high: 'border-orange-300 bg-orange-50 text-orange-900 hover:bg-orange-100',
+  medium: 'border-yellow-300 bg-yellow-50 text-yellow-900 hover:bg-yellow-100',
+  low: 'border-slate-300 bg-slate-50 text-slate-700 hover:bg-slate-100',
 };
 
 const IMPACT_BADGE_COLORS: Record<ImpactLevel, string> = {
-  critical: "bg-red-100 text-red-800 border-red-200",
-  high: "bg-orange-100 text-orange-800 border-orange-200",
-  medium: "bg-yellow-100 text-yellow-800 border-yellow-200",
-  low: "bg-slate-100 text-slate-700 border-slate-200",
+  critical: 'bg-red-100 text-red-800 border-red-200',
+  high: 'bg-orange-100 text-orange-800 border-orange-200',
+  medium: 'bg-yellow-100 text-yellow-800 border-yellow-200',
+  low: 'bg-slate-100 text-slate-700 border-slate-200',
 };
 
 const SEVERITY_DEFINITIONS: { level: string; color: string; text: string }[] = [
-  { level: "Critical", color: "bg-red-100 text-red-800 border-red-200", text: "Major business outage or severe service disruption requiring immediate attention." },
-  { level: "High", color: "bg-orange-100 text-orange-800 border-orange-200", text: "Significant impact to business operations requiring urgent response." },
-  { level: "Medium", color: "bg-yellow-100 text-yellow-800 border-yellow-200", text: "Noticeable service impact that should be addressed promptly but is not a major outage." },
-  { level: "Low", color: "bg-slate-100 text-slate-700 border-slate-200", text: "Limited business impact or minor issue that can be handled in normal workflow." },
+  {
+    level: 'Critical',
+    color: 'bg-red-100 text-red-800 border-red-200',
+    text: 'Major business outage or severe service disruption requiring immediate attention.',
+  },
+  {
+    level: 'High',
+    color: 'bg-orange-100 text-orange-800 border-orange-200',
+    text: 'Significant impact to business operations requiring urgent response.',
+  },
+  {
+    level: 'Medium',
+    color: 'bg-yellow-100 text-yellow-800 border-yellow-200',
+    text: 'Noticeable service impact that should be addressed promptly but is not a major outage.',
+  },
+  {
+    level: 'Low',
+    color: 'bg-slate-100 text-slate-700 border-slate-200',
+    text: 'Limited business impact or minor issue that can be handled in normal workflow.',
+  },
 ];
 
 interface Props {
@@ -47,18 +85,18 @@ interface Props {
 }
 
 async function saveImpactLevel(serviceId: string, impactLevel: ImpactLevel | null): Promise<void> {
-  const token = localStorage.getItem("sa_auth_token");
+  const token = localStorage.getItem('sa_auth_token');
   const res = await fetch(`/api/services/${serviceId}`, {
-    method: "PUT",
+    method: 'PUT',
     headers: {
-      "Content-Type": "application/json",
+      'Content-Type': 'application/json',
       ...(token ? { Authorization: `Bearer ${token}` } : {}),
     },
-    body: JSON.stringify({ impactLevel: impactLevel ?? "" }),
+    body: JSON.stringify({ impactLevel: impactLevel ?? '' }),
   });
   if (!res.ok) {
     const err = await res.json().catch(() => ({}));
-    throw new Error((err as any).message ?? "Failed to save");
+    throw new Error((err as any).message ?? 'Failed to save');
   }
 }
 
@@ -77,24 +115,28 @@ function HelpTip({ children }: { children: React.ReactNode }) {
   );
 }
 
-export function CircuitImpactSelector({ serviceId, currentImpact, defaultExpanded = false }: Props) {
+export function CircuitImpactSelector({
+  serviceId,
+  currentImpact,
+  defaultExpanded = false,
+}: Props) {
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const [collapsed, setCollapsed] = useState(!defaultExpanded);
-  const [selected, setSelected] = useState<ImpactLevel | "none">(currentImpact ?? "high");
+  const [selected, setSelected] = useState<ImpactLevel | 'none'>(currentImpact ?? 'high');
   const [isSaving, setIsSaving] = useState(false);
 
-  const isDirty = selected !== (currentImpact ?? "high");
-  const effectiveImpact = selected !== "none" ? selected : null;
+  const isDirty = selected !== (currentImpact ?? 'high');
+  const effectiveImpact = selected !== 'none' ? selected : null;
 
   const handleSave = async () => {
     setIsSaving(true);
     try {
       await saveImpactLevel(serviceId, effectiveImpact);
       queryClient.invalidateQueries({ queryKey: getGetServiceQueryKey(serviceId) });
-      toast({ title: "Circuit impact saved" });
+      toast({ title: 'Circuit impact saved' });
     } catch (err: any) {
-      toast({ title: "Failed to save", description: err.message, variant: "destructive" });
+      toast({ title: 'Failed to save', description: err.message, variant: 'destructive' });
     } finally {
       setIsSaving(false);
     }
@@ -114,7 +156,7 @@ export function CircuitImpactSelector({ serviceId, currentImpact, defaultExpande
               <p className="text-xs text-muted-foreground mt-0.5">
                 {currentImpact
                   ? `Classified as ${currentImpact.charAt(0).toUpperCase() + currentImpact.slice(1)} importance`
-                  : "No impact classification set"}
+                  : 'No impact classification set'}
               </p>
             </div>
           </button>
@@ -122,15 +164,16 @@ export function CircuitImpactSelector({ serviceId, currentImpact, defaultExpande
             {currentImpact && (
               <Badge
                 variant="outline"
-                className={cn("text-xs capitalize border", IMPACT_BADGE_COLORS[currentImpact])}
+                className={cn('text-xs capitalize border', IMPACT_BADGE_COLORS[currentImpact])}
               >
                 {currentImpact}
               </Badge>
             )}
-            {collapsed
-              ? <ChevronDown className="w-4 h-4 text-muted-foreground" />
-              : <ChevronUp className="w-4 h-4 text-muted-foreground" />
-            }
+            {collapsed ? (
+              <ChevronDown className="w-4 h-4 text-muted-foreground" />
+            ) : (
+              <ChevronUp className="w-4 h-4 text-muted-foreground" />
+            )}
           </div>
         </div>
       </CardHeader>
@@ -140,7 +183,8 @@ export function CircuitImpactSelector({ serviceId, currentImpact, defaultExpande
           <div className="flex items-start gap-1.5 text-xs text-muted-foreground">
             <AlertCircle className="w-3.5 h-3.5 shrink-0 mt-0.5" />
             <span>
-              Set the business importance of this circuit. This classification informs how incidents affecting it are prioritised during escalation.
+              Set the business importance of this circuit. This classification informs how incidents
+              affecting it are prioritised during escalation.
             </span>
           </div>
 
@@ -151,14 +195,11 @@ export function CircuitImpactSelector({ serviceId, currentImpact, defaultExpande
                 The business effect of an incident on the customer, site, or service.
               </HelpTip>
             </label>
-            <Select
-              value={selected}
-              onValueChange={(v) => setSelected(v as ImpactLevel | "none")}
-            >
+            <Select value={selected} onValueChange={(v) => setSelected(v as ImpactLevel | 'none')}>
               <SelectTrigger
                 className={cn(
-                  "w-48 text-sm font-medium border capitalize",
-                  selected !== "none" ? IMPACT_COLORS[selected as ImpactLevel] : "border-border"
+                  'w-48 text-sm font-medium border capitalize',
+                  selected !== 'none' ? IMPACT_COLORS[selected as ImpactLevel] : 'border-border',
                 )}
               >
                 <SelectValue placeholder="Select impact…" />
@@ -169,7 +210,12 @@ export function CircuitImpactSelector({ serviceId, currentImpact, defaultExpande
                 </SelectItem>
                 {IMPACT_OPTIONS.map((opt) => (
                   <SelectItem key={opt.value} value={opt.value} className="text-sm">
-                    <span className={cn("inline-block px-1.5 py-0.5 rounded text-xs font-medium capitalize mr-2 border", IMPACT_BADGE_COLORS[opt.value])}>
+                    <span
+                      className={cn(
+                        'inline-block px-1.5 py-0.5 rounded text-xs font-medium capitalize mr-2 border',
+                        IMPACT_BADGE_COLORS[opt.value],
+                      )}
+                    >
                       {opt.label}
                     </span>
                     <span className="text-muted-foreground text-xs">{opt.description}</span>
@@ -187,7 +233,7 @@ export function CircuitImpactSelector({ serviceId, currentImpact, defaultExpande
               disabled={!isDirty || isSaving}
             >
               <Save className="w-3 h-3 mr-1.5" />
-              {isSaving ? "Saving…" : "Save"}
+              {isSaving ? 'Saving…' : 'Save'}
             </Button>
           </div>
 
@@ -198,7 +244,12 @@ export function CircuitImpactSelector({ serviceId, currentImpact, defaultExpande
             <div className="space-y-2">
               {SEVERITY_DEFINITIONS.map((def) => (
                 <div key={def.level} className="flex items-start gap-2.5">
-                  <span className={cn("inline-flex shrink-0 items-center px-2 py-0.5 rounded text-xs font-semibold border w-16 justify-center", def.color)}>
+                  <span
+                    className={cn(
+                      'inline-flex shrink-0 items-center px-2 py-0.5 rounded text-xs font-semibold border w-16 justify-center',
+                      def.color,
+                    )}
+                  >
                     {def.level}
                   </span>
                   <p className="text-xs text-muted-foreground leading-relaxed">{def.text}</p>

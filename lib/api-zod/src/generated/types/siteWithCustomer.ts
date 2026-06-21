@@ -5,8 +5,8 @@
  * Service Assurance AI API
  * OpenAPI spec version: 0.1.0
  */
-import type { Customer } from "./customer";
-import type { Site } from "./site";
+import type { Customer } from './customer';
+import type { Site } from './site';
 
 export type SiteWithCustomer = Site & {
   customer?: Customer;
