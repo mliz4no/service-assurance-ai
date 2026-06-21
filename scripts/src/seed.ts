@@ -184,11 +184,17 @@ async function seed() {
     (t: any) => t.customerId === pinnacle.id && !['resolved', 'closed'].includes(t.status),
   );
 
-  const eventByType = new Map(deviceEvents.map((evt: any) => [evt.eventType, evt]));
-  const wanConnLostEvt = eventByType.get('uplink_connectivity_change') ?? deviceEvents[0];
-  const wanDownEvt = eventByType.get('wan_status_change') ?? deviceEvents[1] ?? deviceEvents[0];
+  type SeedDeviceEvent = { id?: string; eventType?: string };
+  const typedDeviceEvents = deviceEvents as SeedDeviceEvent[];
+  const eventByType = new Map<string, SeedDeviceEvent>(
+    typedDeviceEvents
+      .filter((evt: SeedDeviceEvent) => Boolean(evt.eventType))
+      .map((evt: SeedDeviceEvent) => [evt.eventType as string, evt]),
+  );
+  const wanConnLostEvt = eventByType.get('uplink_connectivity_change') ?? typedDeviceEvents[0];
+  const wanDownEvt = eventByType.get('wan_status_change') ?? typedDeviceEvents[1] ?? typedDeviceEvents[0];
   const fgtHaEvt = eventByType.get('ha_status_change');
-  const degradedEvt = eventByType.get('latency_degraded') ?? deviceEvents[0];
+  const degradedEvt = eventByType.get('latency_degraded') ?? typedDeviceEvents[0];
 
   if (nexatekOpenTickets.length > 0) {
     const nexatekCorrelations = [

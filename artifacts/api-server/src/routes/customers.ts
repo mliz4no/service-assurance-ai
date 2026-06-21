@@ -1,12 +1,25 @@
 import { Router, type IRouter } from 'express';
 import { db, customersTable, sitesTable, servicesTable, ticketsTable } from '@workspace/db';
 import { eq, and, ilike, or, inArray } from 'drizzle-orm';
-import { requireAuth } from '../middlewares/auth';
+import { requireAuth, requireScope } from '../middlewares/auth';
+import { sendBadRequest, sendForbidden } from '../lib/http';
+import {
+  getIntegrationExternalSource,
+  handleIdempotentCreate,
+  logIntegrationMutation,
+  validateRequiredFields,
+} from '../lib/integration';
 
 const router: IRouter = Router();
 
 router.get('/customers', requireAuth, async (req, res): Promise<void> => {
-  const { search, status } = req.query as { search?: string; status?: string };
+  const { search, status, externalSource, externalId, compact } = req.query as {
+    search?: string;
+    status?: string;
+    externalSource?: string;
+    externalId?: string;
+    compact?: string;
+  };
 
   let query = db.select().from(customersTable).$dynamic();
   const conditions = [];
@@ -32,19 +45,48 @@ router.get('/customers', requireAuth, async (req, res): Promise<void> => {
   if (status) {
     conditions.push(eq(customersTable.status, status as 'active' | 'inactive'));
   }
+  if (externalSource) {
+    conditions.push(eq(customersTable.externalSource, externalSource));
+  }
+  if (externalId) {
+    conditions.push(eq(customersTable.externalId, externalId));
+  }
 
   if (conditions.length > 0) {
     query = query.where(and(...conditions));
   }
 
   const customers = await query.orderBy(customersTable.name);
+  if (compact === 'true' && req.integration) {
+    res.json(
+      customers.map((customer: typeof customersTable.$inferSelect) => ({
+        id: customer.id,
+        name: customer.name,
+        status: customer.status,
+        externalSource: customer.externalSource,
+        externalId: customer.externalId,
+      })),
+    );
+    return;
+  }
+
   const isPartner = req.user?.role === 'telecom_services_partner';
-  res.json(isPartner ? customers.map(({ notes: _notes, ...rest }: typeof customersTable.$inferSelect) => rest) : customers);
+  res.json(
+    isPartner
+      ? customers.map(({ notes: _notes, ...rest }: typeof customersTable.$inferSelect) => rest)
+      : customers,
+  );
 });
 
-router.post('/customers', requireAuth, async (req, res): Promise<void> => {
+router.post('/customers', requireAuth, requireScope('integrations:create'), async (req, res): Promise<void> => {
   if (req.user?.role === 'customer' || req.user?.role === 'telecom_services_partner') {
-    res.status(403).json({ error: 'Forbidden' });
+    sendForbidden(res);
+    return;
+  }
+
+  const fieldErrors = validateRequiredFields(req.body as Record<string, unknown>, ['name', 'status']);
+  if (Object.keys(fieldErrors).length > 0) {
+    sendBadRequest(res, 'Validation failed', fieldErrors);
     return;
   }
 
@@ -56,25 +98,50 @@ router.post('/customers', requireAuth, async (req, res): Promise<void> => {
     primaryContactEmail,
     primaryContactPhone,
     notes,
-  } = req.body;
-  if (!name || !status) {
-    res.status(400).json({ error: 'Bad Request', message: 'name and status are required' });
+    externalSource,
+    externalId,
+    externalSyncedAt,
+    externalSyncStatus,
+  } = req.body as Record<string, string | null | undefined>;
+
+  if (status !== 'active' && status !== 'inactive') {
+    sendBadRequest(res, 'Validation failed', {
+      status: "Unsupported value. Allowed: 'active', 'inactive'",
+    });
     return;
   }
 
-  const [customer] = await db
-    .insert(customersTable)
-    .values({
-      name,
-      accountNumber,
-      status,
-      primaryContactName,
-      primaryContactEmail,
-      primaryContactPhone,
-      notes,
-    })
-    .returning();
-  res.status(201).json(customer);
+  const result = await handleIdempotentCreate(req, res, 'customers', async () => {
+    const source = externalSource ?? getIntegrationExternalSource(req);
+    const [customer] = await db
+      .insert(customersTable)
+      .values({
+        name: name!,
+        accountNumber,
+        status,
+        primaryContactName,
+        primaryContactEmail,
+        primaryContactPhone,
+        notes,
+        externalSource: source,
+        externalSystem: source,
+        externalId,
+        externalSyncedAt: externalSyncedAt ? new Date(externalSyncedAt) : undefined,
+        externalSyncStatus,
+      })
+      .returning();
+
+    logIntegrationMutation(req, 'create', 'customers', customer.id);
+
+    return {
+      statusCode: 201,
+      body: customer,
+      resourceId: customer.id,
+    };
+  });
+
+  if (!result) return;
+  res.status(result.statusCode).json(result.body);
 });
 
 router.get('/customers/:id', requireAuth, async (req, res): Promise<void> => {
@@ -119,7 +186,7 @@ router.get('/customers/:id', requireAuth, async (req, res): Promise<void> => {
 
 router.put('/customers/:id', requireAuth, async (req, res): Promise<void> => {
   if (req.user?.role === 'customer' || req.user?.role === 'telecom_services_partner') {
-    res.status(403).json({ error: 'Forbidden' });
+    sendForbidden(res);
     return;
   }
 

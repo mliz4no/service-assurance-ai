@@ -10,11 +10,18 @@ import {
   slaPoliciesTable,
 } from '@workspace/db';
 import { eq, and, ilike, or, desc, asc, lt, inArray } from 'drizzle-orm';
-import { requireAuth } from '../middlewares/auth';
+import { requireAuth, requireScope } from '../middlewares/auth';
 import { summarizeTicket, normalizeStatus, generateCustomerUpdate } from '../lib/ai';
 import { calculateSeverity, type ImpactLevel, type UrgencyLevel } from '../lib/severity';
 import { evaluateEscalation } from '../lib/notificationEngine';
 import { resolveMatrixCellForTicket } from '../lib/matrixResolver';
+import { sendBadRequest, sendForbidden } from '../lib/http';
+import {
+  getIntegrationExternalSource,
+  handleIdempotentCreate,
+  logIntegrationMutation,
+  validateRequiredFields,
+} from '../lib/integration';
 
 const router: IRouter = Router();
 
@@ -69,8 +76,19 @@ async function enrichTickets(tickets: (typeof ticketsTable.$inferSelect)[]) {
 }
 
 router.get('/tickets', requireAuth, async (req, res): Promise<void> => {
-  const { search, status, severity, customerId, siteId, vendorName, sortBy, sortOrder } =
-    req.query as Record<string, string>;
+  const {
+    search,
+    status,
+    severity,
+    customerId,
+    siteId,
+    vendorName,
+    sortBy,
+    sortOrder,
+    externalSource,
+    externalId,
+    compact,
+  } = req.query as Record<string, string>;
   const conditions = [];
 
   if (req.user?.role === 'customer' && req.user.customerId) {
@@ -112,6 +130,12 @@ router.get('/tickets', requireAuth, async (req, res): Promise<void> => {
       ),
     );
   }
+  if (externalSource) {
+    conditions.push(eq(ticketsTable.externalSource, externalSource));
+  }
+  if (externalId) {
+    conditions.push(eq(ticketsTable.externalId, externalId));
+  }
 
   const orderCol =
     sortBy === 'nextEscalationAt' ? ticketsTable.nextEscalationAt : ticketsTable.openedAt;
@@ -123,13 +147,43 @@ router.get('/tickets', requireAuth, async (req, res): Promise<void> => {
     .where(conditions.length > 0 ? and(...conditions) : undefined)
     .orderBy(order);
 
+  if (compact === 'true' && req.integration) {
+    res.json(
+      tickets.map((ticket: (typeof tickets)[number]) => ({
+        id: ticket.id,
+        ticketNumber: ticket.ticketNumber,
+        customerId: ticket.customerId,
+        siteId: ticket.siteId,
+        serviceId: ticket.serviceId,
+        title: ticket.title,
+        status: ticket.status,
+        severity: ticket.severity,
+        externalSource: ticket.externalSource,
+        externalId: ticket.externalId,
+      })),
+    );
+    return;
+  }
+
   const enriched = await enrichTickets(tickets);
   res.json(enriched);
 });
 
-router.post('/tickets', requireAuth, async (req, res): Promise<void> => {
+router.post('/tickets', requireAuth, requireScope('integrations:create'), async (req, res): Promise<void> => {
   if (req.user?.role === 'customer' || req.user?.role === 'telecom_services_partner') {
-    res.status(403).json({ error: 'Forbidden' });
+    sendForbidden(res);
+    return;
+  }
+
+  const fieldErrors = validateRequiredFields(req.body as Record<string, unknown>, [
+    'customerId',
+    'title',
+    'source',
+    'severity',
+    'outageType',
+  ]);
+  if (Object.keys(fieldErrors).length > 0) {
+    sendBadRequest(res, 'Validation failed', fieldErrors);
     return;
   }
 
@@ -143,6 +197,10 @@ router.post('/tickets', requireAuth, async (req, res): Promise<void> => {
     outageType,
     vendorTicketId,
     assignedToUserId,
+    externalSource,
+    externalId,
+    externalSyncedAt,
+    externalSyncStatus,
   } = req.body;
   let { severity, impactLevel, urgencyLevel } = req.body;
 
@@ -157,66 +215,97 @@ router.post('/tickets', requireAuth, async (req, res): Promise<void> => {
     severity = calculateSeverity(impactLevel as ImpactLevel, urgencyLevel as UrgencyLevel);
   }
 
-  if (!customerId || !title || !source || !severity || !outageType) {
-    res.status(400).json({ error: 'Bad Request', message: 'Required fields missing' });
+  const validSeverities = ['low', 'medium', 'high', 'critical'];
+  if (!validSeverities.includes(String(severity))) {
+    sendBadRequest(res, 'Validation failed', {
+      severity: `Unsupported value. Allowed: ${validSeverities.join(', ')}`,
+    });
+    return;
+  }
+  const validOutageTypes = ['outage', 'impairment', 'informational', 'unknown'];
+  if (!validOutageTypes.includes(String(outageType))) {
+    sendBadRequest(res, 'Validation failed', {
+      outageType: `Unsupported value. Allowed: ${validOutageTypes.join(', ')}`,
+    });
+    return;
+  }
+  const validSources = ['manual', 'email', 'api', 'controller'];
+  if (!validSources.includes(String(source))) {
+    sendBadRequest(res, 'Validation failed', {
+      source: `Unsupported value. Allowed: ${validSources.join(', ')}`,
+    });
     return;
   }
 
   const status = req.body.status || 'new';
-  const ticketNumber = await getNextTicketNumber();
+  const result = await handleIdempotentCreate(req, res, 'tickets', async () => {
+    const ticketNumber = await getNextTicketNumber();
 
-  let nextEscalationAt: Date | undefined;
-  let slaTargetMinutes: number | undefined;
+    let nextEscalationAt: Date | undefined;
+    let slaTargetMinutes: number | undefined;
 
-  const [slaPolicy] = await db
-    .select()
-    .from(slaPoliciesTable)
-    .where(and(eq(slaPoliciesTable.severity, severity), eq(slaPoliciesTable.isDefault, true)));
+    const [slaPolicy] = await db
+      .select()
+      .from(slaPoliciesTable)
+      .where(and(eq(slaPoliciesTable.severity, severity), eq(slaPoliciesTable.isDefault, true)));
 
-  if (slaPolicy) {
-    slaTargetMinutes = slaPolicy.resolutionTargetMinutes;
-    nextEscalationAt = new Date(Date.now() + slaPolicy.escalationMinutes * 60 * 1000);
-  }
+    if (slaPolicy) {
+      slaTargetMinutes = slaPolicy.resolutionTargetMinutes;
+      nextEscalationAt = new Date(Date.now() + slaPolicy.escalationMinutes * 60 * 1000);
+    }
 
-  const [ticket] = await db
-    .insert(ticketsTable)
-    .values({
-      ticketNumber,
-      customerId,
-      siteId: siteId || null,
-      serviceId: serviceId || null,
-      title,
-      description,
-      source,
-      severity,
-      status,
-      outageType,
-      impactLevel: impactLevel || null,
-      urgencyLevel: urgencyLevel || null,
-      vendorTicketId: vendorTicketId || null,
-      assignedToUserId: assignedToUserId || null,
-      nextEscalationAt,
-      slaTargetMinutes,
-    })
-    .returning();
+    const [ticket] = await db
+      .insert(ticketsTable)
+      .values({
+        ticketNumber,
+        customerId,
+        siteId: siteId || null,
+        serviceId: serviceId || null,
+        title,
+        description,
+        source,
+        severity,
+        status,
+        outageType,
+        impactLevel: impactLevel || null,
+        urgencyLevel: urgencyLevel || null,
+        vendorTicketId: vendorTicketId || null,
+        assignedToUserId: assignedToUserId || null,
+        nextEscalationAt,
+        slaTargetMinutes,
+        externalSource: externalSource || getIntegrationExternalSource(req),
+        externalId: externalId || null,
+        externalSyncedAt: externalSyncedAt ? new Date(externalSyncedAt) : undefined,
+        externalSyncStatus: externalSyncStatus || null,
+      })
+      .returning();
 
-  if (req.user?.id) {
-    const severityNote =
-      impactLevel && urgencyLevel
-        ? ` | Impact: ${impactLevel}, Urgency: ${urgencyLevel} → Severity: ${severity}`
-        : ` | Severity: ${severity}`;
-    await db.insert(ticketUpdatesTable).values({
-      ticketId: ticket.id,
-      updateType: 'system_event',
-      rawText: `Ticket ${ticketNumber} created by ${req.user.name}${severityNote}`,
-      visibility: 'internal',
-      createdByUserId: req.user.id,
-    });
-  }
+    if (req.user?.id) {
+      const severityNote =
+        impactLevel && urgencyLevel
+          ? ` | Impact: ${impactLevel}, Urgency: ${urgencyLevel} -> Severity: ${severity}`
+          : ` | Severity: ${severity}`;
+      await db.insert(ticketUpdatesTable).values({
+        ticketId: ticket.id,
+        updateType: 'system_event',
+        rawText: `Ticket ${ticketNumber} created by ${req.user.name}${severityNote}`,
+        visibility: 'internal',
+        createdByUserId: req.user.id,
+      });
+    }
 
-  evaluateEscalation(ticket).catch(() => {});
+    evaluateEscalation(ticket).catch(() => {});
+    logIntegrationMutation(req, 'create', 'tickets', ticket.id);
 
-  res.status(201).json(ticket);
+    return {
+      statusCode: 201,
+      body: ticket,
+      resourceId: ticket.id,
+    };
+  });
+
+  if (!result) return;
+  res.status(result.statusCode).json(result.body);
 });
 
 router.get('/tickets/:id', requireAuth, async (req, res): Promise<void> => {
@@ -291,7 +380,7 @@ router.get('/tickets/:id', requireAuth, async (req, res): Promise<void> => {
 
 router.put('/tickets/:id', requireAuth, async (req, res): Promise<void> => {
   if (req.user?.role === 'customer') {
-    res.status(403).json({ error: 'Forbidden' });
+    sendForbidden(res);
     return;
   }
 

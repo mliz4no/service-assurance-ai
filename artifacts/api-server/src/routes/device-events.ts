@@ -72,10 +72,11 @@ router.get('/device-events', requireAuth, async (req, res): Promise<void> => {
 });
 
 router.get('/device-events/:id', requireAuth, async (req, res): Promise<void> => {
+  const id = Array.isArray(req.params.id) ? req.params.id[0] : req.params.id;
   const [event] = await db
     .select()
     .from(deviceEventsTable)
-    .where(eq(deviceEventsTable.id, req.params.id));
+    .where(eq(deviceEventsTable.id, id));
 
   if (!event) {
     res.status(404).json({ error: 'Event not found' });
@@ -131,10 +132,11 @@ router.get('/device-events/:id', requireAuth, async (req, res): Promise<void> =>
 
 // AI analysis for a single event
 router.post('/device-events/:id/ai-analyze', requireAuth, async (req, res): Promise<void> => {
+  const id = Array.isArray(req.params.id) ? req.params.id[0] : req.params.id;
   const [event] = await db
     .select()
     .from(deviceEventsTable)
-    .where(eq(deviceEventsTable.id, req.params.id));
+    .where(eq(deviceEventsTable.id, id));
 
   if (!event) {
     res.status(404).json({ error: 'Event not found' });

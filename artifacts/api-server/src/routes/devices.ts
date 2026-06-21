@@ -78,10 +78,11 @@ router.get('/devices', requireAuth, async (req, res): Promise<void> => {
 });
 
 router.get('/devices/:id', requireAuth, async (req, res): Promise<void> => {
+  const id = Array.isArray(req.params.id) ? req.params.id[0] : req.params.id;
   const [device] = await db
     .select()
     .from(managedDevicesTable)
-    .where(eq(managedDevicesTable.id, req.params.id));
+    .where(eq(managedDevicesTable.id, id));
 
   if (!device) {
     res.status(404).json({ error: 'Device not found' });
@@ -145,10 +146,11 @@ router.get('/devices/:id', requireAuth, async (req, res): Promise<void> => {
 });
 
 router.put('/devices/:id', requireAuth, async (req, res): Promise<void> => {
+  const id = Array.isArray(req.params.id) ? req.params.id[0] : req.params.id;
   const [existing] = await db
     .select()
     .from(managedDevicesTable)
-    .where(eq(managedDevicesTable.id, req.params.id));
+    .where(eq(managedDevicesTable.id, id));
   if (!existing) {
     res.status(404).json({ error: 'Device not found' });
     return;
@@ -163,7 +165,7 @@ router.put('/devices/:id', requireAuth, async (req, res): Promise<void> => {
       hostname: hostname ?? existing.hostname,
       status: status ?? existing.status,
     })
-    .where(eq(managedDevicesTable.id, req.params.id))
+    .where(eq(managedDevicesTable.id, id))
     .returning();
 
   res.json(updated);
