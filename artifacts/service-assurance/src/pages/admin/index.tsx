@@ -40,6 +40,7 @@ import {
 } from 'lucide-react';
 import { usePartners, useDeletePartner } from '@/pages/admin/hooks/useAdminPartners';
 import { SalesforcePanel } from '@/pages/admin/components/SalesforcePanel';
+import { AvalaraPanel } from '@/pages/admin/components/AvalaraPanel';
 import { SlaPolicyDialog } from '@/pages/admin/components/dialogs/SlaPolicyDialog';
 import { PartnerDialog } from '@/pages/admin/components/dialogs/PartnerDialog';
 import { UserDialog } from '@/pages/admin/components/dialogs/UserDialog';
@@ -464,6 +465,7 @@ export default function AdminPanel() {
         </Card>
 
         <SalesforcePanel />
+        <AvalaraPanel />
 
         <div>
           <div className="flex items-center gap-2 mb-3">

@@ -29,6 +29,10 @@ tags:
     description: AI-powered operations
   - name: dashboard
     description: Dashboard aggregates
+  - name: invoice-complaints
+    description: Invoice complaint workflow
+  - name: integrations
+    description: Third-party integration settings
 
 paths:
   /healthz:
@@ -888,6 +892,201 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/Ticket"
+
+  /invoice-complaints:
+    get:
+      operationId: getInvoiceComplaints
+      tags: [invoice-complaints]
+      summary: List invoice complaints
+      parameters:
+        - name: search
+          in: query
+          schema:
+            type: string
+        - name: status
+          in: query
+          schema:
+            type: string
+        - name: customerId
+          in: query
+          schema:
+            type: string
+        - name: priority
+          in: query
+          schema:
+            type: string
+        - name: complaintType
+          in: query
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Invoice complaints
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/InvoiceComplaintWithCustomer"
+    post:
+      operationId: createInvoiceComplaint
+      tags: [invoice-complaints]
+      summary: Create invoice complaint
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateInvoiceComplaintRequest"
+      responses:
+        "201":
+          description: Created invoice complaint
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/InvoiceComplaint"
+
+  /invoice-complaints/{id}:
+    get:
+      operationId: getInvoiceComplaint
+      tags: [invoice-complaints]
+      summary: Get invoice complaint detail
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Invoice complaint detail
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/InvoiceComplaintDetail"
+    patch:
+      operationId: patchInvoiceComplaint
+      tags: [invoice-complaints]
+      summary: Update invoice complaint fields
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UpdateInvoiceComplaintRequest"
+      responses:
+        "200":
+          description: Updated invoice complaint
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/InvoiceComplaint"
+
+  /invoice-complaints/{id}/events:
+    post:
+      operationId: addInvoiceComplaintEvent
+      tags: [invoice-complaints]
+      summary: Add invoice complaint note/event
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateInvoiceComplaintEventRequest"
+      responses:
+        "201":
+          description: Created complaint event
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/InvoiceComplaintEvent"
+
+  /invoice-complaints/{id}/validate:
+    post:
+      operationId: validateInvoiceComplaintWithAvalara
+      tags: [invoice-complaints]
+      summary: Validate complaint invoice using Avalara
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Validation succeeded
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ValidateInvoiceComplaintResponse"
+
+  /avalara/config:
+    get:
+      operationId: getAvalaraConfig
+      tags: [integrations]
+      summary: Get Avalara integration config (masked)
+      responses:
+        "200":
+          description: Avalara config
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AvalaraConfigResponse"
+    put:
+      operationId: updateAvalaraConfig
+      tags: [integrations]
+      summary: Save Avalara integration config
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UpdateAvalaraConfigRequest"
+      responses:
+        "200":
+          description: Saved config
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SuccessResponse"
+
+  /avalara/test:
+    post:
+      operationId: testAvalaraConnection
+      tags: [integrations]
+      summary: Test Avalara connectivity
+      responses:
+        "200":
+          description: Avalara test result
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AvalaraTestResponse"
+
+  /avalara/status:
+    get:
+      operationId: getAvalaraStatus
+      tags: [integrations]
+      summary: Get Avalara integration status
+      responses:
+        "200":
+          description: Avalara status and recent validations
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AvalaraStatus"
 
   /sla-policies:
     get:
@@ -2163,3 +2362,346 @@ components:
         - openAi
         - sessionSecret
         - environment
+
+    InvoiceComplaint:
+      type: object
+      properties:
+        id:
+          type: string
+        complaintNumber:
+          type: string
+        customerId:
+          type: string
+        siteId:
+          type: string
+          nullable: true
+        serviceId:
+          type: string
+          nullable: true
+        assignedToUserId:
+          type: string
+          nullable: true
+        title:
+          type: string
+        description:
+          type: string
+          nullable: true
+        source:
+          type: string
+          enum: [manual, api]
+        status:
+          type: string
+          enum: [new, triaged, awaiting_customer, resolved, closed]
+        priority:
+          type: string
+          enum: [low, medium, high]
+        complaintType:
+          type: string
+          enum: [tax_mismatch, rate_mismatch, duplicate_charge, missing_exemption, other]
+        invoiceNumber:
+          type: string
+        customerAccountNumber:
+          type: string
+        currencyCode:
+          type: string
+        invoiceAmount:
+          type: string
+          nullable: true
+        documentCode:
+          type: string
+          nullable: true
+        companyCode:
+          type: string
+          nullable: true
+        avalaraValidationStatus:
+          type: string
+          enum: [not_validated, validated, failed]
+        avalaraValidatedAt:
+          type: string
+          format: date-time
+          nullable: true
+        avalaraSummary:
+          type: string
+          nullable: true
+        externalSource:
+          type: string
+          nullable: true
+        externalId:
+          type: string
+          nullable: true
+        externalSyncedAt:
+          type: string
+          format: date-time
+          nullable: true
+        externalSyncStatus:
+          type: string
+          nullable: true
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+      required:
+        - id
+        - complaintNumber
+        - customerId
+        - title
+        - source
+        - status
+        - priority
+        - complaintType
+        - invoiceNumber
+        - customerAccountNumber
+        - currencyCode
+        - avalaraValidationStatus
+        - createdAt
+        - updatedAt
+
+    InvoiceComplaintWithCustomer:
+      allOf:
+        - $ref: "#/components/schemas/InvoiceComplaint"
+        - type: object
+          properties:
+            customer:
+              $ref: "#/components/schemas/Customer"
+              nullable: true
+
+    InvoiceComplaintEvent:
+      type: object
+      properties:
+        id:
+          type: string
+        complaintId:
+          type: string
+        eventType:
+          type: string
+          enum:
+            [created, status_changed, assignment_changed, note, validation_requested, validation_succeeded, validation_failed]
+        message:
+          type: string
+        metadata:
+          type: object
+          nullable: true
+          additionalProperties: true
+        createdByUserId:
+          type: string
+          nullable: true
+        createdAt:
+          type: string
+          format: date-time
+      required:
+        - id
+        - complaintId
+        - eventType
+        - message
+        - createdAt
+
+    InvoiceComplaintDetail:
+      allOf:
+        - $ref: "#/components/schemas/InvoiceComplaint"
+        - type: object
+          properties:
+            customer:
+              $ref: "#/components/schemas/Customer"
+              nullable: true
+            site:
+              $ref: "#/components/schemas/Site"
+              nullable: true
+            service:
+              $ref: "#/components/schemas/Service"
+              nullable: true
+            assignedTo:
+              $ref: "#/components/schemas/User"
+              nullable: true
+            events:
+              type: array
+              items:
+                $ref: "#/components/schemas/InvoiceComplaintEvent"
+
+    CreateInvoiceComplaintRequest:
+      type: object
+      properties:
+        customerId:
+          type: string
+        siteId:
+          type: string
+          nullable: true
+        serviceId:
+          type: string
+          nullable: true
+        assignedToUserId:
+          type: string
+          nullable: true
+        title:
+          type: string
+        description:
+          type: string
+          nullable: true
+        source:
+          type: string
+          enum: [manual, api]
+        status:
+          type: string
+          enum: [new, triaged, awaiting_customer, resolved, closed]
+        priority:
+          type: string
+          enum: [low, medium, high]
+        complaintType:
+          type: string
+          enum: [tax_mismatch, rate_mismatch, duplicate_charge, missing_exemption, other]
+        invoiceNumber:
+          type: string
+        customerAccountNumber:
+          type: string
+        currencyCode:
+          type: string
+        invoiceAmount:
+          oneOf:
+            - type: number
+            - type: string
+          nullable: true
+        documentCode:
+          type: string
+          nullable: true
+        companyCode:
+          type: string
+          nullable: true
+      required:
+        - customerId
+        - title
+        - invoiceNumber
+        - customerAccountNumber
+
+    UpdateInvoiceComplaintRequest:
+      type: object
+      properties:
+        status:
+          type: string
+          enum: [new, triaged, awaiting_customer, resolved, closed]
+        priority:
+          type: string
+          enum: [low, medium, high]
+        assignedToUserId:
+          type: string
+          nullable: true
+        description:
+          type: string
+          nullable: true
+        title:
+          type: string
+        complaintType:
+          type: string
+          enum: [tax_mismatch, rate_mismatch, duplicate_charge, missing_exemption, other]
+        siteId:
+          type: string
+          nullable: true
+        serviceId:
+          type: string
+          nullable: true
+
+    CreateInvoiceComplaintEventRequest:
+      type: object
+      properties:
+        message:
+          type: string
+        metadata:
+          type: object
+          nullable: true
+          additionalProperties: true
+      required:
+        - message
+
+    ValidateInvoiceComplaintResponse:
+      type: object
+      properties:
+        complaint:
+          $ref: "#/components/schemas/InvoiceComplaint"
+        validation:
+          type: object
+          additionalProperties: true
+      required:
+        - complaint
+
+    AvalaraConfigResponse:
+      type: object
+      properties:
+        accountId:
+          type: string
+        licenseKey:
+          type: string
+        baseUrl:
+          type: string
+        companyCode:
+          type: string
+        hasLicenseKey:
+          type: boolean
+      required:
+        - accountId
+        - licenseKey
+        - baseUrl
+        - companyCode
+        - hasLicenseKey
+
+    UpdateAvalaraConfigRequest:
+      type: object
+      properties:
+        accountId:
+          type: string
+        licenseKey:
+          type: string
+        baseUrl:
+          type: string
+        companyCode:
+          type: string
+
+    AvalaraTestResponse:
+      type: object
+      properties:
+        ok:
+          type: boolean
+        message:
+          type: string
+      required:
+        - ok
+        - message
+
+    AvalaraStatusItem:
+      type: object
+      properties:
+        id:
+          type: string
+        complaintNumber:
+          type: string
+        title:
+          type: string
+        avalaraValidationStatus:
+          type: string
+        avalaraValidatedAt:
+          type: string
+          format: date-time
+          nullable: true
+      required:
+        - id
+        - complaintNumber
+        - title
+        - avalaraValidationStatus
+
+    AvalaraStatus:
+      type: object
+      properties:
+        configured:
+          type: boolean
+        validatedCount:
+          type: number
+        failedCount:
+          type: number
+        recent:
+          type: array
+          items:
+            $ref: "#/components/schemas/AvalaraStatusItem"
+      required:
+        - configured
+        - validatedCount
+        - failedCount
+        - recent
