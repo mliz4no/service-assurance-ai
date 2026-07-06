@@ -15,4 +15,8 @@ export interface CreateCustomerRequest {
   primaryContactEmail?: string | null;
   primaryContactPhone?: string | null;
   notes?: string | null;
+  externalSource?: string | null;
+  externalId?: string | null;
+  externalSyncedAt?: Date | null;
+  externalSyncStatus?: string | null;
 }

@@ -14,9 +14,16 @@ export interface SuccessResponse {
   message?: string;
 }
 
+export type ErrorResponseError =
+  | string
+  | {
+      code?: string;
+      message?: string;
+      details?: { [key: string]: string | string[] };
+    };
+
 export interface ErrorResponse {
-  error: string;
-  message?: string;
+  error: ErrorResponseError;
 }
 
 export interface LoginRequest {
@@ -97,9 +104,21 @@ export interface Customer {
   primaryContactEmail?: string | null;
   primaryContactPhone?: string | null;
   notes?: string | null;
+  externalSource?: string | null;
+  externalId?: string | null;
+  externalSyncedAt?: string | null;
+  externalSyncStatus?: string | null;
   createdAt: string;
   updatedAt: string;
 }
+
+export type SiteGeoSource = (typeof SiteGeoSource)[keyof typeof SiteGeoSource] | null;
+
+export const SiteGeoSource = {
+  manual: 'manual',
+  geocoded: 'geocoded',
+  imported: 'imported',
+} as const;
 
 export interface Site {
   id: string;
@@ -119,7 +138,11 @@ export interface Site {
   lconEmail?: string | null;
   latitude?: number | null;
   longitude?: number | null;
-  geoSource?: 'manual' | 'geocoded' | 'imported' | null;
+  geoSource?: SiteGeoSource;
+  externalSource?: string | null;
+  externalId?: string | null;
+  externalSyncedAt?: string | null;
+  externalSyncStatus?: string | null;
   createdAt: string;
   updatedAt: string;
 }
@@ -158,6 +181,10 @@ export interface Service {
   monthlyRecurringCharge?: number | null;
   supportReference?: string | null;
   notes?: string | null;
+  externalSource?: string | null;
+  externalId?: string | null;
+  externalSyncedAt?: string | null;
+  externalSyncStatus?: string | null;
   createdAt: string;
   updatedAt: string;
 }
@@ -200,8 +227,23 @@ export const TicketOutageType = {
   unknown: 'unknown',
 } as const;
 
-export type TicketImpactLevel = 'low' | 'medium' | 'high';
-export type TicketUrgencyLevel = 'low' | 'medium' | 'high';
+export type TicketImpactLevel = (typeof TicketImpactLevel)[keyof typeof TicketImpactLevel] | null;
+
+export const TicketImpactLevel = {
+  low: 'low',
+  medium: 'medium',
+  high: 'high',
+} as const;
+
+export type TicketUrgencyLevel =
+  | (typeof TicketUrgencyLevel)[keyof typeof TicketUrgencyLevel]
+  | null;
+
+export const TicketUrgencyLevel = {
+  low: 'low',
+  medium: 'medium',
+  high: 'high',
+} as const;
 
 export interface Ticket {
   id: string;
@@ -215,8 +257,8 @@ export interface Ticket {
   severity: TicketSeverity;
   status: TicketStatus;
   outageType: TicketOutageType;
-  impactLevel?: TicketImpactLevel | null;
-  urgencyLevel?: TicketUrgencyLevel | null;
+  impactLevel?: TicketImpactLevel;
+  urgencyLevel?: TicketUrgencyLevel;
   vendorTicketId?: string | null;
   assignedToUserId?: string | null;
   openedAt: string;
@@ -228,65 +270,12 @@ export interface Ticket {
   aiNormalizedStatus?: string | null;
   aiCustomerUpdate?: string | null;
   aiLastGeneratedAt?: string | null;
+  externalSource?: string | null;
+  externalId?: string | null;
+  externalSyncedAt?: string | null;
+  externalSyncStatus?: string | null;
   createdAt: string;
   updatedAt: string;
-}
-
-export type CustomerContactRole = 'noc' | 'manager' | 'director' | 'executive';
-
-export interface CustomerContact {
-  id: string;
-  customerId: string;
-  name: string;
-  email: string;
-  phone?: string | null;
-  role: CustomerContactRole;
-  notifyOnSeverity: TicketSeverity;
-  notifyOnDurationMinutes?: number | null;
-  notificationChannels: string;
-  createdAt: string;
-  updatedAt: string;
-}
-
-export interface CreateCustomerContactRequest {
-  name: string;
-  email: string;
-  phone?: string | null;
-  role: CustomerContactRole;
-  notifyOnSeverity: TicketSeverity;
-  notifyOnDurationMinutes?: number | null;
-  notificationChannels?: string;
-}
-
-export interface UpdateCustomerContactRequest {
-  name?: string;
-  email?: string;
-  phone?: string | null;
-  role?: CustomerContactRole;
-  notifyOnSeverity?: TicketSeverity;
-  notifyOnDurationMinutes?: number | null;
-  notificationChannels?: string;
-}
-
-export type EscalationReason = 'severity_threshold' | 'duration_threshold' | 'manual';
-export type EscalationStatus = 'simulated' | 'sent' | 'failed';
-
-export interface EscalationNotification {
-  id: string;
-  ticketId: string;
-  contactId?: string | null;
-  contactName: string;
-  contactEmail: string;
-  contactRole: string;
-  notifiedAt: string;
-  severity: string;
-  channel: string;
-  reason: EscalationReason;
-  durationMinutes: number;
-  message: string;
-  status: EscalationStatus;
-  ruleDescription?: string | null;
-  createdAt: string;
 }
 
 export type CustomerWithRelations = Customer & {
@@ -311,6 +300,10 @@ export interface CreateCustomerRequest {
   primaryContactEmail?: string | null;
   primaryContactPhone?: string | null;
   notes?: string | null;
+  externalSource?: string | null;
+  externalId?: string | null;
+  externalSyncedAt?: string | null;
+  externalSyncStatus?: string | null;
 }
 
 export type UpdateCustomerRequestStatus =
@@ -341,6 +334,16 @@ export type SiteWithRelations = Site & {
   tickets?: Ticket[];
 };
 
+export type CreateSiteRequestGeoSource =
+  | (typeof CreateSiteRequestGeoSource)[keyof typeof CreateSiteRequestGeoSource]
+  | null;
+
+export const CreateSiteRequestGeoSource = {
+  manual: 'manual',
+  geocoded: 'geocoded',
+  imported: 'imported',
+} as const;
+
 export interface CreateSiteRequest {
   customerId: string;
   siteName: string;
@@ -358,8 +361,22 @@ export interface CreateSiteRequest {
   lconEmail?: string | null;
   latitude?: number | null;
   longitude?: number | null;
-  geoSource?: 'manual' | 'geocoded' | 'imported' | null;
+  geoSource?: CreateSiteRequestGeoSource;
+  externalSource?: string | null;
+  externalId?: string | null;
+  externalSyncedAt?: string | null;
+  externalSyncStatus?: string | null;
 }
+
+export type UpdateSiteRequestGeoSource =
+  | (typeof UpdateSiteRequestGeoSource)[keyof typeof UpdateSiteRequestGeoSource]
+  | null;
+
+export const UpdateSiteRequestGeoSource = {
+  manual: 'manual',
+  geocoded: 'geocoded',
+  imported: 'imported',
+} as const;
 
 export interface UpdateSiteRequest {
   siteName?: string;
@@ -372,12 +389,16 @@ export interface UpdateSiteRequest {
   timezone?: string | null;
   siteCode?: string | null;
   notes?: string | null;
+  externalSource?: string | null;
+  externalId?: string | null;
+  externalSyncedAt?: string | null;
+  externalSyncStatus?: string | null;
   lconName?: string | null;
   lconPhone?: string | null;
   lconEmail?: string | null;
   latitude?: number | null;
   longitude?: number | null;
-  geoSource?: 'manual' | 'geocoded' | 'imported' | null;
+  geoSource?: UpdateSiteRequestGeoSource;
 }
 
 export type ServiceWithRelations = Service & {
@@ -541,6 +562,26 @@ export const CreateTicketRequestOutageType = {
   unknown: 'unknown',
 } as const;
 
+export type CreateTicketRequestImpactLevel =
+  | (typeof CreateTicketRequestImpactLevel)[keyof typeof CreateTicketRequestImpactLevel]
+  | null;
+
+export const CreateTicketRequestImpactLevel = {
+  low: 'low',
+  medium: 'medium',
+  high: 'high',
+} as const;
+
+export type CreateTicketRequestUrgencyLevel =
+  | (typeof CreateTicketRequestUrgencyLevel)[keyof typeof CreateTicketRequestUrgencyLevel]
+  | null;
+
+export const CreateTicketRequestUrgencyLevel = {
+  low: 'low',
+  medium: 'medium',
+  high: 'high',
+} as const;
+
 export interface CreateTicketRequest {
   customerId: string;
   siteId?: string | null;
@@ -548,14 +589,18 @@ export interface CreateTicketRequest {
   title: string;
   description?: string | null;
   source: CreateTicketRequestSource;
-  severity?: CreateTicketRequestSeverity;
-  status?: CreateTicketRequestStatus;
+  severity: CreateTicketRequestSeverity;
+  status: CreateTicketRequestStatus;
   outageType: CreateTicketRequestOutageType;
-  impactLevel?: TicketImpactLevel | null;
-  urgencyLevel?: TicketUrgencyLevel | null;
+  impactLevel?: CreateTicketRequestImpactLevel;
+  urgencyLevel?: CreateTicketRequestUrgencyLevel;
   vendorTicketId?: string | null;
   assignedToUserId?: string | null;
   slaTargetMinutes?: number | null;
+  externalSource?: string | null;
+  externalId?: string | null;
+  externalSyncedAt?: string | null;
+  externalSyncStatus?: string | null;
 }
 
 export type UpdateTicketRequestSeverity =
@@ -591,14 +636,34 @@ export const UpdateTicketRequestOutageType = {
   unknown: 'unknown',
 } as const;
 
+export type UpdateTicketRequestImpactLevel =
+  | (typeof UpdateTicketRequestImpactLevel)[keyof typeof UpdateTicketRequestImpactLevel]
+  | null;
+
+export const UpdateTicketRequestImpactLevel = {
+  low: 'low',
+  medium: 'medium',
+  high: 'high',
+} as const;
+
+export type UpdateTicketRequestUrgencyLevel =
+  | (typeof UpdateTicketRequestUrgencyLevel)[keyof typeof UpdateTicketRequestUrgencyLevel]
+  | null;
+
+export const UpdateTicketRequestUrgencyLevel = {
+  low: 'low',
+  medium: 'medium',
+  high: 'high',
+} as const;
+
 export interface UpdateTicketRequest {
   title?: string;
   description?: string | null;
   severity?: UpdateTicketRequestSeverity;
   status?: UpdateTicketRequestStatus;
   outageType?: UpdateTicketRequestOutageType;
-  impactLevel?: TicketImpactLevel | null;
-  urgencyLevel?: TicketUrgencyLevel | null;
+  impactLevel?: UpdateTicketRequestImpactLevel;
+  urgencyLevel?: UpdateTicketRequestUrgencyLevel;
   vendorTicketId?: string | null;
   assignedToUserId?: string | null;
   nextEscalationAt?: string | null;
@@ -606,6 +671,194 @@ export interface UpdateTicketRequest {
   aiSummary?: string | null;
   aiNormalizedStatus?: string | null;
   aiCustomerUpdate?: string | null;
+}
+
+export type CustomerContactRole = (typeof CustomerContactRole)[keyof typeof CustomerContactRole];
+
+export const CustomerContactRole = {
+  noc: 'noc',
+  manager: 'manager',
+  director: 'director',
+  executive: 'executive',
+} as const;
+
+export type CustomerContactNotifyOnSeverity =
+  (typeof CustomerContactNotifyOnSeverity)[keyof typeof CustomerContactNotifyOnSeverity];
+
+export const CustomerContactNotifyOnSeverity = {
+  low: 'low',
+  medium: 'medium',
+  high: 'high',
+  critical: 'critical',
+} as const;
+
+export interface CustomerContact {
+  id: string;
+  customerId: string;
+  name: string;
+  email: string;
+  phone?: string | null;
+  role: CustomerContactRole;
+  notifyOnSeverity: CustomerContactNotifyOnSeverity;
+  notifyOnDurationMinutes?: number | null;
+  notificationChannels: string;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export type CreateCustomerContactRequestNotifyOnSeverity =
+  (typeof CreateCustomerContactRequestNotifyOnSeverity)[keyof typeof CreateCustomerContactRequestNotifyOnSeverity];
+
+export const CreateCustomerContactRequestNotifyOnSeverity = {
+  low: 'low',
+  medium: 'medium',
+  high: 'high',
+  critical: 'critical',
+} as const;
+
+export interface CreateCustomerContactRequest {
+  name: string;
+  email: string;
+  phone?: string | null;
+  role: CustomerContactRole;
+  notifyOnSeverity: CreateCustomerContactRequestNotifyOnSeverity;
+  notifyOnDurationMinutes?: number | null;
+  notificationChannels?: string;
+}
+
+export type UpdateCustomerContactRequestNotifyOnSeverity =
+  (typeof UpdateCustomerContactRequestNotifyOnSeverity)[keyof typeof UpdateCustomerContactRequestNotifyOnSeverity];
+
+export const UpdateCustomerContactRequestNotifyOnSeverity = {
+  low: 'low',
+  medium: 'medium',
+  high: 'high',
+  critical: 'critical',
+} as const;
+
+export interface UpdateCustomerContactRequest {
+  name?: string;
+  email?: string;
+  phone?: string | null;
+  role?: CustomerContactRole;
+  notifyOnSeverity?: UpdateCustomerContactRequestNotifyOnSeverity;
+  notifyOnDurationMinutes?: number | null;
+  notificationChannels?: string;
+}
+
+export type EscalationReason = (typeof EscalationReason)[keyof typeof EscalationReason];
+
+export const EscalationReason = {
+  severity_threshold: 'severity_threshold',
+  duration_threshold: 'duration_threshold',
+  manual: 'manual',
+} as const;
+
+export type EscalationStatus = (typeof EscalationStatus)[keyof typeof EscalationStatus];
+
+export const EscalationStatus = {
+  simulated: 'simulated',
+  sent: 'sent',
+  failed: 'failed',
+} as const;
+
+export type EscalationNotificationSeverity =
+  (typeof EscalationNotificationSeverity)[keyof typeof EscalationNotificationSeverity];
+
+export const EscalationNotificationSeverity = {
+  low: 'low',
+  medium: 'medium',
+  high: 'high',
+  critical: 'critical',
+} as const;
+
+export interface EscalationNotification {
+  id: string;
+  ticketId: string;
+  contactId: string;
+  contactName?: string;
+  contactEmail?: string;
+  contactRole?: CustomerContactRole;
+  reason: EscalationReason;
+  severity?: EscalationNotificationSeverity;
+  durationMinutes?: number | null;
+  ruleDescription?: string | null;
+  message?: string;
+  status: EscalationStatus;
+  notifiedAt: string;
+}
+
+export type EvaluateEscalationResponseContactsItem = {
+  name?: string;
+  email?: string;
+  role?: string;
+  reason?: string;
+};
+
+export interface EvaluateEscalationResponse {
+  notified: number;
+  contacts: EvaluateEscalationResponseContactsItem[];
+}
+
+export type MatrixScopeType = (typeof MatrixScopeType)[keyof typeof MatrixScopeType];
+
+export const MatrixScopeType = {
+  global: 'global',
+  customer: 'customer',
+  site: 'site',
+  service: 'service',
+} as const;
+
+export type MatrixImpactLevel = (typeof MatrixImpactLevel)[keyof typeof MatrixImpactLevel];
+
+export const MatrixImpactLevel = {
+  high: 'high',
+  medium: 'medium',
+  low: 'low',
+} as const;
+
+export type MatrixUrgencyLevel = (typeof MatrixUrgencyLevel)[keyof typeof MatrixUrgencyLevel];
+
+export const MatrixUrgencyLevel = {
+  high: 'high',
+  medium: 'medium',
+  low: 'low',
+} as const;
+
+export type MatrixSeverityLevel = (typeof MatrixSeverityLevel)[keyof typeof MatrixSeverityLevel];
+
+export const MatrixSeverityLevel = {
+  critical: 'critical',
+  high: 'high',
+  medium: 'medium',
+  low: 'low',
+} as const;
+
+export interface MatrixCell {
+  impactLevel: MatrixImpactLevel;
+  urgencyLevel: MatrixUrgencyLevel;
+  derivedSeverity: MatrixSeverityLevel;
+  isOverride: boolean;
+  overrideId?: string | null;
+  inheritedFrom?: string | null;
+}
+
+export interface EscalationMatrixResponse {
+  scopeType: MatrixScopeType;
+  scopeId?: string | null;
+  cells: MatrixCell[];
+}
+
+export type UpsertEscalationMatrixRequestCellsItem = {
+  impactLevel: MatrixImpactLevel;
+  urgencyLevel: MatrixUrgencyLevel;
+  derivedSeverity: MatrixSeverityLevel;
+};
+
+export interface UpsertEscalationMatrixRequest {
+  scopeType: MatrixScopeType;
+  scopeId?: string | null;
+  cells: UpsertEscalationMatrixRequestCellsItem[];
 }
 
 export type CreateTicketUpdateRequestUpdateType =
@@ -733,6 +986,270 @@ export interface ConfigHealth {
   environment: string;
 }
 
+export type InvoiceComplaintSource =
+  (typeof InvoiceComplaintSource)[keyof typeof InvoiceComplaintSource];
+
+export const InvoiceComplaintSource = {
+  manual: 'manual',
+  api: 'api',
+} as const;
+
+export type InvoiceComplaintStatus =
+  (typeof InvoiceComplaintStatus)[keyof typeof InvoiceComplaintStatus];
+
+export const InvoiceComplaintStatus = {
+  new: 'new',
+  triaged: 'triaged',
+  awaiting_customer: 'awaiting_customer',
+  resolved: 'resolved',
+  closed: 'closed',
+} as const;
+
+export type InvoiceComplaintPriority =
+  (typeof InvoiceComplaintPriority)[keyof typeof InvoiceComplaintPriority];
+
+export const InvoiceComplaintPriority = {
+  low: 'low',
+  medium: 'medium',
+  high: 'high',
+} as const;
+
+export type InvoiceComplaintComplaintType =
+  (typeof InvoiceComplaintComplaintType)[keyof typeof InvoiceComplaintComplaintType];
+
+export const InvoiceComplaintComplaintType = {
+  tax_mismatch: 'tax_mismatch',
+  rate_mismatch: 'rate_mismatch',
+  duplicate_charge: 'duplicate_charge',
+  missing_exemption: 'missing_exemption',
+  other: 'other',
+} as const;
+
+export type InvoiceComplaintAvalaraValidationStatus =
+  (typeof InvoiceComplaintAvalaraValidationStatus)[keyof typeof InvoiceComplaintAvalaraValidationStatus];
+
+export const InvoiceComplaintAvalaraValidationStatus = {
+  not_validated: 'not_validated',
+  validated: 'validated',
+  failed: 'failed',
+} as const;
+
+export interface InvoiceComplaint {
+  id: string;
+  complaintNumber: string;
+  customerId: string;
+  siteId?: string | null;
+  serviceId?: string | null;
+  assignedToUserId?: string | null;
+  title: string;
+  description?: string | null;
+  source: InvoiceComplaintSource;
+  status: InvoiceComplaintStatus;
+  priority: InvoiceComplaintPriority;
+  complaintType: InvoiceComplaintComplaintType;
+  invoiceNumber: string;
+  customerAccountNumber: string;
+  currencyCode: string;
+  invoiceAmount?: string | null;
+  documentCode?: string | null;
+  companyCode?: string | null;
+  avalaraValidationStatus: InvoiceComplaintAvalaraValidationStatus;
+  avalaraValidatedAt?: string | null;
+  avalaraSummary?: string | null;
+  externalSource?: string | null;
+  externalId?: string | null;
+  externalSyncedAt?: string | null;
+  externalSyncStatus?: string | null;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export type InvoiceComplaintWithCustomer = InvoiceComplaint & {
+  customer?: Customer | null;
+};
+
+export type InvoiceComplaintEventEventType =
+  (typeof InvoiceComplaintEventEventType)[keyof typeof InvoiceComplaintEventEventType];
+
+export const InvoiceComplaintEventEventType = {
+  created: 'created',
+  status_changed: 'status_changed',
+  assignment_changed: 'assignment_changed',
+  note: 'note',
+  validation_requested: 'validation_requested',
+  validation_succeeded: 'validation_succeeded',
+  validation_failed: 'validation_failed',
+} as const;
+
+export type InvoiceComplaintEventMetadata = { [key: string]: unknown } | null;
+
+export interface InvoiceComplaintEvent {
+  id: string;
+  complaintId: string;
+  eventType: InvoiceComplaintEventEventType;
+  message: string;
+  metadata?: InvoiceComplaintEventMetadata;
+  createdByUserId?: string | null;
+  createdAt: string;
+}
+
+export type InvoiceComplaintDetail = InvoiceComplaint & {
+  customer?: Customer | null;
+  site?: Site | null;
+  service?: Service | null;
+  assignedTo?: User | null;
+  events?: InvoiceComplaintEvent[];
+};
+
+export type CreateInvoiceComplaintRequestSource =
+  (typeof CreateInvoiceComplaintRequestSource)[keyof typeof CreateInvoiceComplaintRequestSource];
+
+export const CreateInvoiceComplaintRequestSource = {
+  manual: 'manual',
+  api: 'api',
+} as const;
+
+export type CreateInvoiceComplaintRequestStatus =
+  (typeof CreateInvoiceComplaintRequestStatus)[keyof typeof CreateInvoiceComplaintRequestStatus];
+
+export const CreateInvoiceComplaintRequestStatus = {
+  new: 'new',
+  triaged: 'triaged',
+  awaiting_customer: 'awaiting_customer',
+  resolved: 'resolved',
+  closed: 'closed',
+} as const;
+
+export type CreateInvoiceComplaintRequestPriority =
+  (typeof CreateInvoiceComplaintRequestPriority)[keyof typeof CreateInvoiceComplaintRequestPriority];
+
+export const CreateInvoiceComplaintRequestPriority = {
+  low: 'low',
+  medium: 'medium',
+  high: 'high',
+} as const;
+
+export type CreateInvoiceComplaintRequestComplaintType =
+  (typeof CreateInvoiceComplaintRequestComplaintType)[keyof typeof CreateInvoiceComplaintRequestComplaintType];
+
+export const CreateInvoiceComplaintRequestComplaintType = {
+  tax_mismatch: 'tax_mismatch',
+  rate_mismatch: 'rate_mismatch',
+  duplicate_charge: 'duplicate_charge',
+  missing_exemption: 'missing_exemption',
+  other: 'other',
+} as const;
+
+export interface CreateInvoiceComplaintRequest {
+  customerId: string;
+  siteId?: string | null;
+  serviceId?: string | null;
+  assignedToUserId?: string | null;
+  title: string;
+  description?: string | null;
+  source?: CreateInvoiceComplaintRequestSource;
+  status?: CreateInvoiceComplaintRequestStatus;
+  priority?: CreateInvoiceComplaintRequestPriority;
+  complaintType?: CreateInvoiceComplaintRequestComplaintType;
+  invoiceNumber: string;
+  customerAccountNumber: string;
+  currencyCode?: string;
+  invoiceAmount?: number | string | null;
+  documentCode?: string | null;
+  companyCode?: string | null;
+}
+
+export type UpdateInvoiceComplaintRequestStatus =
+  (typeof UpdateInvoiceComplaintRequestStatus)[keyof typeof UpdateInvoiceComplaintRequestStatus];
+
+export const UpdateInvoiceComplaintRequestStatus = {
+  new: 'new',
+  triaged: 'triaged',
+  awaiting_customer: 'awaiting_customer',
+  resolved: 'resolved',
+  closed: 'closed',
+} as const;
+
+export type UpdateInvoiceComplaintRequestPriority =
+  (typeof UpdateInvoiceComplaintRequestPriority)[keyof typeof UpdateInvoiceComplaintRequestPriority];
+
+export const UpdateInvoiceComplaintRequestPriority = {
+  low: 'low',
+  medium: 'medium',
+  high: 'high',
+} as const;
+
+export type UpdateInvoiceComplaintRequestComplaintType =
+  (typeof UpdateInvoiceComplaintRequestComplaintType)[keyof typeof UpdateInvoiceComplaintRequestComplaintType];
+
+export const UpdateInvoiceComplaintRequestComplaintType = {
+  tax_mismatch: 'tax_mismatch',
+  rate_mismatch: 'rate_mismatch',
+  duplicate_charge: 'duplicate_charge',
+  missing_exemption: 'missing_exemption',
+  other: 'other',
+} as const;
+
+export interface UpdateInvoiceComplaintRequest {
+  status?: UpdateInvoiceComplaintRequestStatus;
+  priority?: UpdateInvoiceComplaintRequestPriority;
+  assignedToUserId?: string | null;
+  description?: string | null;
+  title?: string;
+  complaintType?: UpdateInvoiceComplaintRequestComplaintType;
+  siteId?: string | null;
+  serviceId?: string | null;
+}
+
+export type CreateInvoiceComplaintEventRequestMetadata = { [key: string]: unknown } | null;
+
+export interface CreateInvoiceComplaintEventRequest {
+  message: string;
+  metadata?: CreateInvoiceComplaintEventRequestMetadata;
+}
+
+export type ValidateInvoiceComplaintResponseValidation = { [key: string]: unknown };
+
+export interface ValidateInvoiceComplaintResponse {
+  complaint: InvoiceComplaint;
+  validation?: ValidateInvoiceComplaintResponseValidation;
+}
+
+export interface AvalaraConfigResponse {
+  accountId: string;
+  licenseKey: string;
+  baseUrl: string;
+  companyCode: string;
+  hasLicenseKey: boolean;
+}
+
+export interface UpdateAvalaraConfigRequest {
+  accountId?: string;
+  licenseKey?: string;
+  baseUrl?: string;
+  companyCode?: string;
+}
+
+export interface AvalaraTestResponse {
+  ok: boolean;
+  message: string;
+}
+
+export interface AvalaraStatusItem {
+  id: string;
+  complaintNumber: string;
+  title: string;
+  avalaraValidationStatus: string;
+  avalaraValidatedAt?: string | null;
+}
+
+export interface AvalaraStatus {
+  configured: boolean;
+  validatedCount: number;
+  failedCount: number;
+  recent: AvalaraStatusItem[];
+}
+
 export type GetRecentTicketsParams = {
   limit?: number;
 };
@@ -740,11 +1257,17 @@ export type GetRecentTicketsParams = {
 export type GetCustomersParams = {
   search?: string;
   status?: string;
+  externalSource?: string;
+  externalId?: string;
+  compact?: boolean;
 };
 
 export type GetSitesParams = {
   customerId?: string;
   search?: string;
+  externalSource?: string;
+  externalId?: string;
+  compact?: boolean;
 };
 
 export type GetServicesParams = {
@@ -753,6 +1276,9 @@ export type GetServicesParams = {
   search?: string;
   status?: string;
   vendorName?: string;
+  externalSource?: string;
+  externalId?: string;
+  compact?: boolean;
 };
 
 export type GetTicketsParams = {
@@ -764,46 +1290,20 @@ export type GetTicketsParams = {
   vendorName?: string;
   sortBy?: string;
   sortOrder?: string;
+  externalSource?: string;
+  externalId?: string;
+  compact?: boolean;
 };
 
-export type MatrixScopeType = 'global' | 'customer' | 'site' | 'service';
-export type MatrixImpactLevel = 'high' | 'medium' | 'low';
-export type MatrixUrgencyLevel = 'high' | 'medium' | 'low';
-export type MatrixSeverityLevel = 'critical' | 'high' | 'medium' | 'low';
-
-export interface MatrixCell {
-  impactLevel: MatrixImpactLevel;
-  urgencyLevel: MatrixUrgencyLevel;
-  derivedSeverity: MatrixSeverityLevel;
-  isOverride: boolean;
-  overrideId: string | null;
-  inheritedFrom: string | null;
-}
-
-export interface EscalationMatrixResponse {
+export type GetEscalationMatrixParams = {
   scopeType: MatrixScopeType;
-  scopeId: string | null;
-  cells: MatrixCell[];
-}
+  scopeId?: string;
+};
 
-export interface EscalationMatrixOverride {
-  id: string;
-  scopeType: MatrixScopeType;
-  scopeId: string | null;
-  impactLevel: MatrixImpactLevel;
-  urgencyLevel: MatrixUrgencyLevel;
-  derivedSeverity: MatrixSeverityLevel;
-  updatedByUserId: string | null;
-  createdAt: string;
-  updatedAt: string;
-}
-
-export interface UpsertEscalationMatrixRequest {
-  scopeType: MatrixScopeType;
-  scopeId?: string | null;
-  cells: Array<{
-    impactLevel: MatrixImpactLevel;
-    urgencyLevel: MatrixUrgencyLevel;
-    derivedSeverity: MatrixSeverityLevel;
-  }>;
-}
+export type GetInvoiceComplaintsParams = {
+  search?: string;
+  status?: string;
+  customerId?: string;
+  priority?: string;
+  complaintType?: string;
+};

@@ -5,10 +5,12 @@
  * Service Assurance AI API
  * OpenAPI spec version: 0.1.0
  */
+import type { CreateTicketRequestImpactLevel } from './createTicketRequestImpactLevel';
 import type { CreateTicketRequestOutageType } from './createTicketRequestOutageType';
 import type { CreateTicketRequestSeverity } from './createTicketRequestSeverity';
 import type { CreateTicketRequestSource } from './createTicketRequestSource';
 import type { CreateTicketRequestStatus } from './createTicketRequestStatus';
+import type { CreateTicketRequestUrgencyLevel } from './createTicketRequestUrgencyLevel';
 
 export interface CreateTicketRequest {
   customerId: string;
@@ -20,7 +22,13 @@ export interface CreateTicketRequest {
   severity: CreateTicketRequestSeverity;
   status: CreateTicketRequestStatus;
   outageType: CreateTicketRequestOutageType;
+  impactLevel?: CreateTicketRequestImpactLevel;
+  urgencyLevel?: CreateTicketRequestUrgencyLevel;
   vendorTicketId?: string | null;
   assignedToUserId?: string | null;
   slaTargetMinutes?: number | null;
+  externalSource?: string | null;
+  externalId?: string | null;
+  externalSyncedAt?: Date | null;
+  externalSyncStatus?: string | null;
 }

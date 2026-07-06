@@ -5,6 +5,7 @@
  * Service Assurance AI API
  * OpenAPI spec version: 0.1.0
  */
+import type { CreateSiteRequestGeoSource } from './createSiteRequestGeoSource';
 
 export interface CreateSiteRequest {
   customerId: string;
@@ -18,4 +19,14 @@ export interface CreateSiteRequest {
   timezone?: string | null;
   siteCode?: string | null;
   notes?: string | null;
+  lconName?: string | null;
+  lconPhone?: string | null;
+  lconEmail?: string | null;
+  latitude?: number | null;
+  longitude?: number | null;
+  geoSource?: CreateSiteRequestGeoSource;
+  externalSource?: string | null;
+  externalId?: string | null;
+  externalSyncedAt?: Date | null;
+  externalSyncStatus?: string | null;
 }

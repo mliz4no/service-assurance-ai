@@ -5,10 +5,12 @@
  * Service Assurance AI API
  * OpenAPI spec version: 0.1.0
  */
+import type { TicketImpactLevel } from './ticketImpactLevel';
 import type { TicketOutageType } from './ticketOutageType';
 import type { TicketSeverity } from './ticketSeverity';
 import type { TicketSource } from './ticketSource';
 import type { TicketStatus } from './ticketStatus';
+import type { TicketUrgencyLevel } from './ticketUrgencyLevel';
 
 export interface Ticket {
   id: string;
@@ -22,6 +24,8 @@ export interface Ticket {
   severity: TicketSeverity;
   status: TicketStatus;
   outageType: TicketOutageType;
+  impactLevel?: TicketImpactLevel;
+  urgencyLevel?: TicketUrgencyLevel;
   vendorTicketId?: string | null;
   assignedToUserId?: string | null;
   openedAt: Date;
@@ -33,6 +37,10 @@ export interface Ticket {
   aiNormalizedStatus?: string | null;
   aiCustomerUpdate?: string | null;
   aiLastGeneratedAt?: Date | null;
+  externalSource?: string | null;
+  externalId?: string | null;
+  externalSyncedAt?: Date | null;
+  externalSyncStatus?: string | null;
   createdAt: Date;
   updatedAt: Date;
 }

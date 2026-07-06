@@ -190,9 +190,9 @@ function ContactsTab({ customerId }: { customerId: string }) {
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const { data: contacts, isLoading } = useGetCustomerContacts(customerId);
-  const createMutation = useCreateCustomerContact(customerId);
-  const updateMutation = useUpdateCustomerContact(customerId);
-  const deleteMutation = useDeleteCustomerContact(customerId);
+  const createMutation = useCreateCustomerContact();
+  const updateMutation = useUpdateCustomerContact();
+  const deleteMutation = useDeleteCustomerContact();
 
   const [showAdd, setShowAdd] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
@@ -200,6 +200,7 @@ function ContactsTab({ customerId }: { customerId: string }) {
   function handleCreate(data: ContactFormData) {
     createMutation.mutate(
       {
+        id: customerId,
         data: {
           name: data.name,
           email: data.email,
@@ -226,6 +227,7 @@ function ContactsTab({ customerId }: { customerId: string }) {
   function handleUpdate(contact: CustomerContact, data: ContactFormData) {
     updateMutation.mutate(
       {
+        id: customerId,
         contactId: contact.id,
         data: {
           name: data.name,
@@ -252,7 +254,7 @@ function ContactsTab({ customerId }: { customerId: string }) {
 
   function handleDelete(contactId: string) {
     deleteMutation.mutate(
-      { contactId },
+      { id: customerId, contactId },
       {
         onSuccess: () => {
           toast({ title: 'Contact removed' });

@@ -5,9 +5,11 @@
  * Service Assurance AI API
  * OpenAPI spec version: 0.1.0
  */
+import type { UpdateTicketRequestImpactLevel } from './updateTicketRequestImpactLevel';
 import type { UpdateTicketRequestOutageType } from './updateTicketRequestOutageType';
 import type { UpdateTicketRequestSeverity } from './updateTicketRequestSeverity';
 import type { UpdateTicketRequestStatus } from './updateTicketRequestStatus';
+import type { UpdateTicketRequestUrgencyLevel } from './updateTicketRequestUrgencyLevel';
 
 export interface UpdateTicketRequest {
   title?: string;
@@ -15,6 +17,8 @@ export interface UpdateTicketRequest {
   severity?: UpdateTicketRequestSeverity;
   status?: UpdateTicketRequestStatus;
   outageType?: UpdateTicketRequestOutageType;
+  impactLevel?: UpdateTicketRequestImpactLevel;
+  urgencyLevel?: UpdateTicketRequestUrgencyLevel;
   vendorTicketId?: string | null;
   assignedToUserId?: string | null;
   nextEscalationAt?: Date | null;

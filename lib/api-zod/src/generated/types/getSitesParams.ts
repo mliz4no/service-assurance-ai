@@ -9,4 +9,7 @@
 export type GetSitesParams = {
   customerId?: string;
   search?: string;
+  externalSource?: string;
+  externalId?: string;
+  compact?: boolean;
 };

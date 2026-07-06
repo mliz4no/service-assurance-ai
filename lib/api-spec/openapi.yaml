@@ -277,6 +277,102 @@ paths:
               schema:
                 $ref: "#/components/schemas/SuccessResponse"
 
+  /customers/{id}/contacts:
+    get:
+      operationId: getCustomerContacts
+      tags: [customers]
+      summary: List escalation contacts for a customer
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Customer escalation contacts
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/CustomerContact"
+    post:
+      operationId: createCustomerContact
+      tags: [customers]
+      summary: Create escalation contact for customer
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateCustomerContactRequest"
+      responses:
+        "201":
+          description: Created customer contact
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CustomerContact"
+
+  /customers/{id}/contacts/{contactId}:
+    put:
+      operationId: updateCustomerContact
+      tags: [customers]
+      summary: Update escalation contact for customer
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+        - name: contactId
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UpdateCustomerContactRequest"
+      responses:
+        "200":
+          description: Updated customer contact
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CustomerContact"
+    delete:
+      operationId: deleteCustomerContact
+      tags: [customers]
+      summary: Delete escalation contact for customer
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+        - name: contactId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Deleted
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SuccessResponse"
+
   /sites:
     get:
       operationId: getSites
@@ -711,6 +807,105 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/TicketUpdate"
+
+  /tickets/{id}/notifications:
+    get:
+      operationId: getTicketNotifications
+      tags: [tickets]
+      summary: Get escalation notifications for a ticket
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Escalation notifications
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/EscalationNotification"
+
+  /tickets/{id}/evaluate-escalation:
+    post:
+      operationId: evaluateEscalation
+      tags: [tickets]
+      summary: Evaluate escalation rules and notify contacts when required
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Escalation evaluation result
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/EvaluateEscalationResponse"
+
+  /escalation-matrix:
+    get:
+      operationId: getEscalationMatrix
+      tags: [dashboard]
+      summary: Get escalation severity matrix
+      parameters:
+        - name: scopeType
+          in: query
+          required: true
+          schema:
+            $ref: "#/components/schemas/MatrixScopeType"
+        - name: scopeId
+          in: query
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Escalation matrix for scope
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/EscalationMatrixResponse"
+    put:
+      operationId: upsertEscalationMatrix
+      tags: [dashboard]
+      summary: Upsert escalation matrix overrides
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UpsertEscalationMatrixRequest"
+      responses:
+        "200":
+          description: Updated escalation matrix
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/EscalationMatrixResponse"
+
+  /escalation-matrix/override/{id}:
+    delete:
+      operationId: deleteEscalationMatrixOverride
+      tags: [dashboard]
+      summary: Delete one escalation matrix override cell
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Deleted
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SuccessResponse"
 
   /tickets/{id}/ai/summarize:
     post:
@@ -1954,6 +2149,14 @@ components:
         outageType:
           type: string
           enum: [outage, impairment, informational, unknown]
+        impactLevel:
+          type: string
+          enum: [low, medium, high]
+          nullable: true
+        urgencyLevel:
+          type: string
+          enum: [low, medium, high]
+          nullable: true
         vendorTicketId:
           type: string
           nullable: true
@@ -2075,6 +2278,14 @@ components:
         outageType:
           type: string
           enum: [outage, impairment, informational, unknown]
+        impactLevel:
+          type: string
+          enum: [low, medium, high]
+          nullable: true
+        urgencyLevel:
+          type: string
+          enum: [low, medium, high]
+          nullable: true
         vendorTicketId:
           type: string
           nullable: true
@@ -2122,6 +2333,14 @@ components:
         outageType:
           type: string
           enum: [outage, impairment, informational, unknown]
+        impactLevel:
+          type: string
+          enum: [low, medium, high]
+          nullable: true
+        urgencyLevel:
+          type: string
+          enum: [low, medium, high]
+          nullable: true
         vendorTicketId:
           type: string
           nullable: true
@@ -2179,6 +2398,251 @@ components:
         - rawText
         - visibility
         - createdAt
+
+    CustomerContactRole:
+      type: string
+      enum: [noc, manager, director, executive]
+
+    CustomerContact:
+      type: object
+      properties:
+        id:
+          type: string
+        customerId:
+          type: string
+        name:
+          type: string
+        email:
+          type: string
+        phone:
+          type: string
+          nullable: true
+        role:
+          $ref: "#/components/schemas/CustomerContactRole"
+        notifyOnSeverity:
+          type: string
+          enum: [low, medium, high, critical]
+        notifyOnDurationMinutes:
+          type: number
+          nullable: true
+        notificationChannels:
+          type: string
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+      required:
+        - id
+        - customerId
+        - name
+        - email
+        - role
+        - notifyOnSeverity
+        - notificationChannels
+        - createdAt
+        - updatedAt
+
+    CreateCustomerContactRequest:
+      type: object
+      properties:
+        name:
+          type: string
+        email:
+          type: string
+        phone:
+          type: string
+          nullable: true
+        role:
+          $ref: "#/components/schemas/CustomerContactRole"
+        notifyOnSeverity:
+          type: string
+          enum: [low, medium, high, critical]
+        notifyOnDurationMinutes:
+          type: number
+          nullable: true
+        notificationChannels:
+          type: string
+      required:
+        - name
+        - email
+        - role
+        - notifyOnSeverity
+
+    UpdateCustomerContactRequest:
+      type: object
+      properties:
+        name:
+          type: string
+        email:
+          type: string
+        phone:
+          type: string
+          nullable: true
+        role:
+          $ref: "#/components/schemas/CustomerContactRole"
+        notifyOnSeverity:
+          type: string
+          enum: [low, medium, high, critical]
+        notifyOnDurationMinutes:
+          type: number
+          nullable: true
+        notificationChannels:
+          type: string
+
+    EscalationReason:
+      type: string
+      enum: [severity_threshold, duration_threshold, manual]
+
+    EscalationStatus:
+      type: string
+      enum: [simulated, sent, failed]
+
+    EscalationNotification:
+      type: object
+      properties:
+        id:
+          type: string
+        ticketId:
+          type: string
+        contactId:
+          type: string
+        contactName:
+          type: string
+        contactEmail:
+          type: string
+        contactRole:
+          $ref: "#/components/schemas/CustomerContactRole"
+        reason:
+          $ref: "#/components/schemas/EscalationReason"
+        severity:
+          type: string
+          enum: [low, medium, high, critical]
+        durationMinutes:
+          type: number
+          nullable: true
+        ruleDescription:
+          type: string
+          nullable: true
+        message:
+          type: string
+        status:
+          $ref: "#/components/schemas/EscalationStatus"
+        notifiedAt:
+          type: string
+          format: date-time
+      required:
+        - id
+        - ticketId
+        - contactId
+        - reason
+        - status
+        - notifiedAt
+
+    EvaluateEscalationResponse:
+      type: object
+      properties:
+        notified:
+          type: number
+        contacts:
+          type: array
+          items:
+            type: object
+            properties:
+              name:
+                type: string
+              email:
+                type: string
+              role:
+                type: string
+              reason:
+                type: string
+      required:
+        - notified
+        - contacts
+
+    MatrixScopeType:
+      type: string
+      enum: [global, customer, site, service]
+
+    MatrixImpactLevel:
+      type: string
+      enum: [high, medium, low]
+
+    MatrixUrgencyLevel:
+      type: string
+      enum: [high, medium, low]
+
+    MatrixSeverityLevel:
+      type: string
+      enum: [critical, high, medium, low]
+
+    MatrixCell:
+      type: object
+      properties:
+        impactLevel:
+          $ref: "#/components/schemas/MatrixImpactLevel"
+        urgencyLevel:
+          $ref: "#/components/schemas/MatrixUrgencyLevel"
+        derivedSeverity:
+          $ref: "#/components/schemas/MatrixSeverityLevel"
+        isOverride:
+          type: boolean
+        overrideId:
+          type: string
+          nullable: true
+        inheritedFrom:
+          type: string
+          nullable: true
+      required:
+        - impactLevel
+        - urgencyLevel
+        - derivedSeverity
+        - isOverride
+
+    EscalationMatrixResponse:
+      type: object
+      properties:
+        scopeType:
+          $ref: "#/components/schemas/MatrixScopeType"
+        scopeId:
+          type: string
+          nullable: true
+        cells:
+          type: array
+          items:
+            $ref: "#/components/schemas/MatrixCell"
+      required:
+        - scopeType
+        - cells
+
+    UpsertEscalationMatrixRequest:
+      type: object
+      properties:
+        scopeType:
+          $ref: "#/components/schemas/MatrixScopeType"
+        scopeId:
+          type: string
+          nullable: true
+        cells:
+          type: array
+          items:
+            type: object
+            properties:
+              impactLevel:
+                $ref: "#/components/schemas/MatrixImpactLevel"
+              urgencyLevel:
+                $ref: "#/components/schemas/MatrixUrgencyLevel"
+              derivedSeverity:
+                $ref: "#/components/schemas/MatrixSeverityLevel"
+            required:
+              - impactLevel
+              - urgencyLevel
+              - derivedSeverity
+      required:
+        - scopeType
+        - cells
 
     CreateTicketUpdateRequest:
       type: object

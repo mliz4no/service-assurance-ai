@@ -5,8 +5,8 @@
  * Service Assurance AI API
  * OpenAPI spec version: 0.1.0
  */
+import type { ErrorResponseError } from './errorResponseError';
 
 export interface ErrorResponse {
-  error: string;
-  message?: string;
+  error: ErrorResponseError;
 }

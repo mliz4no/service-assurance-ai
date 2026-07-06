@@ -12,4 +12,7 @@ export type GetServicesParams = {
   search?: string;
   status?: string;
   vendorName?: string;
+  externalSource?: string;
+  externalId?: string;
+  compact?: boolean;
 };

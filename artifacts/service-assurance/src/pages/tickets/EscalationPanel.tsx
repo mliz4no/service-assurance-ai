@@ -55,7 +55,7 @@ export function EscalationPanel({ ticketId, isCustomer, isResolved }: Props) {
 
   const handleEvaluate = () => {
     evaluateMutation.mutate(
-      { ticketId },
+      { id: ticketId },
       {
         onSuccess: (result) => {
           queryClient.invalidateQueries({ queryKey: getGetTicketNotificationsQueryKey(ticketId) });

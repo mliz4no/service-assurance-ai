@@ -5,6 +5,7 @@
  * Service Assurance AI API
  * OpenAPI spec version: 0.1.0
  */
+import type { UpdateSiteRequestGeoSource } from './updateSiteRequestGeoSource';
 
 export interface UpdateSiteRequest {
   siteName?: string;
@@ -17,4 +18,14 @@ export interface UpdateSiteRequest {
   timezone?: string | null;
   siteCode?: string | null;
   notes?: string | null;
+  externalSource?: string | null;
+  externalId?: string | null;
+  externalSyncedAt?: Date | null;
+  externalSyncStatus?: string | null;
+  lconName?: string | null;
+  lconPhone?: string | null;
+  lconEmail?: string | null;
+  latitude?: number | null;
+  longitude?: number | null;
+  geoSource?: UpdateSiteRequestGeoSource;
 }

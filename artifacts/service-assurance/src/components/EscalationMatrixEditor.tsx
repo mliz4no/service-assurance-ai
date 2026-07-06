@@ -15,7 +15,7 @@ import { RotateCcw, Save, Grid3X3, Info, HelpCircle } from 'lucide-react';
 import {
   useGetEscalationMatrix,
   useUpsertEscalationMatrix,
-  getEscalationMatrixQueryKey,
+  getGetEscalationMatrixQueryKey,
 } from '@workspace/api-client-react';
 import type {
   MatrixScopeType,
@@ -155,7 +155,10 @@ export function EscalationMatrixEditor({
 }: Props) {
   const { toast } = useToast();
   const queryClient = useQueryClient();
-  const { data, isLoading } = useGetEscalationMatrix(scopeType, scopeId);
+  const { data, isLoading } = useGetEscalationMatrix({
+    scopeType,
+    scopeId: scopeId ?? undefined,
+  });
   const upsertMutation = useUpsertEscalationMatrix();
   const [matrix, setMatrix] = useState<EditableMatrix | null>(null);
   const [isDirty, setIsDirty] = useState(false);
@@ -228,12 +231,15 @@ export function EscalationMatrixEditor({
       }
     }
     upsertMutation.mutate(
-      { scopeType, scopeId: scopeId ?? null, cells },
+      { data: { scopeType, scopeId: scopeId ?? undefined, cells } },
       {
         onSuccess: () => {
           toast({ title: `${scopeLabel} matrix saved` });
           queryClient.invalidateQueries({
-            queryKey: getEscalationMatrixQueryKey(scopeType, scopeId),
+            queryKey: getGetEscalationMatrixQueryKey({
+              scopeType,
+              scopeId: scopeId ?? undefined,
+            }),
           });
           setIsDirty(false);
         },

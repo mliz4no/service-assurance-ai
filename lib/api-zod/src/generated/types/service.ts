@@ -21,6 +21,10 @@ export interface Service {
   monthlyRecurringCharge?: number | null;
   supportReference?: string | null;
   notes?: string | null;
+  externalSource?: string | null;
+  externalId?: string | null;
+  externalSyncedAt?: Date | null;
+  externalSyncStatus?: string | null;
   createdAt: Date;
   updatedAt: Date;
 }

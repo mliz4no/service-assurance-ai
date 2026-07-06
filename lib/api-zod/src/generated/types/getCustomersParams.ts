@@ -9,4 +9,7 @@
 export type GetCustomersParams = {
   search?: string;
   status?: string;
+  externalSource?: string;
+  externalId?: string;
+  compact?: boolean;
 };

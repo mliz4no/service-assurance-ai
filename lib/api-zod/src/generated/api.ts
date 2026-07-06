@@ -97,6 +97,8 @@ export const GetRecentTicketsResponseItem = zod
       'closed',
     ]),
     outageType: zod.enum(['outage', 'impairment', 'informational', 'unknown']),
+    impactLevel: zod.enum(['low', 'medium', 'high']).nullish(),
+    urgencyLevel: zod.enum(['low', 'medium', 'high']).nullish(),
     vendorTicketId: zod.string().nullish(),
     assignedToUserId: zod.string().nullish(),
     openedAt: zod.coerce.date(),
@@ -108,6 +110,10 @@ export const GetRecentTicketsResponseItem = zod
     aiNormalizedStatus: zod.string().nullish(),
     aiCustomerUpdate: zod.string().nullish(),
     aiLastGeneratedAt: zod.coerce.date().nullish(),
+    externalSource: zod.string().nullish(),
+    externalId: zod.string().nullish(),
+    externalSyncedAt: zod.coerce.date().nullish(),
+    externalSyncStatus: zod.string().nullish(),
     createdAt: zod.coerce.date(),
     updatedAt: zod.coerce.date(),
   })
@@ -123,6 +129,10 @@ export const GetRecentTicketsResponseItem = zod
           primaryContactEmail: zod.string().nullish(),
           primaryContactPhone: zod.string().nullish(),
           notes: zod.string().nullish(),
+          externalSource: zod.string().nullish(),
+          externalId: zod.string().nullish(),
+          externalSyncedAt: zod.coerce.date().nullish(),
+          externalSyncStatus: zod.string().nullish(),
           createdAt: zod.coerce.date(),
           updatedAt: zod.coerce.date(),
         })
@@ -141,6 +151,16 @@ export const GetRecentTicketsResponseItem = zod
           timezone: zod.string().nullish(),
           siteCode: zod.string().nullish(),
           notes: zod.string().nullish(),
+          lconName: zod.string().nullish(),
+          lconPhone: zod.string().nullish(),
+          lconEmail: zod.string().nullish(),
+          latitude: zod.number().nullish(),
+          longitude: zod.number().nullish(),
+          geoSource: zod.enum(['manual', 'geocoded', 'imported']).nullish(),
+          externalSource: zod.string().nullish(),
+          externalId: zod.string().nullish(),
+          externalSyncedAt: zod.coerce.date().nullish(),
+          externalSyncStatus: zod.string().nullish(),
           createdAt: zod.coerce.date(),
           updatedAt: zod.coerce.date(),
         })
@@ -159,6 +179,10 @@ export const GetRecentTicketsResponseItem = zod
           monthlyRecurringCharge: zod.number().nullish(),
           supportReference: zod.string().nullish(),
           notes: zod.string().nullish(),
+          externalSource: zod.string().nullish(),
+          externalId: zod.string().nullish(),
+          externalSyncedAt: zod.coerce.date().nullish(),
+          externalSyncStatus: zod.string().nullish(),
           createdAt: zod.coerce.date(),
           updatedAt: zod.coerce.date(),
         })
@@ -202,6 +226,8 @@ export const GetEscalationNeededResponseItem = zod
       'closed',
     ]),
     outageType: zod.enum(['outage', 'impairment', 'informational', 'unknown']),
+    impactLevel: zod.enum(['low', 'medium', 'high']).nullish(),
+    urgencyLevel: zod.enum(['low', 'medium', 'high']).nullish(),
     vendorTicketId: zod.string().nullish(),
     assignedToUserId: zod.string().nullish(),
     openedAt: zod.coerce.date(),
@@ -213,6 +239,10 @@ export const GetEscalationNeededResponseItem = zod
     aiNormalizedStatus: zod.string().nullish(),
     aiCustomerUpdate: zod.string().nullish(),
     aiLastGeneratedAt: zod.coerce.date().nullish(),
+    externalSource: zod.string().nullish(),
+    externalId: zod.string().nullish(),
+    externalSyncedAt: zod.coerce.date().nullish(),
+    externalSyncStatus: zod.string().nullish(),
     createdAt: zod.coerce.date(),
     updatedAt: zod.coerce.date(),
   })
@@ -228,6 +258,10 @@ export const GetEscalationNeededResponseItem = zod
           primaryContactEmail: zod.string().nullish(),
           primaryContactPhone: zod.string().nullish(),
           notes: zod.string().nullish(),
+          externalSource: zod.string().nullish(),
+          externalId: zod.string().nullish(),
+          externalSyncedAt: zod.coerce.date().nullish(),
+          externalSyncStatus: zod.string().nullish(),
           createdAt: zod.coerce.date(),
           updatedAt: zod.coerce.date(),
         })
@@ -246,6 +280,16 @@ export const GetEscalationNeededResponseItem = zod
           timezone: zod.string().nullish(),
           siteCode: zod.string().nullish(),
           notes: zod.string().nullish(),
+          lconName: zod.string().nullish(),
+          lconPhone: zod.string().nullish(),
+          lconEmail: zod.string().nullish(),
+          latitude: zod.number().nullish(),
+          longitude: zod.number().nullish(),
+          geoSource: zod.enum(['manual', 'geocoded', 'imported']).nullish(),
+          externalSource: zod.string().nullish(),
+          externalId: zod.string().nullish(),
+          externalSyncedAt: zod.coerce.date().nullish(),
+          externalSyncStatus: zod.string().nullish(),
           createdAt: zod.coerce.date(),
           updatedAt: zod.coerce.date(),
         })
@@ -264,6 +308,10 @@ export const GetEscalationNeededResponseItem = zod
           monthlyRecurringCharge: zod.number().nullish(),
           supportReference: zod.string().nullish(),
           notes: zod.string().nullish(),
+          externalSource: zod.string().nullish(),
+          externalId: zod.string().nullish(),
+          externalSyncedAt: zod.coerce.date().nullish(),
+          externalSyncStatus: zod.string().nullish(),
           createdAt: zod.coerce.date(),
           updatedAt: zod.coerce.date(),
         })
@@ -289,6 +337,9 @@ export const GetEscalationNeededResponse = zod.array(GetEscalationNeededResponse
 export const GetCustomersQueryParams = zod.object({
   search: zod.coerce.string().optional(),
   status: zod.coerce.string().optional(),
+  externalSource: zod.coerce.string().optional(),
+  externalId: zod.coerce.string().optional(),
+  compact: zod.coerce.boolean().optional(),
 });
 
 export const GetCustomersResponseItem = zod.object({
@@ -300,6 +351,10 @@ export const GetCustomersResponseItem = zod.object({
   primaryContactEmail: zod.string().nullish(),
   primaryContactPhone: zod.string().nullish(),
   notes: zod.string().nullish(),
+  externalSource: zod.string().nullish(),
+  externalId: zod.string().nullish(),
+  externalSyncedAt: zod.coerce.date().nullish(),
+  externalSyncStatus: zod.string().nullish(),
   createdAt: zod.coerce.date(),
   updatedAt: zod.coerce.date(),
 });
@@ -308,6 +363,10 @@ export const GetCustomersResponse = zod.array(GetCustomersResponseItem);
 /**
  * @summary Create a customer
  */
+export const CreateCustomerHeader = zod.object({
+  'Idempotency-Key': zod.string(),
+});
+
 export const CreateCustomerBody = zod.object({
   name: zod.string(),
   accountNumber: zod.string().nullish(),
@@ -316,6 +375,10 @@ export const CreateCustomerBody = zod.object({
   primaryContactEmail: zod.string().nullish(),
   primaryContactPhone: zod.string().nullish(),
   notes: zod.string().nullish(),
+  externalSource: zod.string().nullish(),
+  externalId: zod.string().nullish(),
+  externalSyncedAt: zod.coerce.date().nullish(),
+  externalSyncStatus: zod.string().nullish(),
 });
 
 /**
@@ -335,6 +398,10 @@ export const GetCustomerResponse = zod
     primaryContactEmail: zod.string().nullish(),
     primaryContactPhone: zod.string().nullish(),
     notes: zod.string().nullish(),
+    externalSource: zod.string().nullish(),
+    externalId: zod.string().nullish(),
+    externalSyncedAt: zod.coerce.date().nullish(),
+    externalSyncStatus: zod.string().nullish(),
     createdAt: zod.coerce.date(),
     updatedAt: zod.coerce.date(),
   })
@@ -355,6 +422,16 @@ export const GetCustomerResponse = zod
             timezone: zod.string().nullish(),
             siteCode: zod.string().nullish(),
             notes: zod.string().nullish(),
+            lconName: zod.string().nullish(),
+            lconPhone: zod.string().nullish(),
+            lconEmail: zod.string().nullish(),
+            latitude: zod.number().nullish(),
+            longitude: zod.number().nullish(),
+            geoSource: zod.enum(['manual', 'geocoded', 'imported']).nullish(),
+            externalSource: zod.string().nullish(),
+            externalId: zod.string().nullish(),
+            externalSyncedAt: zod.coerce.date().nullish(),
+            externalSyncStatus: zod.string().nullish(),
             createdAt: zod.coerce.date(),
             updatedAt: zod.coerce.date(),
           }),
@@ -375,6 +452,10 @@ export const GetCustomerResponse = zod
             monthlyRecurringCharge: zod.number().nullish(),
             supportReference: zod.string().nullish(),
             notes: zod.string().nullish(),
+            externalSource: zod.string().nullish(),
+            externalId: zod.string().nullish(),
+            externalSyncedAt: zod.coerce.date().nullish(),
+            externalSyncStatus: zod.string().nullish(),
             createdAt: zod.coerce.date(),
             updatedAt: zod.coerce.date(),
           }),
@@ -402,6 +483,8 @@ export const GetCustomerResponse = zod
               'closed',
             ]),
             outageType: zod.enum(['outage', 'impairment', 'informational', 'unknown']),
+            impactLevel: zod.enum(['low', 'medium', 'high']).nullish(),
+            urgencyLevel: zod.enum(['low', 'medium', 'high']).nullish(),
             vendorTicketId: zod.string().nullish(),
             assignedToUserId: zod.string().nullish(),
             openedAt: zod.coerce.date(),
@@ -413,6 +496,10 @@ export const GetCustomerResponse = zod
             aiNormalizedStatus: zod.string().nullish(),
             aiCustomerUpdate: zod.string().nullish(),
             aiLastGeneratedAt: zod.coerce.date().nullish(),
+            externalSource: zod.string().nullish(),
+            externalId: zod.string().nullish(),
+            externalSyncedAt: zod.coerce.date().nullish(),
+            externalSyncStatus: zod.string().nullish(),
             createdAt: zod.coerce.date(),
             updatedAt: zod.coerce.date(),
           }),
@@ -447,6 +534,10 @@ export const UpdateCustomerResponse = zod.object({
   primaryContactEmail: zod.string().nullish(),
   primaryContactPhone: zod.string().nullish(),
   notes: zod.string().nullish(),
+  externalSource: zod.string().nullish(),
+  externalId: zod.string().nullish(),
+  externalSyncedAt: zod.coerce.date().nullish(),
+  externalSyncStatus: zod.string().nullish(),
   createdAt: zod.coerce.date(),
   updatedAt: zod.coerce.date(),
 });
@@ -464,11 +555,98 @@ export const DeleteCustomerResponse = zod.object({
 });
 
 /**
+ * @summary List escalation contacts for a customer
+ */
+export const GetCustomerContactsParams = zod.object({
+  id: zod.coerce.string(),
+});
+
+export const GetCustomerContactsResponseItem = zod.object({
+  id: zod.string(),
+  customerId: zod.string(),
+  name: zod.string(),
+  email: zod.string(),
+  phone: zod.string().nullish(),
+  role: zod.enum(['noc', 'manager', 'director', 'executive']),
+  notifyOnSeverity: zod.enum(['low', 'medium', 'high', 'critical']),
+  notifyOnDurationMinutes: zod.number().nullish(),
+  notificationChannels: zod.string(),
+  createdAt: zod.coerce.date(),
+  updatedAt: zod.coerce.date(),
+});
+export const GetCustomerContactsResponse = zod.array(GetCustomerContactsResponseItem);
+
+/**
+ * @summary Create escalation contact for customer
+ */
+export const CreateCustomerContactParams = zod.object({
+  id: zod.coerce.string(),
+});
+
+export const CreateCustomerContactBody = zod.object({
+  name: zod.string(),
+  email: zod.string(),
+  phone: zod.string().nullish(),
+  role: zod.enum(['noc', 'manager', 'director', 'executive']),
+  notifyOnSeverity: zod.enum(['low', 'medium', 'high', 'critical']),
+  notifyOnDurationMinutes: zod.number().nullish(),
+  notificationChannels: zod.string().optional(),
+});
+
+/**
+ * @summary Update escalation contact for customer
+ */
+export const UpdateCustomerContactParams = zod.object({
+  id: zod.coerce.string(),
+  contactId: zod.coerce.string(),
+});
+
+export const UpdateCustomerContactBody = zod.object({
+  name: zod.string().optional(),
+  email: zod.string().optional(),
+  phone: zod.string().nullish(),
+  role: zod.enum(['noc', 'manager', 'director', 'executive']).optional(),
+  notifyOnSeverity: zod.enum(['low', 'medium', 'high', 'critical']).optional(),
+  notifyOnDurationMinutes: zod.number().nullish(),
+  notificationChannels: zod.string().optional(),
+});
+
+export const UpdateCustomerContactResponse = zod.object({
+  id: zod.string(),
+  customerId: zod.string(),
+  name: zod.string(),
+  email: zod.string(),
+  phone: zod.string().nullish(),
+  role: zod.enum(['noc', 'manager', 'director', 'executive']),
+  notifyOnSeverity: zod.enum(['low', 'medium', 'high', 'critical']),
+  notifyOnDurationMinutes: zod.number().nullish(),
+  notificationChannels: zod.string(),
+  createdAt: zod.coerce.date(),
+  updatedAt: zod.coerce.date(),
+});
+
+/**
+ * @summary Delete escalation contact for customer
+ */
+export const DeleteCustomerContactParams = zod.object({
+  id: zod.coerce.string(),
+  contactId: zod.coerce.string(),
+});
+
+export const DeleteCustomerContactResponse = zod.object({
+  success: zod.boolean(),
+  message: zod.string().optional(),
+});
+
+/**
  * @summary List sites
  */
 export const GetSitesQueryParams = zod.object({
   customerId: zod.coerce.string().optional(),
   search: zod.coerce.string().optional(),
+  externalSource: zod.coerce.string().optional(),
+  externalId: zod.coerce.string().optional(),
+  compact: zod.coerce.boolean().optional(),
 });
 
 export const GetSitesResponseItem = zod
@@ -485,6 +663,16 @@ export const GetSitesResponseItem = zod
     timezone: zod.string().nullish(),
     siteCode: zod.string().nullish(),
     notes: zod.string().nullish(),
+    lconName: zod.string().nullish(),
+    lconPhone: zod.string().nullish(),
+    lconEmail: zod.string().nullish(),
+    latitude: zod.number().nullish(),
+    longitude: zod.number().nullish(),
+    geoSource: zod.enum(['manual', 'geocoded', 'imported']).nullish(),
+    externalSource: zod.string().nullish(),
+    externalId: zod.string().nullish(),
+    externalSyncedAt: zod.coerce.date().nullish(),
+    externalSyncStatus: zod.string().nullish(),
     createdAt: zod.coerce.date(),
     updatedAt: zod.coerce.date(),
   })
@@ -500,6 +688,10 @@ export const GetSitesResponseItem = zod
           primaryContactEmail: zod.string().nullish(),
           primaryContactPhone: zod.string().nullish(),
           notes: zod.string().nullish(),
+          externalSource: zod.string().nullish(),
+          externalId: zod.string().nullish(),
+          externalSyncedAt: zod.coerce.date().nullish(),
+          externalSyncStatus: zod.string().nullish(),
           createdAt: zod.coerce.date(),
           updatedAt: zod.coerce.date(),
         })
@@ -511,6 +703,10 @@ export const GetSitesResponse = zod.array(GetSitesResponseItem);
 /**
  * @summary Create a site
  */
+export const CreateSiteHeader = zod.object({
+  'Idempotency-Key': zod.string(),
+});
+
 export const CreateSiteBody = zod.object({
   customerId: zod.string(),
   siteName: zod.string(),
@@ -523,6 +719,16 @@ export const CreateSiteBody = zod.object({
   timezone: zod.string().nullish(),
   siteCode: zod.string().nullish(),
   notes: zod.string().nullish(),
+  lconName: zod.string().nullish(),
+  lconPhone: zod.string().nullish(),
+  lconEmail: zod.string().nullish(),
+  latitude: zod.number().nullish(),
+  longitude: zod.number().nullish(),
+  geoSource: zod.enum(['manual', 'geocoded', 'imported']).nullish(),
+  externalSource: zod.string().nullish(),
+  externalId: zod.string().nullish(),
+  externalSyncedAt: zod.coerce.date().nullish(),
+  externalSyncStatus: zod.string().nullish(),
 });
 
 /**
@@ -546,6 +752,16 @@ export const GetSiteResponse = zod
     timezone: zod.string().nullish(),
     siteCode: zod.string().nullish(),
     notes: zod.string().nullish(),
+    lconName: zod.string().nullish(),
+    lconPhone: zod.string().nullish(),
+    lconEmail: zod.string().nullish(),
+    latitude: zod.number().nullish(),
+    longitude: zod.number().nullish(),
+    geoSource: zod.enum(['manual', 'geocoded', 'imported']).nullish(),
+    externalSource: zod.string().nullish(),
+    externalId: zod.string().nullish(),
+    externalSyncedAt: zod.coerce.date().nullish(),
+    externalSyncStatus: zod.string().nullish(),
     createdAt: zod.coerce.date(),
     updatedAt: zod.coerce.date(),
   })
@@ -561,6 +777,10 @@ export const GetSiteResponse = zod
           primaryContactEmail: zod.string().nullish(),
           primaryContactPhone: zod.string().nullish(),
           notes: zod.string().nullish(),
+          externalSource: zod.string().nullish(),
+          externalId: zod.string().nullish(),
+          externalSyncedAt: zod.coerce.date().nullish(),
+          externalSyncStatus: zod.string().nullish(),
           createdAt: zod.coerce.date(),
           updatedAt: zod.coerce.date(),
         })
@@ -580,6 +800,10 @@ export const GetSiteResponse = zod
             monthlyRecurringCharge: zod.number().nullish(),
             supportReference: zod.string().nullish(),
             notes: zod.string().nullish(),
+            externalSource: zod.string().nullish(),
+            externalId: zod.string().nullish(),
+            externalSyncedAt: zod.coerce.date().nullish(),
+            externalSyncStatus: zod.string().nullish(),
             createdAt: zod.coerce.date(),
             updatedAt: zod.coerce.date(),
           }),
@@ -607,6 +831,8 @@ export const GetSiteResponse = zod
               'closed',
             ]),
             outageType: zod.enum(['outage', 'impairment', 'informational', 'unknown']),
+            impactLevel: zod.enum(['low', 'medium', 'high']).nullish(),
+            urgencyLevel: zod.enum(['low', 'medium', 'high']).nullish(),
             vendorTicketId: zod.string().nullish(),
             assignedToUserId: zod.string().nullish(),
             openedAt: zod.coerce.date(),
@@ -618,6 +844,10 @@ export const GetSiteResponse = zod
             aiNormalizedStatus: zod.string().nullish(),
             aiCustomerUpdate: zod.string().nullish(),
             aiLastGeneratedAt: zod.coerce.date().nullish(),
+            externalSource: zod.string().nullish(),
+            externalId: zod.string().nullish(),
+            externalSyncedAt: zod.coerce.date().nullish(),
+            externalSyncStatus: zod.string().nullish(),
             createdAt: zod.coerce.date(),
             updatedAt: zod.coerce.date(),
           }),
@@ -644,6 +874,16 @@ export const UpdateSiteBody = zod.object({
   timezone: zod.string().nullish(),
   siteCode: zod.string().nullish(),
   notes: zod.string().nullish(),
+  externalSource: zod.string().nullish(),
+  externalId: zod.string().nullish(),
+  externalSyncedAt: zod.coerce.date().nullish(),
+  externalSyncStatus: zod.string().nullish(),
+  lconName: zod.string().nullish(),
+  lconPhone: zod.string().nullish(),
+  lconEmail: zod.string().nullish(),
+  latitude: zod.number().nullish(),
+  longitude: zod.number().nullish(),
+  geoSource: zod.enum(['manual', 'geocoded', 'imported']).nullish(),
 });
 
 export const UpdateSiteResponse = zod.object({
@@ -659,6 +899,16 @@ export const UpdateSiteResponse = zod.object({
   timezone: zod.string().nullish(),
   siteCode: zod.string().nullish(),
   notes: zod.string().nullish(),
+  lconName: zod.string().nullish(),
+  lconPhone: zod.string().nullish(),
+  lconEmail: zod.string().nullish(),
+  latitude: zod.number().nullish(),
+  longitude: zod.number().nullish(),
+  geoSource: zod.enum(['manual', 'geocoded', 'imported']).nullish(),
+  externalSource: zod.string().nullish(),
+  externalId: zod.string().nullish(),
+  externalSyncedAt: zod.coerce.date().nullish(),
+  externalSyncStatus: zod.string().nullish(),
   createdAt: zod.coerce.date(),
   updatedAt: zod.coerce.date(),
 });
@@ -684,6 +934,9 @@ export const GetServicesQueryParams = zod.object({
   search: zod.coerce.string().optional(),
   status: zod.coerce.string().optional(),
   vendorName: zod.coerce.string().optional(),
+  externalSource: zod.coerce.string().optional(),
+  externalId: zod.coerce.string().optional(),
+  compact: zod.coerce.boolean().optional(),
 });
 
 export const GetServicesResponseItem = zod
@@ -700,6 +953,10 @@ export const GetServicesResponseItem = zod
     monthlyRecurringCharge: zod.number().nullish(),
     supportReference: zod.string().nullish(),
     notes: zod.string().nullish(),
+    externalSource: zod.string().nullish(),
+    externalId: zod.string().nullish(),
+    externalSyncedAt: zod.coerce.date().nullish(),
+    externalSyncStatus: zod.string().nullish(),
     createdAt: zod.coerce.date(),
     updatedAt: zod.coerce.date(),
   })
@@ -715,6 +972,10 @@ export const GetServicesResponseItem = zod
           primaryContactEmail: zod.string().nullish(),
           primaryContactPhone: zod.string().nullish(),
           notes: zod.string().nullish(),
+          externalSource: zod.string().nullish(),
+          externalId: zod.string().nullish(),
+          externalSyncedAt: zod.coerce.date().nullish(),
+          externalSyncStatus: zod.string().nullish(),
           createdAt: zod.coerce.date(),
           updatedAt: zod.coerce.date(),
         })
@@ -733,6 +994,16 @@ export const GetServicesResponseItem = zod
           timezone: zod.string().nullish(),
           siteCode: zod.string().nullish(),
           notes: zod.string().nullish(),
+          lconName: zod.string().nullish(),
+          lconPhone: zod.string().nullish(),
+          lconEmail: zod.string().nullish(),
+          latitude: zod.number().nullish(),
+          longitude: zod.number().nullish(),
+          geoSource: zod.enum(['manual', 'geocoded', 'imported']).nullish(),
+          externalSource: zod.string().nullish(),
+          externalId: zod.string().nullish(),
+          externalSyncedAt: zod.coerce.date().nullish(),
+          externalSyncStatus: zod.string().nullish(),
           createdAt: zod.coerce.date(),
           updatedAt: zod.coerce.date(),
         })
@@ -744,6 +1015,10 @@ export const GetServicesResponse = zod.array(GetServicesResponseItem);
 /**
  * @summary Create a service
  */
+export const CreateServiceHeader = zod.object({
+  'Idempotency-Key': zod.string(),
+});
+
 export const CreateServiceBody = zod.object({
   customerId: zod.string(),
   siteId: zod.string(),
@@ -779,6 +1054,10 @@ export const GetServiceResponse = zod
     monthlyRecurringCharge: zod.number().nullish(),
     supportReference: zod.string().nullish(),
     notes: zod.string().nullish(),
+    externalSource: zod.string().nullish(),
+    externalId: zod.string().nullish(),
+    externalSyncedAt: zod.coerce.date().nullish(),
+    externalSyncStatus: zod.string().nullish(),
     createdAt: zod.coerce.date(),
     updatedAt: zod.coerce.date(),
   })
@@ -794,6 +1073,10 @@ export const GetServiceResponse = zod
           primaryContactEmail: zod.string().nullish(),
           primaryContactPhone: zod.string().nullish(),
           notes: zod.string().nullish(),
+          externalSource: zod.string().nullish(),
+          externalId: zod.string().nullish(),
+          externalSyncedAt: zod.coerce.date().nullish(),
+          externalSyncStatus: zod.string().nullish(),
           createdAt: zod.coerce.date(),
           updatedAt: zod.coerce.date(),
         })
@@ -812,6 +1095,16 @@ export const GetServiceResponse = zod
           timezone: zod.string().nullish(),
           siteCode: zod.string().nullish(),
           notes: zod.string().nullish(),
+          lconName: zod.string().nullish(),
+          lconPhone: zod.string().nullish(),
+          lconEmail: zod.string().nullish(),
+          latitude: zod.number().nullish(),
+          longitude: zod.number().nullish(),
+          geoSource: zod.enum(['manual', 'geocoded', 'imported']).nullish(),
+          externalSource: zod.string().nullish(),
+          externalId: zod.string().nullish(),
+          externalSyncedAt: zod.coerce.date().nullish(),
+          externalSyncStatus: zod.string().nullish(),
           createdAt: zod.coerce.date(),
           updatedAt: zod.coerce.date(),
         })
@@ -851,6 +1144,10 @@ export const UpdateServiceResponse = zod.object({
   monthlyRecurringCharge: zod.number().nullish(),
   supportReference: zod.string().nullish(),
   notes: zod.string().nullish(),
+  externalSource: zod.string().nullish(),
+  externalId: zod.string().nullish(),
+  externalSyncedAt: zod.coerce.date().nullish(),
+  externalSyncStatus: zod.string().nullish(),
   createdAt: zod.coerce.date(),
   updatedAt: zod.coerce.date(),
 });
@@ -879,6 +1176,9 @@ export const GetTicketsQueryParams = zod.object({
   vendorName: zod.coerce.string().optional(),
   sortBy: zod.coerce.string().optional(),
   sortOrder: zod.coerce.string().optional(),
+  externalSource: zod.coerce.string().optional(),
+  externalId: zod.coerce.string().optional(),
+  compact: zod.coerce.boolean().optional(),
 });
 
 export const GetTicketsResponseItem = zod
@@ -902,6 +1202,8 @@ export const GetTicketsResponseItem = zod
       'closed',
     ]),
     outageType: zod.enum(['outage', 'impairment', 'informational', 'unknown']),
+    impactLevel: zod.enum(['low', 'medium', 'high']).nullish(),
+    urgencyLevel: zod.enum(['low', 'medium', 'high']).nullish(),
     vendorTicketId: zod.string().nullish(),
     assignedToUserId: zod.string().nullish(),
     openedAt: zod.coerce.date(),
@@ -913,6 +1215,10 @@ export const GetTicketsResponseItem = zod
     aiNormalizedStatus: zod.string().nullish(),
     aiCustomerUpdate: zod.string().nullish(),
     aiLastGeneratedAt: zod.coerce.date().nullish(),
+    externalSource: zod.string().nullish(),
+    externalId: zod.string().nullish(),
+    externalSyncedAt: zod.coerce.date().nullish(),
+    externalSyncStatus: zod.string().nullish(),
     createdAt: zod.coerce.date(),
     updatedAt: zod.coerce.date(),
   })
@@ -928,6 +1234,10 @@ export const GetTicketsResponseItem = zod
           primaryContactEmail: zod.string().nullish(),
           primaryContactPhone: zod.string().nullish(),
           notes: zod.string().nullish(),
+          externalSource: zod.string().nullish(),
+          externalId: zod.string().nullish(),
+          externalSyncedAt: zod.coerce.date().nullish(),
+          externalSyncStatus: zod.string().nullish(),
           createdAt: zod.coerce.date(),
           updatedAt: zod.coerce.date(),
         })
@@ -946,6 +1256,16 @@ export const GetTicketsResponseItem = zod
           timezone: zod.string().nullish(),
           siteCode: zod.string().nullish(),
           notes: zod.string().nullish(),
+          lconName: zod.string().nullish(),
+          lconPhone: zod.string().nullish(),
+          lconEmail: zod.string().nullish(),
+          latitude: zod.number().nullish(),
+          longitude: zod.number().nullish(),
+          geoSource: zod.enum(['manual', 'geocoded', 'imported']).nullish(),
+          externalSource: zod.string().nullish(),
+          externalId: zod.string().nullish(),
+          externalSyncedAt: zod.coerce.date().nullish(),
+          externalSyncStatus: zod.string().nullish(),
           createdAt: zod.coerce.date(),
           updatedAt: zod.coerce.date(),
         })
@@ -964,6 +1284,10 @@ export const GetTicketsResponseItem = zod
           monthlyRecurringCharge: zod.number().nullish(),
           supportReference: zod.string().nullish(),
           notes: zod.string().nullish(),
+          externalSource: zod.string().nullish(),
+          externalId: zod.string().nullish(),
+          externalSyncedAt: zod.coerce.date().nullish(),
+          externalSyncStatus: zod.string().nullish(),
           createdAt: zod.coerce.date(),
           updatedAt: zod.coerce.date(),
         })
@@ -986,6 +1310,10 @@ export const GetTicketsResponse = zod.array(GetTicketsResponseItem);
 /**
  * @summary Create a ticket
  */
+export const CreateTicketHeader = zod.object({
+  'Idempotency-Key': zod.string(),
+});
+
 export const CreateTicketBody = zod.object({
   customerId: zod.string(),
   siteId: zod.string().nullish(),
@@ -1004,9 +1332,15 @@ export const CreateTicketBody = zod.object({
     'closed',
   ]),
   outageType: zod.enum(['outage', 'impairment', 'informational', 'unknown']),
+  impactLevel: zod.enum(['low', 'medium', 'high']).nullish(),
+  urgencyLevel: zod.enum(['low', 'medium', 'high']).nullish(),
   vendorTicketId: zod.string().nullish(),
   assignedToUserId: zod.string().nullish(),
   slaTargetMinutes: zod.number().nullish(),
+  externalSource: zod.string().nullish(),
+  externalId: zod.string().nullish(),
+  externalSyncedAt: zod.coerce.date().nullish(),
+  externalSyncStatus: zod.string().nullish(),
 });
 
 /**
@@ -1037,6 +1371,8 @@ export const GetTicketResponse = zod
       'closed',
     ]),
     outageType: zod.enum(['outage', 'impairment', 'informational', 'unknown']),
+    impactLevel: zod.enum(['low', 'medium', 'high']).nullish(),
+    urgencyLevel: zod.enum(['low', 'medium', 'high']).nullish(),
     vendorTicketId: zod.string().nullish(),
     assignedToUserId: zod.string().nullish(),
     openedAt: zod.coerce.date(),
@@ -1048,6 +1384,10 @@ export const GetTicketResponse = zod
     aiNormalizedStatus: zod.string().nullish(),
     aiCustomerUpdate: zod.string().nullish(),
     aiLastGeneratedAt: zod.coerce.date().nullish(),
+    externalSource: zod.string().nullish(),
+    externalId: zod.string().nullish(),
+    externalSyncedAt: zod.coerce.date().nullish(),
+    externalSyncStatus: zod.string().nullish(),
     createdAt: zod.coerce.date(),
     updatedAt: zod.coerce.date(),
   })
@@ -1063,6 +1403,10 @@ export const GetTicketResponse = zod
           primaryContactEmail: zod.string().nullish(),
           primaryContactPhone: zod.string().nullish(),
           notes: zod.string().nullish(),
+          externalSource: zod.string().nullish(),
+          externalId: zod.string().nullish(),
+          externalSyncedAt: zod.coerce.date().nullish(),
+          externalSyncStatus: zod.string().nullish(),
           createdAt: zod.coerce.date(),
           updatedAt: zod.coerce.date(),
         })
@@ -1081,6 +1425,16 @@ export const GetTicketResponse = zod
           timezone: zod.string().nullish(),
           siteCode: zod.string().nullish(),
           notes: zod.string().nullish(),
+          lconName: zod.string().nullish(),
+          lconPhone: zod.string().nullish(),
+          lconEmail: zod.string().nullish(),
+          latitude: zod.number().nullish(),
+          longitude: zod.number().nullish(),
+          geoSource: zod.enum(['manual', 'geocoded', 'imported']).nullish(),
+          externalSource: zod.string().nullish(),
+          externalId: zod.string().nullish(),
+          externalSyncedAt: zod.coerce.date().nullish(),
+          externalSyncStatus: zod.string().nullish(),
           createdAt: zod.coerce.date(),
           updatedAt: zod.coerce.date(),
         })
@@ -1099,6 +1453,10 @@ export const GetTicketResponse = zod
           monthlyRecurringCharge: zod.number().nullish(),
           supportReference: zod.string().nullish(),
           notes: zod.string().nullish(),
+          externalSource: zod.string().nullish(),
+          externalId: zod.string().nullish(),
+          externalSyncedAt: zod.coerce.date().nullish(),
+          externalSyncStatus: zod.string().nullish(),
           createdAt: zod.coerce.date(),
           updatedAt: zod.coerce.date(),
         })
@@ -1175,6 +1533,8 @@ export const UpdateTicketBody = zod.object({
     ])
     .optional(),
   outageType: zod.enum(['outage', 'impairment', 'informational', 'unknown']).optional(),
+  impactLevel: zod.enum(['low', 'medium', 'high']).nullish(),
+  urgencyLevel: zod.enum(['low', 'medium', 'high']).nullish(),
   vendorTicketId: zod.string().nullish(),
   assignedToUserId: zod.string().nullish(),
   nextEscalationAt: zod.coerce.date().nullish(),
@@ -1204,6 +1564,8 @@ export const UpdateTicketResponse = zod.object({
     'closed',
   ]),
   outageType: zod.enum(['outage', 'impairment', 'informational', 'unknown']),
+  impactLevel: zod.enum(['low', 'medium', 'high']).nullish(),
+  urgencyLevel: zod.enum(['low', 'medium', 'high']).nullish(),
   vendorTicketId: zod.string().nullish(),
   assignedToUserId: zod.string().nullish(),
   openedAt: zod.coerce.date(),
@@ -1215,6 +1577,10 @@ export const UpdateTicketResponse = zod.object({
   aiNormalizedStatus: zod.string().nullish(),
   aiCustomerUpdate: zod.string().nullish(),
   aiLastGeneratedAt: zod.coerce.date().nullish(),
+  externalSource: zod.string().nullish(),
+  externalId: zod.string().nullish(),
+  externalSyncedAt: zod.coerce.date().nullish(),
+  externalSyncStatus: zod.string().nullish(),
   createdAt: zod.coerce.date(),
   updatedAt: zod.coerce.date(),
 });
@@ -1276,6 +1642,114 @@ export const CreateTicketUpdateBody = zod.object({
 });
 
 /**
+ * @summary Get escalation notifications for a ticket
+ */
+export const GetTicketNotificationsParams = zod.object({
+  id: zod.coerce.string(),
+});
+
+export const GetTicketNotificationsResponseItem = zod.object({
+  id: zod.string(),
+  ticketId: zod.string(),
+  contactId: zod.string(),
+  contactName: zod.string().optional(),
+  contactEmail: zod.string().optional(),
+  contactRole: zod.enum(['noc', 'manager', 'director', 'executive']).optional(),
+  reason: zod.enum(['severity_threshold', 'duration_threshold', 'manual']),
+  severity: zod.enum(['low', 'medium', 'high', 'critical']).optional(),
+  durationMinutes: zod.number().nullish(),
+  ruleDescription: zod.string().nullish(),
+  message: zod.string().optional(),
+  status: zod.enum(['simulated', 'sent', 'failed']),
+  notifiedAt: zod.coerce.date(),
+});
+export const GetTicketNotificationsResponse = zod.array(GetTicketNotificationsResponseItem);
+
+/**
+ * @summary Evaluate escalation rules and notify contacts when required
+ */
+export const EvaluateEscalationParams = zod.object({
+  id: zod.coerce.string(),
+});
+
+export const EvaluateEscalationResponse = zod.object({
+  notified: zod.number(),
+  contacts: zod.array(
+    zod.object({
+      name: zod.string().optional(),
+      email: zod.string().optional(),
+      role: zod.string().optional(),
+      reason: zod.string().optional(),
+    }),
+  ),
+});
+
+/**
+ * @summary Get escalation severity matrix
+ */
+export const GetEscalationMatrixQueryParams = zod.object({
+  scopeType: zod.enum(['global', 'customer', 'site', 'service']),
+  scopeId: zod.coerce.string().optional(),
+});
+
+export const GetEscalationMatrixResponse = zod.object({
+  scopeType: zod.enum(['global', 'customer', 'site', 'service']),
+  scopeId: zod.string().nullish(),
+  cells: zod.array(
+    zod.object({
+      impactLevel: zod.enum(['high', 'medium', 'low']),
+      urgencyLevel: zod.enum(['high', 'medium', 'low']),
+      derivedSeverity: zod.enum(['critical', 'high', 'medium', 'low']),
+      isOverride: zod.boolean(),
+      overrideId: zod.string().nullish(),
+      inheritedFrom: zod.string().nullish(),
+    }),
+  ),
+});
+
+/**
+ * @summary Upsert escalation matrix overrides
+ */
+export const UpsertEscalationMatrixBody = zod.object({
+  scopeType: zod.enum(['global', 'customer', 'site', 'service']),
+  scopeId: zod.string().nullish(),
+  cells: zod.array(
+    zod.object({
+      impactLevel: zod.enum(['high', 'medium', 'low']),
+      urgencyLevel: zod.enum(['high', 'medium', 'low']),
+      derivedSeverity: zod.enum(['critical', 'high', 'medium', 'low']),
+    }),
+  ),
+});
+
+export const UpsertEscalationMatrixResponse = zod.object({
+  scopeType: zod.enum(['global', 'customer', 'site', 'service']),
+  scopeId: zod.string().nullish(),
+  cells: zod.array(
+    zod.object({
+      impactLevel: zod.enum(['high', 'medium', 'low']),
+      urgencyLevel: zod.enum(['high', 'medium', 'low']),
+      derivedSeverity: zod.enum(['critical', 'high', 'medium', 'low']),
+      isOverride: zod.boolean(),
+      overrideId: zod.string().nullish(),
+      inheritedFrom: zod.string().nullish(),
+    }),
+  ),
+});
+
+/**
+ * @summary Delete one escalation matrix override cell
+ */
+export const DeleteEscalationMatrixOverrideParams = zod.object({
+  id: zod.coerce.string(),
+});
+
+export const DeleteEscalationMatrixOverrideResponse = zod.object({
+  success: zod.boolean(),
+  message: zod.string().optional(),
+});
+
+/**
  * @summary Generate AI summary for a ticket
  */
 export const AiSummarizeTicketParams = zod.object({
@@ -1304,6 +1778,8 @@ export const AiSummarizeTicketResponse = zod.object({
       'closed',
     ]),
     outageType: zod.enum(['outage', 'impairment', 'informational', 'unknown']),
+    impactLevel: zod.enum(['low', 'medium', 'high']).nullish(),
+    urgencyLevel: zod.enum(['low', 'medium', 'high']).nullish(),
     vendorTicketId: zod.string().nullish(),
     assignedToUserId: zod.string().nullish(),
     openedAt: zod.coerce.date(),
@@ -1315,6 +1791,10 @@ export const AiSummarizeTicketResponse = zod.object({
     aiNormalizedStatus: zod.string().nullish(),
     aiCustomerUpdate: zod.string().nullish(),
     aiLastGeneratedAt: zod.coerce.date().nullish(),
+    externalSource: zod.string().nullish(),
+    externalId: zod.string().nullish(),
+    externalSyncedAt: zod.coerce.date().nullish(),
+    externalSyncStatus: zod.string().nullish(),
     createdAt: zod.coerce.date(),
     updatedAt: zod.coerce.date(),
   }),
@@ -1349,6 +1829,8 @@ export const AiNormalizeLatestUpdateResponse = zod.object({
       'closed',
     ]),
     outageType: zod.enum(['outage', 'impairment', 'informational', 'unknown']),
+    impactLevel: zod.enum(['low', 'medium', 'high']).nullish(),
+    urgencyLevel: zod.enum(['low', 'medium', 'high']).nullish(),
     vendorTicketId: zod.string().nullish(),
     assignedToUserId: zod.string().nullish(),
     openedAt: zod.coerce.date(),
@@ -1360,6 +1842,10 @@ export const AiNormalizeLatestUpdateResponse = zod.object({
     aiNormalizedStatus: zod.string().nullish(),
     aiCustomerUpdate: zod.string().nullish(),
     aiLastGeneratedAt: zod.coerce.date().nullish(),
+    externalSource: zod.string().nullish(),
+    externalId: zod.string().nullish(),
+    externalSyncedAt: zod.coerce.date().nullish(),
+    externalSyncStatus: zod.string().nullish(),
     createdAt: zod.coerce.date(),
     updatedAt: zod.coerce.date(),
   }),
@@ -1394,6 +1880,8 @@ export const AiGenerateCustomerUpdateResponse = zod.object({
       'closed',
     ]),
     outageType: zod.enum(['outage', 'impairment', 'informational', 'unknown']),
+    impactLevel: zod.enum(['low', 'medium', 'high']).nullish(),
+    urgencyLevel: zod.enum(['low', 'medium', 'high']).nullish(),
     vendorTicketId: zod.string().nullish(),
     assignedToUserId: zod.string().nullish(),
     openedAt: zod.coerce.date(),
@@ -1405,9 +1893,637 @@ export const AiGenerateCustomerUpdateResponse = zod.object({
     aiNormalizedStatus: zod.string().nullish(),
     aiCustomerUpdate: zod.string().nullish(),
     aiLastGeneratedAt: zod.coerce.date().nullish(),
+    externalSource: zod.string().nullish(),
+    externalId: zod.string().nullish(),
+    externalSyncedAt: zod.coerce.date().nullish(),
+    externalSyncStatus: zod.string().nullish(),
     createdAt: zod.coerce.date(),
     updatedAt: zod.coerce.date(),
   }),
+});
+
+/**
+ * @summary Upsert customer by InvoxAI external identity
+ */
+export const UpsertInvoxaiCustomerHeader = zod.object({
+  'Idempotency-Key': zod.string().optional(),
+});
+
+export const UpsertInvoxaiCustomerBody = zod.object({
+  name: zod.string(),
+  accountNumber: zod.string().nullish(),
+  status: zod.enum(['active', 'inactive']),
+  primaryContactName: zod.string().nullish(),
+  primaryContactEmail: zod.string().nullish(),
+  primaryContactPhone: zod.string().nullish(),
+  notes: zod.string().nullish(),
+  externalSource: zod.string().nullish(),
+  externalId: zod.string().nullish(),
+  externalSyncedAt: zod.coerce.date().nullish(),
+  externalSyncStatus: zod.string().nullish(),
+});
+
+export const UpsertInvoxaiCustomerResponse = zod.object({
+  id: zod.string(),
+  name: zod.string(),
+  accountNumber: zod.string().nullish(),
+  status: zod.enum(['active', 'inactive']),
+  primaryContactName: zod.string().nullish(),
+  primaryContactEmail: zod.string().nullish(),
+  primaryContactPhone: zod.string().nullish(),
+  notes: zod.string().nullish(),
+  externalSource: zod.string().nullish(),
+  externalId: zod.string().nullish(),
+  externalSyncedAt: zod.coerce.date().nullish(),
+  externalSyncStatus: zod.string().nullish(),
+  createdAt: zod.coerce.date(),
+  updatedAt: zod.coerce.date(),
+});
+
+/**
+ * @summary Upsert site by InvoxAI external identity
+ */
+export const UpsertInvoxaiSiteHeader = zod.object({
+  'Idempotency-Key': zod.string().optional(),
+});
+
+export const UpsertInvoxaiSiteBody = zod.object({
+  customerId: zod.string(),
+  siteName: zod.string(),
+  address1: zod.string().nullish(),
+  address2: zod.string().nullish(),
+  city: zod.string().nullish(),
+  state: zod.string().nullish(),
+  postalCode: zod.string().nullish(),
+  country: zod.string().nullish(),
+  timezone: zod.string().nullish(),
+  siteCode: zod.string().nullish(),
+  notes: zod.string().nullish(),
+  lconName: zod.string().nullish(),
+  lconPhone: zod.string().nullish(),
+  lconEmail: zod.string().nullish(),
+  latitude: zod.number().nullish(),
+  longitude: zod.number().nullish(),
+  geoSource: zod.enum(['manual', 'geocoded', 'imported']).nullish(),
+  externalSource: zod.string().nullish(),
+  externalId: zod.string().nullish(),
+  externalSyncedAt: zod.coerce.date().nullish(),
+  externalSyncStatus: zod.string().nullish(),
+});
+
+export const UpsertInvoxaiSiteResponse = zod.object({
+  id: zod.string(),
+  customerId: zod.string(),
+  siteName: zod.string(),
+  address1: zod.string().nullish(),
+  address2: zod.string().nullish(),
+  city: zod.string().nullish(),
+  state: zod.string().nullish(),
+  postalCode: zod.string().nullish(),
+  country: zod.string().nullish(),
+  timezone: zod.string().nullish(),
+  siteCode: zod.string().nullish(),
+  notes: zod.string().nullish(),
+  lconName: zod.string().nullish(),
+  lconPhone: zod.string().nullish(),
+  lconEmail: zod.string().nullish(),
+  latitude: zod.number().nullish(),
+  longitude: zod.number().nullish(),
+  geoSource: zod.enum(['manual', 'geocoded', 'imported']).nullish(),
+  externalSource: zod.string().nullish(),
+  externalId: zod.string().nullish(),
+  externalSyncedAt: zod.coerce.date().nullish(),
+  externalSyncStatus: zod.string().nullish(),
+  createdAt: zod.coerce.date(),
+  updatedAt: zod.coerce.date(),
+});
+
+/**
+ * @summary Upsert service by InvoxAI external identity
+ */
+export const UpsertInvoxaiServiceHeader = zod.object({
+  'Idempotency-Key': zod.string().optional(),
+});
+
+export const UpsertInvoxaiServiceBody = zod.object({
+  customerId: zod.string(),
+  siteId: zod.string(),
+  vendorName: zod.string(),
+  serviceType: zod.enum(['DIA', 'Broadband', 'SD-WAN', 'Voice', 'Wireless', 'Other']),
+  circuitId: zod.string().nullish(),
+  bandwidth: zod.string().nullish(),
+  status: zod.enum(['active', 'pending', 'down', 'impaired', 'disconnected']),
+  installDate: zod.string().nullish(),
+  monthlyRecurringCharge: zod.number().nullish(),
+  supportReference: zod.string().nullish(),
+  notes: zod.string().nullish(),
+});
+
+export const UpsertInvoxaiServiceResponse = zod.object({
+  id: zod.string(),
+  customerId: zod.string(),
+  siteId: zod.string(),
+  vendorName: zod.string(),
+  serviceType: zod.enum(['DIA', 'Broadband', 'SD-WAN', 'Voice', 'Wireless', 'Other']),
+  circuitId: zod.string().nullish(),
+  bandwidth: zod.string().nullish(),
+  status: zod.enum(['active', 'pending', 'down', 'impaired', 'disconnected']),
+  installDate: zod.string().nullish(),
+  monthlyRecurringCharge: zod.number().nullish(),
+  supportReference: zod.string().nullish(),
+  notes: zod.string().nullish(),
+  externalSource: zod.string().nullish(),
+  externalId: zod.string().nullish(),
+  externalSyncedAt: zod.coerce.date().nullish(),
+  externalSyncStatus: zod.string().nullish(),
+  createdAt: zod.coerce.date(),
+  updatedAt: zod.coerce.date(),
+});
+
+/**
+ * @summary Upsert ticket by InvoxAI external identity
+ */
+export const UpsertInvoxaiTicketHeader = zod.object({
+  'Idempotency-Key': zod.string().optional(),
+});
+
+export const UpsertInvoxaiTicketBody = zod.object({
+  customerId: zod.string(),
+  siteId: zod.string().nullish(),
+  serviceId: zod.string().nullish(),
+  title: zod.string(),
+  description: zod.string().nullish(),
+  source: zod.enum(['manual', 'email', 'api']),
+  severity: zod.enum(['low', 'medium', 'high', 'critical']),
+  status: zod.enum([
+    'new',
+    'investigating',
+    'vendor_engaged',
+    'dispatch_scheduled',
+    'monitoring',
+    'resolved',
+    'closed',
+  ]),
+  outageType: zod.enum(['outage', 'impairment', 'informational', 'unknown']),
+  impactLevel: zod.enum(['low', 'medium', 'high']).nullish(),
+  urgencyLevel: zod.enum(['low', 'medium', 'high']).nullish(),
+  vendorTicketId: zod.string().nullish(),
+  assignedToUserId: zod.string().nullish(),
+  slaTargetMinutes: zod.number().nullish(),
+  externalSource: zod.string().nullish(),
+  externalId: zod.string().nullish(),
+  externalSyncedAt: zod.coerce.date().nullish(),
+  externalSyncStatus: zod.string().nullish(),
+});
+
+export const UpsertInvoxaiTicketResponse = zod.object({
+  id: zod.string(),
+  ticketNumber: zod.string(),
+  customerId: zod.string(),
+  siteId: zod.string().nullish(),
+  serviceId: zod.string().nullish(),
+  title: zod.string(),
+  description: zod.string().nullish(),
+  source: zod.enum(['manual', 'email', 'api']),
+  severity: zod.enum(['low', 'medium', 'high', 'critical']),
+  status: zod.enum([
+    'new',
+    'investigating',
+    'vendor_engaged',
+    'dispatch_scheduled',
+    'monitoring',
+    'resolved',
+    'closed',
+  ]),
+  outageType: zod.enum(['outage', 'impairment', 'informational', 'unknown']),
+  impactLevel: zod.enum(['low', 'medium', 'high']).nullish(),
+  urgencyLevel: zod.enum(['low', 'medium', 'high']).nullish(),
+  vendorTicketId: zod.string().nullish(),
+  assignedToUserId: zod.string().nullish(),
+  openedAt: zod.coerce.date(),
+  lastUpdatedAt: zod.coerce.date(),
+  resolvedAt: zod.coerce.date().nullish(),
+  nextEscalationAt: zod.coerce.date().nullish(),
+  slaTargetMinutes: zod.number().nullish(),
+  aiSummary: zod.string().nullish(),
+  aiNormalizedStatus: zod.string().nullish(),
+  aiCustomerUpdate: zod.string().nullish(),
+  aiLastGeneratedAt: zod.coerce.date().nullish(),
+  externalSource: zod.string().nullish(),
+  externalId: zod.string().nullish(),
+  externalSyncedAt: zod.coerce.date().nullish(),
+  externalSyncStatus: zod.string().nullish(),
+  createdAt: zod.coerce.date(),
+  updatedAt: zod.coerce.date(),
+});
+
+/**
+ * @summary List invoice complaints
+ */
+export const GetInvoiceComplaintsQueryParams = zod.object({
+  search: zod.coerce.string().optional(),
+  status: zod.coerce.string().optional(),
+  customerId: zod.coerce.string().optional(),
+  priority: zod.coerce.string().optional(),
+  complaintType: zod.coerce.string().optional(),
+});
+
+export const GetInvoiceComplaintsResponseItem = zod
+  .object({
+    id: zod.string(),
+    complaintNumber: zod.string(),
+    customerId: zod.string(),
+    siteId: zod.string().nullish(),
+    serviceId: zod.string().nullish(),
+    assignedToUserId: zod.string().nullish(),
+    title: zod.string(),
+    description: zod.string().nullish(),
+    source: zod.enum(['manual', 'api']),
+    status: zod.enum(['new', 'triaged', 'awaiting_customer', 'resolved', 'closed']),
+    priority: zod.enum(['low', 'medium', 'high']),
+    complaintType: zod.enum([
+      'tax_mismatch',
+      'rate_mismatch',
+      'duplicate_charge',
+      'missing_exemption',
+      'other',
+    ]),
+    invoiceNumber: zod.string(),
+    customerAccountNumber: zod.string(),
+    currencyCode: zod.string(),
+    invoiceAmount: zod.string().nullish(),
+    documentCode: zod.string().nullish(),
+    companyCode: zod.string().nullish(),
+    avalaraValidationStatus: zod.enum(['not_validated', 'validated', 'failed']),
+    avalaraValidatedAt: zod.coerce.date().nullish(),
+    avalaraSummary: zod.string().nullish(),
+    externalSource: zod.string().nullish(),
+    externalId: zod.string().nullish(),
+    externalSyncedAt: zod.coerce.date().nullish(),
+    externalSyncStatus: zod.string().nullish(),
+    createdAt: zod.coerce.date(),
+    updatedAt: zod.coerce.date(),
+  })
+  .and(
+    zod.object({
+      customer: zod
+        .object({
+          id: zod.string(),
+          name: zod.string(),
+          accountNumber: zod.string().nullish(),
+          status: zod.enum(['active', 'inactive']),
+          primaryContactName: zod.string().nullish(),
+          primaryContactEmail: zod.string().nullish(),
+          primaryContactPhone: zod.string().nullish(),
+          notes: zod.string().nullish(),
+          externalSource: zod.string().nullish(),
+          externalId: zod.string().nullish(),
+          externalSyncedAt: zod.coerce.date().nullish(),
+          externalSyncStatus: zod.string().nullish(),
+          createdAt: zod.coerce.date(),
+          updatedAt: zod.coerce.date(),
+        })
+        .nullish(),
+    }),
+  );
+export const GetInvoiceComplaintsResponse = zod.array(GetInvoiceComplaintsResponseItem);
+
+/**
+ * @summary Create invoice complaint
+ */
+export const CreateInvoiceComplaintBody = zod.object({
+  customerId: zod.string(),
+  siteId: zod.string().nullish(),
+  serviceId: zod.string().nullish(),
+  assignedToUserId: zod.string().nullish(),
+  title: zod.string(),
+  description: zod.string().nullish(),
+  source: zod.enum(['manual', 'api']).optional(),
+  status: zod.enum(['new', 'triaged', 'awaiting_customer', 'resolved', 'closed']).optional(),
+  priority: zod.enum(['low', 'medium', 'high']).optional(),
+  complaintType: zod
+    .enum(['tax_mismatch', 'rate_mismatch', 'duplicate_charge', 'missing_exemption', 'other'])
+    .optional(),
+  invoiceNumber: zod.string(),
+  customerAccountNumber: zod.string(),
+  currencyCode: zod.string().optional(),
+  invoiceAmount: zod.union([zod.number(), zod.string()]).nullish(),
+  documentCode: zod.string().nullish(),
+  companyCode: zod.string().nullish(),
+});
+
+/**
+ * @summary Get invoice complaint detail
+ */
+export const GetInvoiceComplaintParams = zod.object({
+  id: zod.coerce.string(),
+});
+
+export const GetInvoiceComplaintResponse = zod
+  .object({
+    id: zod.string(),
+    complaintNumber: zod.string(),
+    customerId: zod.string(),
+    siteId: zod.string().nullish(),
+    serviceId: zod.string().nullish(),
+    assignedToUserId: zod.string().nullish(),
+    title: zod.string(),
+    description: zod.string().nullish(),
+    source: zod.enum(['manual', 'api']),
+    status: zod.enum(['new', 'triaged', 'awaiting_customer', 'resolved', 'closed']),
+    priority: zod.enum(['low', 'medium', 'high']),
+    complaintType: zod.enum([
+      'tax_mismatch',
+      'rate_mismatch',
+      'duplicate_charge',
+      'missing_exemption',
+      'other',
+    ]),
+    invoiceNumber: zod.string(),
+    customerAccountNumber: zod.string(),
+    currencyCode: zod.string(),
+    invoiceAmount: zod.string().nullish(),
+    documentCode: zod.string().nullish(),
+    companyCode: zod.string().nullish(),
+    avalaraValidationStatus: zod.enum(['not_validated', 'validated', 'failed']),
+    avalaraValidatedAt: zod.coerce.date().nullish(),
+    avalaraSummary: zod.string().nullish(),
+    externalSource: zod.string().nullish(),
+    externalId: zod.string().nullish(),
+    externalSyncedAt: zod.coerce.date().nullish(),
+    externalSyncStatus: zod.string().nullish(),
+    createdAt: zod.coerce.date(),
+    updatedAt: zod.coerce.date(),
+  })
+  .and(
+    zod.object({
+      customer: zod
+        .object({
+          id: zod.string(),
+          name: zod.string(),
+          accountNumber: zod.string().nullish(),
+          status: zod.enum(['active', 'inactive']),
+          primaryContactName: zod.string().nullish(),
+          primaryContactEmail: zod.string().nullish(),
+          primaryContactPhone: zod.string().nullish(),
+          notes: zod.string().nullish(),
+          externalSource: zod.string().nullish(),
+          externalId: zod.string().nullish(),
+          externalSyncedAt: zod.coerce.date().nullish(),
+          externalSyncStatus: zod.string().nullish(),
+          createdAt: zod.coerce.date(),
+          updatedAt: zod.coerce.date(),
+        })
+        .nullish(),
+      site: zod
+        .object({
+          id: zod.string(),
+          customerId: zod.string(),
+          siteName: zod.string(),
+          address1: zod.string().nullish(),
+          address2: zod.string().nullish(),
+          city: zod.string().nullish(),
+          state: zod.string().nullish(),
+          postalCode: zod.string().nullish(),
+          country: zod.string().nullish(),
+          timezone: zod.string().nullish(),
+          siteCode: zod.string().nullish(),
+          notes: zod.string().nullish(),
+          lconName: zod.string().nullish(),
+          lconPhone: zod.string().nullish(),
+          lconEmail: zod.string().nullish(),
+          latitude: zod.number().nullish(),
+          longitude: zod.number().nullish(),
+          geoSource: zod.enum(['manual', 'geocoded', 'imported']).nullish(),
+          externalSource: zod.string().nullish(),
+          externalId: zod.string().nullish(),
+          externalSyncedAt: zod.coerce.date().nullish(),
+          externalSyncStatus: zod.string().nullish(),
+          createdAt: zod.coerce.date(),
+          updatedAt: zod.coerce.date(),
+        })
+        .nullish(),
+      service: zod
+        .object({
+          id: zod.string(),
+          customerId: zod.string(),
+          siteId: zod.string(),
+          vendorName: zod.string(),
+          serviceType: zod.enum(['DIA', 'Broadband', 'SD-WAN', 'Voice', 'Wireless', 'Other']),
+          circuitId: zod.string().nullish(),
+          bandwidth: zod.string().nullish(),
+          status: zod.enum(['active', 'pending', 'down', 'impaired', 'disconnected']),
+          installDate: zod.string().nullish(),
+          monthlyRecurringCharge: zod.number().nullish(),
+          supportReference: zod.string().nullish(),
+          notes: zod.string().nullish(),
+          externalSource: zod.string().nullish(),
+          externalId: zod.string().nullish(),
+          externalSyncedAt: zod.coerce.date().nullish(),
+          externalSyncStatus: zod.string().nullish(),
+          createdAt: zod.coerce.date(),
+          updatedAt: zod.coerce.date(),
+        })
+        .nullish(),
+      assignedTo: zod
+        .object({
+          id: zod.string(),
+          name: zod.string(),
+          email: zod.string(),
+          role: zod.enum(['admin', 'ops', 'customer']),
+          customerId: zod.string().nullish(),
+          createdAt: zod.coerce.date(),
+          updatedAt: zod.coerce.date(),
+        })
+        .nullish(),
+      events: zod
+        .array(
+          zod.object({
+            id: zod.string(),
+            complaintId: zod.string(),
+            eventType: zod.enum([
+              'created',
+              'status_changed',
+              'assignment_changed',
+              'note',
+              'validation_requested',
+              'validation_succeeded',
+              'validation_failed',
+            ]),
+            message: zod.string(),
+            metadata: zod.record(zod.string(), zod.unknown()).nullish(),
+            createdByUserId: zod.string().nullish(),
+            createdAt: zod.coerce.date(),
+          }),
+        )
+        .optional(),
+    }),
+  );
+
+/**
+ * @summary Update invoice complaint fields
+ */
+export const PatchInvoiceComplaintParams = zod.object({
+  id: zod.coerce.string(),
+});
+
+export const PatchInvoiceComplaintBody = zod.object({
+  status: zod.enum(['new', 'triaged', 'awaiting_customer', 'resolved', 'closed']).optional(),
+  priority: zod.enum(['low', 'medium', 'high']).optional(),
+  assignedToUserId: zod.string().nullish(),
+  description: zod.string().nullish(),
+  title: zod.string().optional(),
+  complaintType: zod
+    .enum(['tax_mismatch', 'rate_mismatch', 'duplicate_charge', 'missing_exemption', 'other'])
+    .optional(),
+  siteId: zod.string().nullish(),
+  serviceId: zod.string().nullish(),
+});
+
+export const PatchInvoiceComplaintResponse = zod.object({
+  id: zod.string(),
+  complaintNumber: zod.string(),
+  customerId: zod.string(),
+  siteId: zod.string().nullish(),
+  serviceId: zod.string().nullish(),
+  assignedToUserId: zod.string().nullish(),
+  title: zod.string(),
+  description: zod.string().nullish(),
+  source: zod.enum(['manual', 'api']),
+  status: zod.enum(['new', 'triaged', 'awaiting_customer', 'resolved', 'closed']),
+  priority: zod.enum(['low', 'medium', 'high']),
+  complaintType: zod.enum([
+    'tax_mismatch',
+    'rate_mismatch',
+    'duplicate_charge',
+    'missing_exemption',
+    'other',
+  ]),
+  invoiceNumber: zod.string(),
+  customerAccountNumber: zod.string(),
+  currencyCode: zod.string(),
+  invoiceAmount: zod.string().nullish(),
+  documentCode: zod.string().nullish(),
+  companyCode: zod.string().nullish(),
+  avalaraValidationStatus: zod.enum(['not_validated', 'validated', 'failed']),
+  avalaraValidatedAt: zod.coerce.date().nullish(),
+  avalaraSummary: zod.string().nullish(),
+  externalSource: zod.string().nullish(),
+  externalId: zod.string().nullish(),
+  externalSyncedAt: zod.coerce.date().nullish(),
+  externalSyncStatus: zod.string().nullish(),
+  createdAt: zod.coerce.date(),
+  updatedAt: zod.coerce.date(),
+});
+
+/**
+ * @summary Add invoice complaint note/event
+ */
+export const AddInvoiceComplaintEventParams = zod.object({
+  id: zod.coerce.string(),
+});
+
+export const AddInvoiceComplaintEventBody = zod.object({
+  message: zod.string(),
+  metadata: zod.record(zod.string(), zod.unknown()).nullish(),
+});
+
+/**
+ * @summary Validate complaint invoice using Avalara
+ */
+export const ValidateInvoiceComplaintWithAvalaraParams = zod.object({
+  id: zod.coerce.string(),
+});
+
+export const ValidateInvoiceComplaintWithAvalaraResponse = zod.object({
+  complaint: zod.object({
+    id: zod.string(),
+    complaintNumber: zod.string(),
+    customerId: zod.string(),
+    siteId: zod.string().nullish(),
+    serviceId: zod.string().nullish(),
+    assignedToUserId: zod.string().nullish(),
+    title: zod.string(),
+    description: zod.string().nullish(),
+    source: zod.enum(['manual', 'api']),
+    status: zod.enum(['new', 'triaged', 'awaiting_customer', 'resolved', 'closed']),
+    priority: zod.enum(['low', 'medium', 'high']),
+    complaintType: zod.enum([
+      'tax_mismatch',
+      'rate_mismatch',
+      'duplicate_charge',
+      'missing_exemption',
+      'other',
+    ]),
+    invoiceNumber: zod.string(),
+    customerAccountNumber: zod.string(),
+    currencyCode: zod.string(),
+    invoiceAmount: zod.string().nullish(),
+    documentCode: zod.string().nullish(),
+    companyCode: zod.string().nullish(),
+    avalaraValidationStatus: zod.enum(['not_validated', 'validated', 'failed']),
+    avalaraValidatedAt: zod.coerce.date().nullish(),
+    avalaraSummary: zod.string().nullish(),
+    externalSource: zod.string().nullish(),
+    externalId: zod.string().nullish(),
+    externalSyncedAt: zod.coerce.date().nullish(),
+    externalSyncStatus: zod.string().nullish(),
+    createdAt: zod.coerce.date(),
+    updatedAt: zod.coerce.date(),
+  }),
+  validation: zod.record(zod.string(), zod.unknown()).optional(),
+});
+
+/**
+ * @summary Get Avalara integration config (masked)
+ */
+export const GetAvalaraConfigResponse = zod.object({
+  accountId: zod.string(),
+  licenseKey: zod.string(),
+  baseUrl: zod.string(),
+  companyCode: zod.string(),
+  hasLicenseKey: zod.boolean(),
+});
+
+/**
+ * @summary Save Avalara integration config
+ */
+export const UpdateAvalaraConfigBody = zod.object({
+  accountId: zod.string().optional(),
+  licenseKey: zod.string().optional(),
+  baseUrl: zod.string().optional(),
+  companyCode: zod.string().optional(),
+});
+
+export const UpdateAvalaraConfigResponse = zod.object({
+  success: zod.boolean(),
+  message: zod.string().optional(),
+});
+
+/**
+ * @summary Test Avalara connectivity
+ */
+export const TestAvalaraConnectionResponse = zod.object({
+  ok: zod.boolean(),
+  message: zod.string(),
+});
+
+/**
+ * @summary Get Avalara integration status
+ */
+export const GetAvalaraStatusResponse = zod.object({
+  configured: zod.boolean(),
+  validatedCount: zod.number(),
+  failedCount: zod.number(),
+  recent: zod.array(
+    zod.object({
+      id: zod.string(),
+      complaintNumber: zod.string(),
+      title: zod.string(),
+      avalaraValidationStatus: zod.string(),
+      avalaraValidatedAt: zod.coerce.date().nullish(),
+    }),
+  ),
 });
 
 /**
@@ -1569,6 +2685,8 @@ export const AiTestResponse = zod.object({
       'closed',
     ]),
     outageType: zod.enum(['outage', 'impairment', 'informational', 'unknown']),
+    impactLevel: zod.enum(['low', 'medium', 'high']).nullish(),
+    urgencyLevel: zod.enum(['low', 'medium', 'high']).nullish(),
     vendorTicketId: zod.string().nullish(),
     assignedToUserId: zod.string().nullish(),
     openedAt: zod.coerce.date(),
@@ -1580,6 +2698,10 @@ export const AiTestResponse = zod.object({
     aiNormalizedStatus: zod.string().nullish(),
     aiCustomerUpdate: zod.string().nullish(),
     aiLastGeneratedAt: zod.coerce.date().nullish(),
+    externalSource: zod.string().nullish(),
+    externalId: zod.string().nullish(),
+    externalSyncedAt: zod.coerce.date().nullish(),
+    externalSyncStatus: zod.string().nullish(),
     createdAt: zod.coerce.date(),
     updatedAt: zod.coerce.date(),
   }),

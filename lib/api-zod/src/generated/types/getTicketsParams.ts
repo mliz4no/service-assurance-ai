@@ -15,4 +15,7 @@ export type GetTicketsParams = {
   vendorName?: string;
   sortBy?: string;
   sortOrder?: string;
+  externalSource?: string;
+  externalId?: string;
+  compact?: boolean;
 };
