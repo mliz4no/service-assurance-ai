@@ -18,3 +18,6 @@ export * from './telecom_services_partners';
 export * from './crm_sync_logs';
 export * from './salesforce_config';
 export * from './integration_idempotency_keys';
+export * from './invoice_complaints';
+export * from './invoice_complaint_events';
+export * from './avalara_config';

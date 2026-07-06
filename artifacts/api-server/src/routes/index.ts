@@ -18,6 +18,8 @@ import escalationMatrixRouter from './escalation-matrix';
 import partnersRouter from './partners';
 import salesforceRouter from './salesforce';
 import integrationsInvoxaiRouter from './integrations-invoxai';
+import invoiceComplaintsRouter from './invoice-complaints';
+import avalaraRouter from './avalara';
 
 const router: IRouter = Router();
 
@@ -40,5 +42,7 @@ router.use(escalationMatrixRouter);
 router.use(partnersRouter);
 router.use(salesforceRouter);
 router.use(integrationsInvoxaiRouter);
+router.use(invoiceComplaintsRouter);
+router.use(avalaraRouter);
 
 export default router;

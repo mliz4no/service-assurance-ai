@@ -29,6 +29,9 @@ import DeviceDetailPage from '@/pages/devices/detail';
 import NetworkLinksPage from '@/pages/network-links/index';
 import EventMonitorPage from '@/pages/events/index';
 import MapPage from '@/pages/map/index';
+import InvoiceComplaintsList from '@/pages/invoice-complaints/index';
+import NewInvoiceComplaint from '@/pages/invoice-complaints/new';
+import InvoiceComplaintDetail from '@/pages/invoice-complaints/detail';
 import NotFound from '@/pages/not-found';
 
 const queryClient = new QueryClient({
@@ -158,6 +161,21 @@ function Router() {
       <Route path="/map">
         <ProtectedRoute>
           <MapPage />
+        </ProtectedRoute>
+      </Route>
+      <Route path="/invoice-complaints">
+        <ProtectedRoute>
+          <InvoiceComplaintsList />
+        </ProtectedRoute>
+      </Route>
+      <Route path="/invoice-complaints/new">
+        <ProtectedRoute>
+          <NewInvoiceComplaint />
+        </ProtectedRoute>
+      </Route>
+      <Route path="/invoice-complaints/:id">
+        <ProtectedRoute>
+          <InvoiceComplaintDetail />
         </ProtectedRoute>
       </Route>
 
