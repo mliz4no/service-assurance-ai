@@ -3,6 +3,7 @@ import {
   useGetRecentTickets,
   useGetEscalationNeeded,
 } from '@workspace/api-client-react';
+import { useQuery } from '@tanstack/react-query';
 import { AppLayout } from '@/components/layout/app-layout';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -22,6 +23,48 @@ import {
 } from 'lucide-react';
 import { Link } from 'wouter';
 import { cn } from '@/lib/utils';
+import { apiFetch } from '@/lib/api';
+
+type OutageContextSummary = {
+  openOnly: boolean;
+  totals: {
+    monitoring: number;
+    controller: number;
+  };
+  monitoring: {
+    byClassification: Record<string, number>;
+    byConfidence: Record<string, number>;
+    byReasonCode: Record<string, number>;
+  };
+  controller: {
+    byClassification: Record<string, number>;
+    byConfidence: Record<string, number>;
+    byReasonCode: Record<string, number>;
+  };
+};
+
+type OutageDrilldownSource = 'monitoring' | 'controller';
+
+function buildTicketsHref(params: {
+  source: OutageDrilldownSource;
+  classification?: string;
+  reasonCode?: string;
+}): string {
+  const searchParams = new URLSearchParams({
+    outageSource: params.source,
+    outageOpenOnly: 'true',
+  });
+
+  if (params.classification) {
+    searchParams.set('outageClassification', params.classification);
+  }
+
+  if (params.reasonCode) {
+    searchParams.set('outageReasonCode', params.reasonCode);
+  }
+
+  return `/tickets?${searchParams.toString()}`;
+}
 
 function timeAgo(date: string | Date): string {
   const d = typeof date === 'string' ? new Date(date) : date;
@@ -109,12 +152,21 @@ export default function Dashboard() {
   const { data: summary, isLoading: isLoadingSummary } = useGetDashboardSummary();
   const { data: recentTickets, isLoading: isLoadingTickets } = useGetRecentTickets({ limit: 8 });
   const { data: escalations, isLoading: isLoadingEscalations } = useGetEscalationNeeded();
+  const { data: outageContext, isLoading: isLoadingOutageContext } = useQuery({
+    queryKey: ['dashboard', 'outage-context-summary'],
+    queryFn: () => apiFetch<OutageContextSummary>('/dashboard/outage-context-summary'),
+    staleTime: 30_000,
+  });
 
   const recentTicketsList = Array.isArray(recentTickets) ? recentTickets : [];
   const escalationList = Array.isArray(escalations) ? escalations : [];
 
   const ticketsByStatus = summary?.ticketsByStatus as Record<string, number> | undefined;
   const ticketsBySeverity = summary?.ticketsBySeverity as Record<string, number> | undefined;
+  const monitoringClassifications = outageContext?.monitoring.byClassification ?? {};
+  const controllerClassifications = outageContext?.controller.byClassification ?? {};
+  const monitoringReasons = outageContext?.monitoring.byReasonCode ?? {};
+  const controllerReasons = outageContext?.controller.byReasonCode ?? {};
 
   return (
     <AppLayout title="Operations Dashboard">
@@ -232,6 +284,186 @@ export default function Dashboard() {
             </CardContent>
           </Card>
         )}
+
+        <div className="grid grid-cols-1 xl:grid-cols-5 gap-5">
+          <div className="xl:col-span-3">
+            <Card className="border-border/60 shadow-sm">
+              <CardHeader className="pb-3 pt-4 px-5 flex-row items-center justify-between">
+                <div>
+                  <CardTitle className="text-sm font-semibold">Outage Context Distribution</CardTitle>
+                  <p className="text-xs text-muted-foreground mt-0.5">
+                    Shared, isolated, regional, and controller-origin classifications for open work.
+                  </p>
+                </div>
+                <Badge variant="outline" className="text-[10px] uppercase tracking-wide">
+                  Open tickets only
+                </Badge>
+              </CardHeader>
+              <CardContent className="px-5 pb-5">
+                {isLoadingOutageContext ? (
+                  <div className="py-10 flex justify-center">
+                    <Activity className="w-6 h-6 animate-spin text-muted-foreground" />
+                  </div>
+                ) : (
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div className="rounded-lg border border-border/60 bg-muted/20 p-4">
+                      <div className="flex items-center justify-between mb-3">
+                        <div>
+                          <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">
+                            Monitoring Context
+                          </p>
+                          <p className="text-2xl font-bold mt-1">
+                            {outageContext?.totals.monitoring ?? 0}
+                          </p>
+                        </div>
+                        <Link
+                          href={buildTicketsHref({ source: 'monitoring' })}
+                          className="rounded-full p-1.5 transition-colors hover:bg-blue-100"
+                        >
+                          <TrendingUp className="w-5 h-5 text-blue-500" />
+                        </Link>
+                      </div>
+                      <div className="space-y-2">
+                        {[
+                          ['shared_outage', 'Shared'],
+                          ['regional_outage', 'Regional'],
+                          ['isolated_issue', 'Isolated'],
+                          ['unknown', 'Unknown'],
+                        ].map(([key, label]) => (
+                          <Link
+                            key={key}
+                            href={buildTicketsHref({
+                              source: 'monitoring',
+                              classification: key,
+                            })}
+                            className="flex items-center justify-between rounded-md px-2 py-1 text-sm transition-colors hover:bg-background/80"
+                          >
+                            <span className="text-muted-foreground">{label}</span>
+                            <span className="font-semibold">
+                              {monitoringClassifications[key] ?? 0}
+                            </span>
+                          </Link>
+                        ))}
+                      </div>
+                    </div>
+
+                    <div className="rounded-lg border border-border/60 bg-muted/20 p-4">
+                      <div className="flex items-center justify-between mb-3">
+                        <div>
+                          <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">
+                            Controller Context
+                          </p>
+                          <p className="text-2xl font-bold mt-1">
+                            {outageContext?.totals.controller ?? 0}
+                          </p>
+                        </div>
+                        <Link
+                          href={buildTicketsHref({ source: 'controller' })}
+                          className="rounded-full p-1.5 transition-colors hover:bg-indigo-100"
+                        >
+                          <Activity className="w-5 h-5 text-indigo-500" />
+                        </Link>
+                      </div>
+                      <div className="space-y-2">
+                        {[
+                          ['controller_outage', 'Outage'],
+                          ['controller_impairment', 'Impairment'],
+                          ['controller_info', 'Info'],
+                        ].map(([key, label]) => (
+                          <Link
+                            key={key}
+                            href={buildTicketsHref({
+                              source: 'controller',
+                              classification: key,
+                            })}
+                            className="flex items-center justify-between rounded-md px-2 py-1 text-sm transition-colors hover:bg-background/80"
+                          >
+                            <span className="text-muted-foreground">{label}</span>
+                            <span className="font-semibold">
+                              {controllerClassifications[key] ?? 0}
+                            </span>
+                          </Link>
+                        ))}
+                      </div>
+                    </div>
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+          </div>
+
+          <div className="xl:col-span-2">
+            <Card className="border-border/60 shadow-sm h-full">
+              <CardHeader className="pb-3 pt-4 px-5">
+                <CardTitle className="text-sm font-semibold">Top Correlation Signals</CardTitle>
+                <p className="text-xs text-muted-foreground mt-0.5">
+                  Most common reasons driving automated outage classification.
+                </p>
+              </CardHeader>
+              <CardContent className="px-5 pb-5 space-y-4">
+                {isLoadingOutageContext ? (
+                  <div className="py-10 flex justify-center">
+                    <Activity className="w-6 h-6 animate-spin text-muted-foreground" />
+                  </div>
+                ) : (
+                  <>
+                    <div>
+                      <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide mb-2">
+                        Monitoring Reasons
+                      </p>
+                      <div className="flex flex-wrap gap-2">
+                        {Object.keys(monitoringReasons).length === 0 ? (
+                          <span className="text-sm text-muted-foreground">No monitoring context yet.</span>
+                        ) : (
+                          Object.entries(monitoringReasons)
+                            .sort((a, b) => b[1] - a[1])
+                            .slice(0, 4)
+                            .map(([key, count]) => (
+                              <Link
+                                key={key}
+                                href={buildTicketsHref({ source: 'monitoring', reasonCode: key })}
+                                className="inline-flex"
+                              >
+                                <Badge variant="outline" className="px-2.5 py-1 hover:bg-background">
+                                  {key.replaceAll('_', ' ')}: {count}
+                                </Badge>
+                              </Link>
+                            ))
+                        )}
+                      </div>
+                    </div>
+
+                    <div>
+                      <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide mb-2">
+                        Controller Reasons
+                      </p>
+                      <div className="flex flex-wrap gap-2">
+                        {Object.keys(controllerReasons).length === 0 ? (
+                          <span className="text-sm text-muted-foreground">No controller context yet.</span>
+                        ) : (
+                          Object.entries(controllerReasons)
+                            .sort((a, b) => b[1] - a[1])
+                            .slice(0, 4)
+                            .map(([key, count]) => (
+                              <Link
+                                key={key}
+                                href={buildTicketsHref({ source: 'controller', reasonCode: key })}
+                                className="inline-flex"
+                              >
+                                <Badge variant="outline" className="px-2.5 py-1 hover:bg-background">
+                                  {key.replaceAll('_', ' ')}: {count}
+                                </Badge>
+                              </Link>
+                            ))
+                        )}
+                      </div>
+                    </div>
+                  </>
+                )}
+              </CardContent>
+            </Card>
+          </div>
+        </div>
 
         {/* ── Main two-column ───────────────────────────────── */}
         <div className="grid grid-cols-1 xl:grid-cols-5 gap-5">
