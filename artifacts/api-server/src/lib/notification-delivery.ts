@@ -1,3 +1,6 @@
+import { randomUUID } from 'node:crypto';
+import { fetchWithRetry } from './http-client';
+
 export type AlertDeliveryInput = {
   to: string;
   subject: string;
@@ -14,23 +17,20 @@ export type AlertDeliveryResult = {
 };
 
 async function postJson(url: string, payload: Record<string, unknown>, token?: string): Promise<Response> {
-  const controller = new AbortController();
   const timeoutMs = Math.max(1_000, Number(process.env.ALERT_DELIVERY_TIMEOUT_MS ?? '10000'));
-  const timeout = setTimeout(() => controller.abort(), timeoutMs);
+  const maxAttempts = Math.max(1, Number(process.env.ALERT_DELIVERY_MAX_ATTEMPTS ?? '3'));
+  const baseDelayMs = Math.max(0, Number(process.env.ALERT_DELIVERY_RETRY_DELAY_MS ?? '250'));
+  const idempotencyKey = randomUUID();
 
-  try {
-    return await fetch(url, {
-      method: 'POST',
-      signal: controller.signal,
-      headers: {
-        'Content-Type': 'application/json',
-        ...(token ? { Authorization: `Bearer ${token}` } : {}),
-      },
-      body: JSON.stringify(payload),
-    });
-  } finally {
-    clearTimeout(timeout);
-  }
+  return fetchWithRetry(url, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'Idempotency-Key': idempotencyKey,
+      ...(token ? { Authorization: `Bearer ${token}` } : {}),
+    },
+    body: JSON.stringify(payload),
+  }, { timeoutMs, maxAttempts, baseDelayMs });
 }
 
 export async function deliverAlert(input: AlertDeliveryInput): Promise<AlertDeliveryResult> {

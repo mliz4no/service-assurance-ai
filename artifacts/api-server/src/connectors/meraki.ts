@@ -53,6 +53,7 @@ import type {
   NormalizedEvent,
   ConnectorSyncResult,
 } from './base';
+import { fetchWithRetry } from '../lib/http-client';
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Meraki API response shape types
@@ -1106,23 +1107,14 @@ export class MerakiConnector implements BaseConnector {
 
   /**
    * Helper for authenticated GET requests to the Meraki API.
-   * Handles rate limiting (429) with a single retry after the Retry-After delay.
+  * Handles rate limiting and transient failures with bounded retries.
    *
    * REAL USAGE: This method is used by all real API call implementations.
    * In demo mode it is never called — mock methods return directly.
    */
   private async merakiGet<T>(path: string): Promise<T> {
     const url = `${this.config.baseUrl}${path}`;
-    const resp = await fetch(url, { headers: this.headers() });
-
-    // Handle Meraki rate limiting (300 req/min per org)
-    if (resp.status === 429) {
-      const retryAfter = parseInt(resp.headers.get('Retry-After') ?? '1', 10);
-      await new Promise((r) => setTimeout(r, retryAfter * 1000));
-      const retried = await fetch(url, { headers: this.headers() });
-      if (!retried.ok) throw new Error(`Meraki API error: ${retried.status} ${retried.statusText}`);
-      return retried.json() as Promise<T>;
-    }
+    const resp = await fetchWithRetry(url, { headers: this.headers() });
 
     if (!resp.ok) throw new Error(`Meraki API error: ${resp.status} ${resp.statusText}`);
     return resp.json() as Promise<T>;

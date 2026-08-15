@@ -35,6 +35,7 @@ import type {
   NormalizedEvent,
   ConnectorSyncResult,
 } from './base';
+import { fetchWithRetry } from '../lib/http-client';
 
 export interface FortinetConnectorConfig {
   apiKey: string;
@@ -78,7 +79,7 @@ export class FortinetConnector implements BaseConnector {
     try {
       if (this.config.managerType === 'fortimanager') {
         const loginUrl = `${baseUrl}/sys/login/user`;
-        const response = await fetch(loginUrl, {
+        const response = await fetchWithRetry(loginUrl, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
@@ -118,7 +119,7 @@ export class FortinetConnector implements BaseConnector {
       const statusUrl = `${baseUrl}/api/v2/monitor/system/status?access_token=${encodeURIComponent(
         this.config.apiKey,
       )}`;
-      const response = await fetch(statusUrl, { method: 'GET' });
+      const response = await fetchWithRetry(statusUrl, { method: 'GET' });
       if (!response.ok) {
         return {
           ok: false,

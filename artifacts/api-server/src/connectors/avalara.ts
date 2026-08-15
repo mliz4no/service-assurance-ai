@@ -1,4 +1,5 @@
 import { db, avalaraConfigTable } from '@workspace/db';
+import { fetchWithRetry } from '../lib/http-client';
 
 export interface AvalaraCredentials {
   accountId: string;
@@ -85,7 +86,7 @@ export async function testConnection(): Promise<{ ok: boolean; message: string }
   }
 
   try {
-    const res = await fetch(`${creds.baseUrl}/utilities/ping`, {
+    const res = await fetchWithRetry(`${creds.baseUrl}/utilities/ping`, {
       headers: {
         Authorization: buildAuthHeader(creds.accountId, creds.licenseKey),
       },
@@ -125,7 +126,7 @@ export async function validateInvoice(args: {
 
   const url = `${creds.baseUrl}/companies/${encodeURIComponent(companyCode)}/transactions/${encodeURIComponent(documentCode)}`;
 
-  const res = await fetch(url, {
+  const res = await fetchWithRetry(url, {
     headers: {
       Authorization: buildAuthHeader(creds.accountId, creds.licenseKey),
     },

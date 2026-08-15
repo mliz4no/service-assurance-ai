@@ -381,7 +381,7 @@ Bring in controller-level status and outage signals from major vendors and platf
   - SD1-style controller APIs
 
 ### Current repo alignment
-The repository already has a connector abstraction in [artifacts/api-server/src/connectors/base.ts](artifacts/api-server/src/connectors/base.ts) and vendor-specific placeholders such as [artifacts/api-server/src/connectors/meraki.ts](artifacts/api-server/src/connectors/meraki.ts) and [artifacts/api-server/src/connectors/fortinet.ts](artifacts/api-server/src/connectors/fortinet.ts).
+The repository has a connector abstraction in [artifacts/api-server/src/connectors/base.ts](artifacts/api-server/src/connectors/base.ts) and implementations for Meraki, Fortinet, Palo Alto, and SD-WAN controller APIs. External connector and alert-provider requests share bounded timeout, rate-limit, and transient-failure retry behavior. Alert retries use a stable idempotency key per delivery call.
 
 ### Implementation approach
 - Use the existing connector interface.
@@ -399,9 +399,10 @@ The repository already has a connector abstraction in [artifacts/api-server/src/
 - Treat controller sync as a data ingestion step; ticketing and incidents are a later step.
 
 ### Deliverables
-- Connector modules for each platform
-- Polling and sync orchestration
-- Normalized status data used by the outage map and incident engine
+- [x] Connector modules for each platform
+- [x] Polling and sync orchestration
+- [x] Normalized status data used by the outage map and incident engine
+- [x] Shared timeout, `Retry-After`, and bounded backoff handling
 
 ### Acceptance criteria
 - The system can ingest controller device status from multiple vendors.
@@ -588,6 +589,8 @@ Increase backend test coverage steadily and establish a quality gate for future 
 - Reach 80%+ coverage for the API server core modules and the most critical business logic.
 - Keep new feature work covered by unit tests wherever possible.
 - Use database-backed integration tests only where the behavior truly depends on the database.
+
+The API server enforces 80% statement and line coverage over production source, excluding tests and process bootstrap code.
 
 ### Initial approach
 - Add unit tests for isolated logic modules first:

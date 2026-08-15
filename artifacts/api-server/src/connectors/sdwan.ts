@@ -1,4 +1,5 @@
 import type { BaseConnector, ConnectorSyncResult, NormalizedDevice, NormalizedEvent, NormalizedLink } from './base';
+import { fetchWithRetry } from '../lib/http-client';
 
 export type SdWanConnectorConfig = { apiKey: string; baseUrl: string; tenant?: string };
 
@@ -9,7 +10,7 @@ export class SdWanConnector implements BaseConnector {
   private get demoMode(): boolean { return !this.config.apiKey || this.config.apiKey === 'placeholder'; }
 
   private async get<T>(path: string): Promise<T> {
-    const response = await fetch(`${this.config.baseUrl.replace(/\/+$/, '')}${path}`, {
+    const response = await fetchWithRetry(`${this.config.baseUrl.replace(/\/+$/, '')}${path}`, {
       headers: { Authorization: `Bearer ${this.config.apiKey}`, Accept: 'application/json' },
     });
     if (!response.ok) throw new Error(`SD-WAN API returned ${response.status}`);

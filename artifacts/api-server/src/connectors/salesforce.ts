@@ -14,6 +14,7 @@ import {
 } from '@workspace/db';
 import { eq, and } from 'drizzle-orm';
 import { logger } from '../lib/logger';
+import { fetchWithRetry } from '../lib/http-client';
 
 // ── Types ────────────────────────────────────────────────────────────────────
 
@@ -139,7 +140,7 @@ async function authenticate(): Promise<TokenCache> {
   });
 
   const tokenEndpoint = creds.loginUrl.replace(/\/$/, '') + '/services/oauth2/token';
-  const res = await fetch(tokenEndpoint, {
+  const res = await fetchWithRetry(tokenEndpoint, {
     method: 'POST',
     headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
     body: params.toString(),
@@ -165,14 +166,14 @@ async function sfQuery<T>(soql: string): Promise<T[]> {
   const token = await authenticate();
   const url = `${token.instanceUrl}/services/data/v58.0/query?q=${encodeURIComponent(soql)}`;
 
-  let res = await fetch(url, {
+  let res = await fetchWithRetry(url, {
     headers: { Authorization: `Bearer ${token.accessToken}` },
   });
 
   if (res.status === 401) {
     tokenCache = null;
     const retryToken = await authenticate();
-    res = await fetch(url, {
+    res = await fetchWithRetry(url, {
       headers: { Authorization: `Bearer ${retryToken.accessToken}` },
     });
   }

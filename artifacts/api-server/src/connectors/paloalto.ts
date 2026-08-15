@@ -5,6 +5,7 @@ import type {
   NormalizedEvent,
   NormalizedLink,
 } from './base';
+import { fetchWithRetry } from '../lib/http-client';
 
 export type PaloAltoConnectorConfig = {
   apiKey: string;
@@ -24,7 +25,7 @@ export class PaloAltoConnector implements BaseConnector {
   }
 
   private async get<T>(path: string): Promise<T> {
-    const response = await fetch(`${this.config.baseUrl.replace(/\/+$/, '')}${path}`, {
+    const response = await fetchWithRetry(`${this.config.baseUrl.replace(/\/+$/, '')}${path}`, {
       headers: { 'X-PAN-KEY': this.config.apiKey, Accept: 'application/json' },
     });
     if (!response.ok) throw new Error(`Palo Alto API returned ${response.status}`);
