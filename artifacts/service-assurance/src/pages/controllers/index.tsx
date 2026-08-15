@@ -64,11 +64,16 @@ import {
 import { formatDistanceToNow } from 'date-fns';
 
 function vendorBadge(vendor: string) {
-  return vendor === 'meraki' ? (
-    <Badge className="bg-teal-100 text-teal-800 border-teal-200">Meraki</Badge>
-  ) : (
-    <Badge className="bg-orange-100 text-orange-800 border-orange-200">Fortinet</Badge>
-  );
+  if (vendor === 'meraki') {
+    return <Badge className="bg-teal-100 text-teal-800 border-teal-200">Meraki</Badge>;
+  }
+  if (vendor === 'fortinet') {
+    return <Badge className="bg-orange-100 text-orange-800 border-orange-200">Fortinet</Badge>;
+  }
+  if (vendor === 'palo_alto') {
+    return <Badge className="bg-red-100 text-red-800 border-red-200">Palo Alto</Badge>;
+  }
+  return <Badge className="bg-cyan-100 text-cyan-800 border-cyan-200">SD-WAN</Badge>;
 }
 
 function pollStatusIcon(status: string | null) {
@@ -80,7 +85,7 @@ function pollStatusIcon(status: string | null) {
 
 interface ControllerFormData {
   name: string;
-  vendor: 'meraki' | 'fortinet';
+  vendor: ControllerRecord['vendor'];
   type: 'sdwan' | 'firewall_manager' | 'network_manager';
   baseUrl: string;
   apiKeyEncryptedOrPlaceholder: string;
@@ -379,6 +384,8 @@ export default function ControllersPage() {
                   <SelectContent>
                     <SelectItem value="meraki">Cisco Meraki</SelectItem>
                     <SelectItem value="fortinet">Fortinet</SelectItem>
+                    <SelectItem value="palo_alto">Palo Alto / Panorama</SelectItem>
+                    <SelectItem value="sdwan">SD-WAN / SD1</SelectItem>
                   </SelectContent>
                 </Select>
               </div>

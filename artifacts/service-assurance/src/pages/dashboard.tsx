@@ -4,9 +4,11 @@ import {
   useGetEscalationNeeded,
 } from '@workspace/api-client-react';
 import { useQuery } from '@tanstack/react-query';
+import { useState } from 'react';
 import { AppLayout } from '@/components/layout/app-layout';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
 import { StatusBadge } from '@/components/status-badge';
 import { SeverityBadge } from '@/components/severity-badge';
 import {
@@ -16,6 +18,7 @@ import {
   Building2,
   CheckCircle2,
   Clock,
+  Download,
   Globe2,
   Ticket,
   TrendingUp,
@@ -23,7 +26,7 @@ import {
 } from 'lucide-react';
 import { Link } from 'wouter';
 import { cn } from '@/lib/utils';
-import { apiFetch } from '@/lib/api';
+import { apiDownload, apiFetch } from '@/lib/api';
 
 type OutageContextSummary = {
   openOnly: boolean;
@@ -44,6 +47,28 @@ type OutageContextSummary = {
 };
 
 type OutageDrilldownSource = 'monitoring' | 'controller';
+
+type ImpactGroup = {
+  key: string;
+  totalChecks: number;
+  outages: number;
+  degraded: number;
+  availabilityPct: number;
+  averageResponseTimeMs: number | null;
+};
+
+type NetworkImpactReport = {
+  totals: { checks: number; outages: number; degraded: number; devices: number };
+  byProvider: ImpactGroup[];
+  byRegion: ImpactGroup[];
+  byDevice: Array<ImpactGroup & {
+    targetId: string;
+    name: string;
+    provider: string;
+    region: string;
+    lastStatus: string;
+  }>;
+};
 
 function buildTicketsHref(params: {
   source: OutageDrilldownSource;
@@ -149,12 +174,20 @@ function KpiCard({
 }
 
 export default function Dashboard() {
+  const [reportDays, setReportDays] = useState(7);
+  const reportFrom = new Date(Date.now() - reportDays * 24 * 60 * 60 * 1000).toISOString();
+  const reportQuery = `from=${encodeURIComponent(reportFrom)}&to=${encodeURIComponent(new Date().toISOString())}`;
   const { data: summary, isLoading: isLoadingSummary } = useGetDashboardSummary();
   const { data: recentTickets, isLoading: isLoadingTickets } = useGetRecentTickets({ limit: 8 });
   const { data: escalations, isLoading: isLoadingEscalations } = useGetEscalationNeeded();
   const { data: outageContext, isLoading: isLoadingOutageContext } = useQuery({
     queryKey: ['dashboard', 'outage-context-summary'],
     queryFn: () => apiFetch<OutageContextSummary>('/dashboard/outage-context-summary'),
+    staleTime: 30_000,
+  });
+  const { data: networkImpact, isLoading: isLoadingNetworkImpact } = useQuery({
+    queryKey: ['dashboard', 'network-impact-report', reportDays],
+    queryFn: () => apiFetch<NetworkImpactReport>(`/dashboard/network-impact-report?${reportQuery}`),
     staleTime: 30_000,
   });
 
@@ -464,6 +497,85 @@ export default function Dashboard() {
             </Card>
           </div>
         </div>
+
+        <Card className="border-border/60 shadow-sm">
+          <CardHeader className="pb-3 pt-4 px-5 flex-row items-center justify-between gap-4">
+            <div>
+              <CardTitle className="text-sm font-semibold">Network Impact Report</CardTitle>
+              <p className="text-xs text-muted-foreground mt-0.5">
+                Availability and incident load by carrier, region, and monitored device.
+              </p>
+            </div>
+            <div className="flex items-center gap-2">
+              <div className="flex rounded-md border border-border p-0.5" aria-label="Report period">
+                {[7, 30, 90].map((days) => (
+                  <Button
+                    key={days}
+                    type="button"
+                    size="sm"
+                    variant={reportDays === days ? 'secondary' : 'ghost'}
+                    className="h-7 px-2.5 text-xs"
+                    onClick={() => setReportDays(days)}
+                  >
+                    {days}d
+                  </Button>
+                ))}
+              </div>
+              <Button
+                type="button"
+                size="icon"
+                variant="outline"
+                className="h-8 w-8"
+                title="Download network impact CSV"
+                onClick={() => void apiDownload(
+                  `/dashboard/network-impact-report?${reportQuery}&format=csv`,
+                  `network-impact-${reportDays}d.csv`,
+                )}
+              >
+                <Download className="w-4 h-4" />
+              </Button>
+            </div>
+          </CardHeader>
+          <CardContent className="px-5 pb-5">
+            {isLoadingNetworkImpact ? (
+              <div className="py-8 flex justify-center">
+                <Activity className="w-6 h-6 animate-spin text-muted-foreground" />
+              </div>
+            ) : (
+              <div className="grid grid-cols-1 lg:grid-cols-3 gap-5">
+                <div>
+                  <p className="text-xs font-semibold text-muted-foreground uppercase mb-2">Providers</p>
+                  {(networkImpact?.byProvider ?? []).slice(0, 5).map((provider) => (
+                    <div key={provider.key} className="flex items-center justify-between py-1.5 text-sm">
+                      <span className="truncate">{provider.key}</span>
+                      <span className="font-semibold">{provider.availabilityPct}%</span>
+                    </div>
+                  ))}
+                </div>
+                <div>
+                  <p className="text-xs font-semibold text-muted-foreground uppercase mb-2">Regions</p>
+                  {(networkImpact?.byRegion ?? []).slice(0, 5).map((region) => (
+                    <div key={region.key} className="flex items-center justify-between py-1.5 text-sm">
+                      <span className="truncate">{region.key}</span>
+                      <span className="font-semibold">{region.outages} outages</span>
+                    </div>
+                  ))}
+                </div>
+                <div>
+                  <p className="text-xs font-semibold text-muted-foreground uppercase mb-2">Most Impacted Devices</p>
+                  {(networkImpact?.byDevice ?? []).slice(0, 5).map((device) => (
+                    <div key={device.targetId} className="flex items-center justify-between py-1.5 text-sm gap-3">
+                      <span className="truncate">{device.name}</span>
+                      <Badge variant={device.outages > 0 ? 'destructive' : 'outline'}>
+                        {device.outages}
+                      </Badge>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+          </CardContent>
+        </Card>
 
         {/* ── Main two-column ───────────────────────────────── */}
         <div className="grid grid-cols-1 xl:grid-cols-5 gap-5">

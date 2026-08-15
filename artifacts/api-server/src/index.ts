@@ -5,6 +5,8 @@ import { db, usersTable, telecomServicesPartnersTable, customersTable } from '@w
 import { seed } from '@workspace/scripts';
 import { eq } from 'drizzle-orm';
 import crypto from 'crypto';
+import { createMonitoringScheduler, type MonitoringScheduler } from './lib/monitoring-scheduler';
+import { runNagiosMonitoring, runSyntheticMonitoring } from './lib/monitoring-execution';
 
 const rawPort = process.env['PORT'];
 
@@ -95,6 +97,35 @@ async function patchPartnerIfMissing() {
   }
 }
 
+function startMonitoringScheduler(): MonitoringScheduler | null {
+  if (process.env.MONITORING_SCHEDULER_ENABLED !== 'true') return null;
+
+  const rawInterval = Number(process.env.MONITORING_INTERVAL_MS ?? '60000');
+  const intervalMs = Number.isFinite(rawInterval) ? Math.max(1_000, rawInterval) : 60_000;
+  const mode = process.env.MONITORING_MODE ?? 'synthetic';
+
+  return createMonitoringScheduler({
+    intervalMs,
+    runImmediately: process.env.MONITORING_RUN_IMMEDIATELY === 'true',
+    jobName: `monitoring:${mode}`,
+    run: async () => {
+      if (mode === 'nagios') return runNagiosMonitoring();
+      if (mode === 'both') {
+        const [synthetic, nagios] = await Promise.all([
+          runSyntheticMonitoring(),
+          runNagiosMonitoring(),
+        ]);
+        return {
+          processed: synthetic.processed + nagios.processed,
+          createdTickets: synthetic.createdTickets + nagios.createdTickets,
+          updatedTickets: synthetic.updatedTickets + nagios.updatedTickets,
+        };
+      }
+      return runSyntheticMonitoring();
+    },
+  });
+}
+
 app.listen(port, async (err) => {
   if (err) {
     logger.error({ err }, 'Error listening on port');
@@ -104,4 +135,11 @@ app.listen(port, async (err) => {
   logger.info({ port }, 'Server listening');
   await autoSeedIfEmpty();
   await patchPartnerIfMissing();
+  const scheduler = startMonitoringScheduler();
+  if (scheduler) {
+    logger.info('Automated monitoring scheduler started');
+    const stop = () => scheduler.stop();
+    process.once('SIGINT', stop);
+    process.once('SIGTERM', stop);
+  }
 });

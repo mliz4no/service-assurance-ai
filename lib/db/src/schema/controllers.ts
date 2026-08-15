@@ -5,7 +5,7 @@ import { z } from 'zod/v4';
 export const controllersTable = pgTable('controllers', {
   id: uuid('id').primaryKey().defaultRandom(),
   name: text('name').notNull(),
-  vendor: text('vendor', { enum: ['meraki', 'fortinet'] }).notNull(),
+  vendor: text('vendor', { enum: ['meraki', 'fortinet', 'palo_alto', 'sdwan'] }).notNull(),
   type: text('type', { enum: ['sdwan', 'firewall_manager', 'network_manager'] }).notNull(),
   baseUrl: text('base_url').notNull(),
   authType: text('auth_type', { enum: ['api_key', 'oauth', 'basic'] })

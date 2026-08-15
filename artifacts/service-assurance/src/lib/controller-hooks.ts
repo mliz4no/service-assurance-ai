@@ -30,7 +30,7 @@ async function apiFetch<T>(path: string, options?: RequestInit): Promise<T> {
 export interface ControllerRecord {
   id: string;
   name: string;
-  vendor: 'meraki' | 'fortinet';
+  vendor: 'meraki' | 'fortinet' | 'palo_alto' | 'sdwan';
   type: 'sdwan' | 'firewall_manager' | 'network_manager';
   baseUrl: string;
   authType: string;

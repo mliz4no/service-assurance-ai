@@ -30,6 +30,7 @@ import NetworkLinksPage from '@/pages/network-links/index';
 import EventMonitorPage from '@/pages/events/index';
 import MapPage from '@/pages/map/index';
 import PublicNetworkMapPage from '@/pages/network-map-public';
+import MonitoringPage from '@/pages/monitoring/index';
 import InvoiceComplaintsList from '@/pages/invoice-complaints/index';
 import NewInvoiceComplaint from '@/pages/invoice-complaints/new';
 import InvoiceComplaintDetail from '@/pages/invoice-complaints/detail';
@@ -164,6 +165,11 @@ function Router() {
         <ProtectedRoute>
           <MapPage />
         </ProtectedRoute>
+      </Route>
+      <Route path="/monitoring">
+        <InternalOnlyRoute>
+          <MonitoringPage />
+        </InternalOnlyRoute>
       </Route>
       <Route path="/invoice-complaints">
         <ProtectedRoute>

@@ -1,6 +1,14 @@
 import { Router, type IRouter } from 'express';
-import { db, customersTable, servicesTable, ticketsTable, ticketUpdatesTable } from '@workspace/db';
-import { eq, and, desc, count, inArray } from 'drizzle-orm';
+import {
+  db,
+  customersTable,
+  servicesTable,
+  ticketsTable,
+  ticketUpdatesTable,
+  monitoredTargetsTable,
+  monitoringChecksTable,
+} from '@workspace/db';
+import { eq, and, desc, count, inArray, gte, lte } from 'drizzle-orm';
 import { requireAuth } from '../middlewares/auth';
 import { normalizeStatus } from '../lib/ai';
 
@@ -58,6 +66,11 @@ function parseControllerContext(rawText: string): ParsedControllerContext | null
 
 function increment(map: Record<string, number>, key: string): void {
   map[key] = (map[key] ?? 0) + 1;
+}
+
+function csvCell(value: unknown): string {
+  const text = value == null ? '' : String(value);
+  return `"${text.replaceAll('"', '""')}"`;
 }
 
 router.get('/dashboard/summary', requireAuth, async (req, res): Promise<void> => {
@@ -374,6 +387,162 @@ router.get('/dashboard/outage-context-report', requireAuth, async (req, res): Pr
     );
 
   res.json(filtered);
+});
+
+router.get('/dashboard/network-impact-report', requireAuth, async (req, res): Promise<void> => {
+  const defaultFrom = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000);
+  const from = req.query.from ? new Date(String(req.query.from)) : defaultFrom;
+  const to = req.query.to ? new Date(String(req.query.to)) : new Date();
+
+  if (Number.isNaN(from.getTime()) || Number.isNaN(to.getTime()) || from > to) {
+    res.status(400).json({ error: 'Bad Request', message: 'A valid from/to date range is required' });
+    return;
+  }
+
+  const conditions = [gte(monitoringChecksTable.checkedAt, from), lte(monitoringChecksTable.checkedAt, to)];
+  if (req.user?.role === 'customer' && req.user.customerId) {
+    conditions.push(eq(monitoredTargetsTable.customerId, req.user.customerId));
+  }
+
+  const checks = await db
+    .select({
+      targetId: monitoredTargetsTable.id,
+      targetName: monitoredTargetsTable.name,
+      provider: monitoredTargetsTable.provider,
+      region: monitoredTargetsTable.region,
+      status: monitoringChecksTable.status,
+      responseTimeMs: monitoringChecksTable.responseTimeMs,
+      checkedAt: monitoringChecksTable.checkedAt,
+    })
+    .from(monitoringChecksTable)
+    .innerJoin(monitoredTargetsTable, eq(monitoringChecksTable.targetId, monitoredTargetsTable.id))
+    .where(and(...conditions))
+    .orderBy(desc(monitoringChecksTable.checkedAt));
+
+  type Aggregate = {
+    key: string;
+    totalChecks: number;
+    outages: number;
+    degraded: number;
+    responseTimeTotal: number;
+    responseTimeCount: number;
+  };
+
+  const providers = new Map<string, Aggregate>();
+  const regions = new Map<string, Aggregate>();
+  const devices = new Map<string, Aggregate & {
+    name: string;
+    provider: string;
+    region: string;
+    lastStatus: string;
+    lastCheckedAt: Date;
+  }>();
+
+  const updateAggregate = (map: Map<string, Aggregate>, key: string, row: (typeof checks)[number]) => {
+    const current = map.get(key) ?? {
+      key,
+      totalChecks: 0,
+      outages: 0,
+      degraded: 0,
+      responseTimeTotal: 0,
+      responseTimeCount: 0,
+    };
+    current.totalChecks += 1;
+    if (row.status === 'down') current.outages += 1;
+    if (row.status === 'degraded') current.degraded += 1;
+    if (row.responseTimeMs != null) {
+      current.responseTimeTotal += row.responseTimeMs;
+      current.responseTimeCount += 1;
+    }
+    map.set(key, current);
+  };
+
+  for (const row of checks) {
+    const provider = row.provider ?? 'Unknown provider';
+    const region = row.region ?? 'Unknown region';
+    updateAggregate(providers, provider, row);
+    updateAggregate(regions, region, row);
+
+    const existing = devices.get(row.targetId);
+    if (existing) {
+      updateAggregate(devices, row.targetId, row);
+    } else {
+      devices.set(row.targetId, {
+        key: row.targetId,
+        name: row.targetName,
+        provider,
+        region,
+        lastStatus: row.status,
+        lastCheckedAt: row.checkedAt,
+        totalChecks: 1,
+        outages: row.status === 'down' ? 1 : 0,
+        degraded: row.status === 'degraded' ? 1 : 0,
+        responseTimeTotal: row.responseTimeMs ?? 0,
+        responseTimeCount: row.responseTimeMs == null ? 0 : 1,
+      });
+    }
+  }
+
+  const finalize = (aggregate: Aggregate) => ({
+    key: aggregate.key,
+    totalChecks: aggregate.totalChecks,
+    outages: aggregate.outages,
+    degraded: aggregate.degraded,
+    availabilityPct: Number(
+      (((aggregate.totalChecks - aggregate.outages) / Math.max(aggregate.totalChecks, 1)) * 100).toFixed(2),
+    ),
+    averageResponseTimeMs: aggregate.responseTimeCount
+      ? Math.round(aggregate.responseTimeTotal / aggregate.responseTimeCount)
+      : null,
+  });
+
+  const byProvider = [...providers.values()].map(finalize).sort((a, b) => b.outages - a.outages);
+  const byRegion = [...regions.values()].map(finalize).sort((a, b) => b.outages - a.outages);
+  const byDevice = [...devices.values()]
+    .map((device) => ({
+      ...finalize(device),
+      targetId: device.key,
+      name: device.name,
+      provider: device.provider,
+      region: device.region,
+      lastStatus: device.lastStatus,
+      lastCheckedAt: device.lastCheckedAt,
+    }))
+    .sort((a, b) => b.outages - a.outages);
+
+  if (req.query.format === 'csv') {
+    const header = ['targetId', 'name', 'provider', 'region', 'totalChecks', 'outages', 'degraded', 'availabilityPct', 'averageResponseTimeMs', 'lastStatus', 'lastCheckedAt'];
+    const rows = byDevice.map((device) => [
+      device.targetId,
+      device.name,
+      device.provider,
+      device.region,
+      device.totalChecks,
+      device.outages,
+      device.degraded,
+      device.availabilityPct,
+      device.averageResponseTimeMs,
+      device.lastStatus,
+      device.lastCheckedAt.toISOString(),
+    ]);
+    res.setHeader('Content-Type', 'text/csv; charset=utf-8');
+    res.setHeader('Content-Disposition', 'attachment; filename="network-impact-report.csv"');
+    res.send([header, ...rows].map((row) => row.map(csvCell).join(',')).join('\n'));
+    return;
+  }
+
+  res.json({
+    range: { from: from.toISOString(), to: to.toISOString() },
+    totals: {
+      checks: checks.length,
+      outages: checks.filter((check: { status: string }) => check.status === 'down').length,
+      degraded: checks.filter((check: { status: string }) => check.status === 'degraded').length,
+      devices: devices.size,
+    },
+    byProvider,
+    byRegion,
+    byDevice,
+  });
 });
 
 router.get('/admin/config-health', requireAuth, async (_req, res): Promise<void> => {

@@ -27,3 +27,21 @@ export async function apiFetch<T>(path: string, options?: RequestInit): Promise<
 
   return res.json();
 }
+
+export async function apiDownload(path: string, filename: string): Promise<void> {
+  const token = getToken();
+  const response = await fetch(`${API_PREFIX}${path}`, {
+    headers: token ? { Authorization: `Bearer ${token}` } : {},
+  });
+
+  if (!response.ok) {
+    throw new Error(`Download failed: ${response.statusText}`);
+  }
+
+  const url = URL.createObjectURL(await response.blob());
+  const link = document.createElement('a');
+  link.href = url;
+  link.download = filename;
+  link.click();
+  URL.revokeObjectURL(url);
+}

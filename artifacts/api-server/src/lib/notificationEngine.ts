@@ -12,6 +12,7 @@ import {
   type MatrixScopeType,
 } from './matrixResolver';
 import type { ImpactLevel, UrgencyLevel } from './severity';
+import { deliverAlert } from './notification-delivery';
 
 interface NotificationTicket {
   id: string;
@@ -51,12 +52,7 @@ function buildMessage(
 
   const ruleNote = ruleDescription ? `\nMatrix Rule: ${ruleDescription}` : '';
 
-  return `[SIMULATED EMAIL — NOT SENT]
-
-To: ${contact.name} (${contact.role.toUpperCase()})
-Subject: [${ticket.severity.toUpperCase()}] Service Assurance Alert: ${ticket.ticketNumber} — ${ticket.title}
-
-Dear ${contact.name},
+  return `Dear ${contact.name},
 
 You are receiving this notification because a service ticket requires your attention.
 
@@ -68,9 +64,7 @@ Duration: ${durationText}${ruleNote}
 
 ${reasonText}
 
-Please log into the Service Assurance portal to review and take action.
-
-This is a simulated notification. Real email delivery can be enabled by connecting an SMTP provider.`;
+Please log into the Service Assurance portal to review and take action.`;
 }
 
 export async function evaluateEscalation(
@@ -184,7 +178,29 @@ export async function evaluateEscalation(
   }
 
   if (notifications.length > 0) {
-    await db.insert(escalationNotificationsTable).values(notifications);
+    const deliveredNotifications = await Promise.all(
+      notifications.map(async (notification) => {
+        const delivery = await deliverAlert({
+          to: notification.contactEmail,
+          subject: `[${ticket.severity.toUpperCase()}] Service Assurance Alert: ${ticket.ticketNumber} - ${ticket.title}`,
+          message: notification.message,
+          ticketId: ticket.id,
+          ticketNumber: ticket.ticketNumber,
+          severity: ticket.severity,
+        });
+
+        return {
+          ...notification,
+          channel: delivery.channel,
+          status: delivery.status,
+          message: delivery.error
+            ? `${notification.message}\n\nDelivery error: ${delivery.error}`
+            : notification.message,
+        };
+      }),
+    );
+
+    await db.insert(escalationNotificationsTable).values(deliveredNotifications);
 
     const namesText = notifiedContacts.map((c) => `${c.name} (${c.role})`).join(', ');
     const logText = triggeredBy

@@ -90,6 +90,43 @@ describe.sequential('monitoring checks endpoints', () => {
     expect(response.body.error.code).toBe('FORBIDDEN');
   });
 
+  it('creates, updates, lists, and deletes monitoring targets', async () => {
+    const token = await getOpsToken();
+    const created = await request(app)
+      .post('/api/monitoring/targets')
+      .set('Authorization', `Bearer ${token}`)
+      .send({
+        name: 'vitest-check-target-crud',
+        hostOrIp: '198.51.100.88',
+        targetType: 'ip',
+        publicLabel: 'VT-CRUD',
+        isPublic: false,
+      });
+
+    expect(created.status).toBe(201);
+    expect(created.body.name).toBe('vitest-check-target-crud');
+
+    const updated = await request(app)
+      .put(`/api/monitoring/targets/${created.body.id}`)
+      .set('Authorization', `Bearer ${token}`)
+      .send({ isPublic: true });
+    expect(updated.status).toBe(200);
+    expect(updated.body.isPublic).toBe(true);
+
+    const listed = await request(app)
+      .get('/api/monitoring/targets?search=crud')
+      .set('Authorization', `Bearer ${token}`);
+    expect(listed.status).toBe(200);
+    expect(listed.body).toHaveLength(1);
+    expect(listed.body[0].id).toBe(created.body.id);
+
+    const deleted = await request(app)
+      .delete(`/api/monitoring/targets/${created.body.id}`)
+      .set('Authorization', `Bearer ${token}`);
+    expect(deleted.status).toBe(200);
+    expect(deleted.body.success).toBe(true);
+  });
+
   it('runs a manual check, persists it, and updates target status timestamps', async () => {
     const token = await getOpsToken();
     const [target] = await db

@@ -1,9 +1,11 @@
 import { MerakiConnector } from './meraki';
 import { FortinetConnector } from './fortinet';
+import { PaloAltoConnector } from './paloalto';
+import { SdWanConnector } from './sdwan';
 import type { BaseConnector } from './base';
 import type { Controller } from '@workspace/db';
 
-export { MerakiConnector, FortinetConnector };
+export { MerakiConnector, FortinetConnector, PaloAltoConnector, SdWanConnector };
 export type { BaseConnector };
 
 /**
@@ -28,6 +30,20 @@ export function createConnector(controller: Controller): BaseConnector | null {
         baseUrl,
         organizationIdOrTenant: controller.organizationIdOrTenant ?? undefined,
         managerType: controller.type === 'firewall_manager' ? 'fortimanager' : 'fortigate',
+      });
+
+    case 'palo_alto':
+      return new PaloAltoConnector({
+        apiKey,
+        baseUrl,
+        organizationIdOrTenant: controller.organizationIdOrTenant ?? undefined,
+      });
+
+    case 'sdwan':
+      return new SdWanConnector({
+        apiKey,
+        baseUrl,
+        tenant: controller.organizationIdOrTenant ?? undefined,
       });
 
     default:

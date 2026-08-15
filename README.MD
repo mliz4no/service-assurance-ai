@@ -83,6 +83,14 @@ Key values in `.env`:
 - `SESSION_SECRET`: session/auth secret
 - `OPENAI_API_KEY`: optional, only needed for AI-related features
 - `NODE_ENV`: development/production mode
+- `MONITORING_SCHEDULER_ENABLED`: set to `true` to run automated monitoring checks
+- `MONITORING_INTERVAL_MS`: scheduler interval in milliseconds (default: `60000`)
+- `MONITORING_MODE`: scheduled check source: `synthetic`, `nagios`, or `both`
+- `MONITORING_RUN_IMMEDIATELY`: set to `true` to run once at API startup
+- `ALERT_EMAIL_API_URL`: optional HTTP email provider endpoint
+- `ALERT_WEBHOOK_URL`: optional webhook endpoint used when no email provider is configured
+- `ALERT_DELIVERY_TOKEN`: optional bearer token for the configured alert endpoint
+- `ALERT_DELIVERY_TIMEOUT_MS`: alert request timeout in milliseconds (default: `10000`)
 
 Default local DB URL:
 
