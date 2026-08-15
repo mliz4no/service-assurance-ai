@@ -40,7 +40,7 @@ jobs:
           node-version: 24
           cache: pnpm
       - run: pnpm install --frozen-lockfile
-      - run: pnpm run db:push
+      - run: pnpm run db:migrate
       - run: pnpm run typecheck
       - run: pnpm run build
       - run: pnpm --filter @workspace/api-server run test

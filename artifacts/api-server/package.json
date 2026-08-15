@@ -8,7 +8,7 @@
     "build": "node ./build.mjs",
     "start": "node --env-file-if-exists=../../.env --enable-source-maps ./dist/index.mjs",
     "typecheck": "tsc -p tsconfig.json --noEmit",
-    "test": "cross-env DATABASE_URL=postgresql://service_assurance:service_assurance@localhost:5432/service_assurance vitest run --no-file-parallelism"
+    "test": "cross-env NODE_ENV=test DATABASE_URL=postgresql://service_assurance:service_assurance@localhost:5432/service_assurance vitest run --no-file-parallelism"
   },
   "dependencies": {
     "@workspace/api-zod": "workspace:*",

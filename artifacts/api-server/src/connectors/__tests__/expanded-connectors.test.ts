@@ -1,6 +1,6 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import type { Controller } from '@workspace/db';
-import { createConnector, PaloAltoConnector, SdWanConnector } from '..';
+import { createConnector, FortinetConnector, PaloAltoConnector, SdWanConnector } from '..';
 
 function response(body: unknown, ok = true, status = 200): Response {
   return { ok, status, json: async () => body } as Response;
@@ -80,5 +80,45 @@ describe('expanded controller connectors', () => {
     expect(result.links[0]).toMatchObject({ linkType: 'sdwan_transport', latencyMs: 12 });
     expect(result.events[0]).toMatchObject({ rawEventId: 'evt-2', severity: 'high' });
     expect(fetchMock.mock.calls[0][1]?.headers).toMatchObject({ Authorization: 'Bearer sdwan-token' });
+  });
+
+  it('normalizes live FortiGate devices, WAN health, and system events', async () => {
+    const fetchMock = vi.fn((url: string) => {
+      if (url.includes('/system/status')) return Promise.resolve(response({ results: { hostname: 'FG-LIVE', serial: 'FGT-001', model: 'FortiGate 80F' } }));
+      if (url.includes('/ha-statistics')) return Promise.resolve(response({ results: { members: [{ hostname: 'FG-LIVE', role: 'primary' }] } }));
+      if (url.includes('/system/interface')) return Promise.resolve(response({ results: { wan1: { alias: 'Primary DIA', role: 'wan', link: true } } }));
+      if (url.includes('/health-check')) return Promise.resolve(response({ results: { internet: { members: [{ interface: 'wan1', status: 'degraded', latency: 88, jitter: 12, packet_loss: 4 }] } } }));
+      return Promise.resolve(response({ results: [{ logid: 'forti-event-1', level: 'warning', subtype: 'sdwan', msg: 'WAN quality degraded', serial: 'FGT-001', eventtime: '2026-08-15T12:00:00Z' }] }));
+    });
+    vi.stubGlobal('fetch', fetchMock);
+    const connector = new FortinetConnector({ apiKey: 'fortigate-token', baseUrl: 'https://fortigate.test', managerType: 'fortigate' });
+
+    const result = await connector.fullSync();
+    expect(result.errors).toEqual([]);
+    expect(result.devices[0]).toMatchObject({ controllerDeviceId: 'FGT-001', hostname: 'FG-LIVE', haState: 'active' });
+    expect(result.links[0]).toMatchObject({ controllerDeviceId: 'FGT-001', linkName: 'Primary DIA', status: 'degraded', latencyMs: 88 });
+    expect(result.events[0]).toMatchObject({ rawEventId: 'forti-event-1', severity: 'medium', eventType: 'sdwan' });
+    expect(fetchMock.mock.calls.every(([url]) => String(url).includes('access_token=fortigate-token'))).toBe(true);
+  });
+
+  it('normalizes live FortiManager JSON-RPC inventory, members, and alerts', async () => {
+    const fetchMock = vi.fn((_url: string, init?: RequestInit) => {
+      const body = JSON.parse(String(init?.body)) as { method: string; params: Array<{ url: string }> };
+      if (body.method === 'exec') {
+        return Promise.resolve(response({ session: 'manager-session', result: [{ status: { code: 0, message: 'OK' } }] }));
+      }
+      const path = body.params[0].url;
+      if (path === '/dvmdb/device') return Promise.resolve(response({ result: [{ status: { code: 0 }, data: [{ name: 'Branch FGT', serial: 'FMG-FGT-1', ip: '10.0.0.1', conn_status: 1, adom: 'customer-a' }] }] }));
+      if (path.includes('virtual-wan-link')) return Promise.resolve(response({ result: [{ status: { code: 0 }, data: [{ device: 'FMG-FGT-1', interface: 'wan1', status: 'up', role: 'primary' }] }] }));
+      return Promise.resolve(response({ result: [{ status: { code: 0 }, data: [{ id: 'fmg-alert-1', severity: 'high', category: 'connectivity', message: 'Device tunnel down', serial: 'FMG-FGT-1' }] }] }));
+    });
+    vi.stubGlobal('fetch', fetchMock);
+    const connector = new FortinetConnector({ apiKey: 'manager-secret', baseUrl: 'https://fortimanager.test/jsonrpc', managerType: 'fortimanager', organizationIdOrTenant: 'customer-a' });
+
+    const result = await connector.fullSync();
+    expect(result.errors).toEqual([]);
+    expect(result.devices[0]).toMatchObject({ controllerDeviceId: 'FMG-FGT-1', status: 'online', networkName: 'customer-a' });
+    expect(result.links[0]).toMatchObject({ controllerDeviceId: 'FMG-FGT-1', status: 'up' });
+    expect(result.events[0]).toMatchObject({ rawEventId: 'fmg-alert-1', severity: 'high', eventSource: 'fortimanager' });
   });
 });

@@ -1,4 +1,4 @@
-CREATE TABLE "provider_lookups" (
+CREATE TABLE IF NOT EXISTS "provider_lookups" (
 	"ip_address" text PRIMARY KEY NOT NULL,
 	"provider" text,
 	"region" text,

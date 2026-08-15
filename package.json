@@ -9,6 +9,7 @@
     "db:down": "docker compose down",
     "db:url": "echo postgresql://service_assurance:service_assurance@localhost:5432/service_assurance",
     "db:push": "pnpm --filter @workspace/db run push",
+    "db:baseline": "pnpm --filter @workspace/db run baseline",
     "db:migrate": "pnpm --filter @workspace/db run migrate",
     "db:seed": "pnpm --filter @workspace/scripts run seed",
     "typecheck:libs": "tsc --build",

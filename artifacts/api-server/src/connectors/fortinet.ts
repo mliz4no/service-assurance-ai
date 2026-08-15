@@ -53,6 +53,66 @@ export class FortinetConnector implements BaseConnector {
     this.config = config;
   }
 
+  private get demoMode(): boolean {
+    return !this.config.apiKey || this.config.apiKey === 'placeholder';
+  }
+
+  private get baseUrl(): string {
+    return this.config.baseUrl.replace(/\/+$/, '');
+  }
+
+  private async getFortiGate<T>(path: string): Promise<T> {
+    const separator = path.includes('?') ? '&' : '?';
+    const response = await fetchWithRetry(
+      `${this.baseUrl}${path}${separator}access_token=${encodeURIComponent(this.config.apiKey)}`,
+      { headers: { Accept: 'application/json' } },
+    );
+    if (!response.ok) throw new Error(`FortiGate API returned ${response.status} for ${path}`);
+    return response.json() as Promise<T>;
+  }
+
+  private async getFortiManagerData<T>(url: string): Promise<T> {
+    const loginResponse = await fetchWithRetry(this.baseUrl, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        id: 1,
+        method: 'exec',
+        params: [{ url: 'sys/login/user', data: { user: 'admin', passwd: this.config.apiKey } }],
+      }),
+    });
+    if (!loginResponse.ok) throw new Error(`FortiManager login returned ${loginResponse.status}`);
+
+    const login = (await loginResponse.json()) as {
+      session?: string;
+      result?: Array<{ status?: { code?: number; message?: string } }>;
+    };
+    if (login.result?.[0]?.status?.code !== 0 || !login.session) {
+      throw new Error(`FortiManager login failed: ${login.result?.[0]?.status?.message ?? 'missing session'}`);
+    }
+
+    const response = await fetchWithRetry(this.baseUrl, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        id: 2,
+        method: 'get',
+        params: [{ url, option: ['get all'] }],
+        session: login.session,
+      }),
+    });
+    if (!response.ok) throw new Error(`FortiManager API returned ${response.status} for ${url}`);
+
+    const payload = (await response.json()) as {
+      result?: Array<{ status?: { code?: number; message?: string }; data?: T }>;
+    };
+    const result = payload.result?.[0];
+    if (result?.status?.code !== 0) {
+      throw new Error(`FortiManager API failed for ${url}: ${result?.status?.message ?? 'unknown error'}`);
+    }
+    return (result?.data ?? []) as T;
+  }
+
   /**
    * Test connection to FortiManager or FortiGate.
    *
@@ -70,7 +130,7 @@ export class FortinetConnector implements BaseConnector {
       return { ok: false, message: 'Fortinet baseUrl is not configured.' };
     }
 
-    if (!this.config.apiKey || this.config.apiKey === 'placeholder') {
+    if (this.demoMode) {
       return { ok: true, message: 'Demo mode: Fortinet connection simulated (no real API key)' };
     }
 
@@ -78,7 +138,7 @@ export class FortinetConnector implements BaseConnector {
 
     try {
       if (this.config.managerType === 'fortimanager') {
-        const loginUrl = `${baseUrl}/sys/login/user`;
+        const loginUrl = baseUrl;
         const response = await fetchWithRetry(loginUrl, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
@@ -164,7 +224,52 @@ export class FortinetConnector implements BaseConnector {
    * Returns: { "results": { "members": [{ "hostname", "role": "primary|backup", "overridden": false }] } }
    */
   async syncDevices(): Promise<NormalizedDevice[]> {
-    return this.mockDevices();
+    if (this.demoMode) return this.mockDevices();
+
+    if (this.config.managerType === 'fortimanager') {
+      const devices = await this.getFortiManagerData<Array<Record<string, unknown>>>('/dvmdb/device');
+      return devices.map((device) => ({
+        controllerDeviceId: String(device.serial ?? device.sn ?? device.name),
+        hostname: String(device.name ?? device.hostname ?? device.serial),
+        deviceType: 'firewall',
+        vendor: 'Fortinet',
+        serialNumber: device.serial ? String(device.serial) : device.sn ? String(device.sn) : undefined,
+        model: device.platform_str ? String(device.platform_str) : device.platform ? String(device.platform) : undefined,
+        mgmtIp: device.ip ? String(device.ip) : undefined,
+        status: device.conn_status === 1 || device.connection_status === 'up' ? 'online' : 'offline',
+        haState: device.ha_mode === 1 || device.ha_status === 'master' ? 'active' : device.ha_status === 'slave' ? 'standby' : 'standalone',
+        lastSeenAt: new Date(),
+        networkName: device.adom ? String(device.adom) : this.config.organizationIdOrTenant,
+        metadataJson: device,
+      }));
+    }
+
+    const [statusPayload, haPayload] = await Promise.all([
+      this.getFortiGate<{ results?: Record<string, unknown> }>('/api/v2/monitor/system/status'),
+      this.getFortiGate<{ results?: { members?: Array<Record<string, unknown>> } }>('/api/v2/monitor/system/ha-statistics')
+        .catch(() => ({ results: { members: [] } })),
+    ]);
+    const status = statusPayload.results ?? {};
+    const members = haPayload.results?.members ?? [];
+    const hostname = String(status.hostname ?? status.serial ?? 'FortiGate');
+    const serial = String(status.serial ?? hostname);
+    const member = members.find((item) => item.hostname === hostname) ?? members[0];
+    const role = member?.role;
+
+    return [{
+      controllerDeviceId: serial,
+      hostname,
+      deviceType: 'firewall',
+      vendor: 'Fortinet',
+      serialNumber: serial,
+      model: status.model ? String(status.model) : undefined,
+      mgmtIp: status.management_ip ? String(status.management_ip) : undefined,
+      status: 'online',
+      haState: role === 'primary' || role === 'master' ? 'active' : role === 'secondary' || role === 'slave' ? 'standby' : 'standalone',
+      lastSeenAt: new Date(),
+      networkName: this.config.organizationIdOrTenant,
+      metadataJson: { ...status, ha: member },
+    }];
   }
 
   /**
@@ -179,7 +284,67 @@ export class FortinetConnector implements BaseConnector {
    * Returns: { "results": { "{health-check-name}": { "members": [{ "interface", "latency", "jitter", "packet_loss", "status" }] } } }
    */
   async syncLinks(): Promise<NormalizedLink[]> {
-    return this.mockLinks();
+    if (this.demoMode) return this.mockLinks();
+
+    if (this.config.managerType === 'fortimanager') {
+      const adom = this.config.organizationIdOrTenant ?? 'root';
+      const members = await this.getFortiManagerData<Array<Record<string, unknown>>>(
+        `/pm/config/adom/${encodeURIComponent(adom)}/obj/system/virtual-wan-link/members`,
+      );
+      return members.map((member) => ({
+        controllerDeviceId: String(member.device ?? member.serial ?? member.scope_member ?? 'fortimanager'),
+        linkName: String(member.interface ?? member.name ?? `SD-WAN member ${member.seq_num ?? ''}`),
+        linkType: 'sdwan_transport',
+        providerName: member.provider ? String(member.provider) : undefined,
+        role: member.priority === 1 || member.role === 'primary' ? 'primary' : member.role === 'backup' ? 'backup' : 'unknown',
+        status: member.status === 'down' || member.link === false ? 'down' : member.status === 'degraded' ? 'degraded' : 'up',
+        networkName: adom,
+        metadataJson: member,
+      }));
+    }
+
+    const [interfacePayload, healthPayload, statusPayload] = await Promise.all([
+      this.getFortiGate<{ results?: Record<string, Record<string, unknown>> | Array<Record<string, unknown>> }>(
+        '/api/v2/monitor/system/interface?include_vdom=true',
+      ),
+      this.getFortiGate<{ results?: Record<string, { members?: Array<Record<string, unknown>> }> }>(
+        '/api/v2/monitor/virtual-wan/health-check',
+      ).catch(() => ({ results: {} })),
+      this.getFortiGate<{ results?: Record<string, unknown> }>('/api/v2/monitor/system/status'),
+    ]);
+    const serial = String(statusPayload.results?.serial ?? statusPayload.results?.hostname ?? 'fortigate');
+    const interfaces: Array<Record<string, unknown>> = Array.isArray(interfacePayload.results)
+      ? interfacePayload.results
+      : Object.entries(interfacePayload.results ?? {}).map(([name, value]) => ({ ...value, name }));
+    const healthResults = (healthPayload.results ?? {}) as Record<
+      string,
+      { members?: Array<Record<string, unknown>> }
+    >;
+    const healthMembers = Object.values(healthResults).flatMap((check) => check.members ?? []);
+    const healthByInterface = new Map(healthMembers.map((member) => [String(member.interface ?? member.name), member]));
+
+    return interfaces
+      .filter((item) => {
+        const name = String(item.name ?? item.interface ?? '');
+        return healthByInterface.has(name) || item.role === 'wan' || /^wan\d*$/i.test(name);
+      })
+      .map((item) => {
+        const name = String(item.name ?? item.interface);
+        const health = healthByInterface.get(name);
+        const linkUp = item.link === true || item.link === 'up' || item.status === 'up';
+        const healthStatus = health?.status;
+        return {
+          controllerDeviceId: serial,
+          linkName: String(item.alias || name),
+          linkType: 'wan_uplink' as const,
+          role: item.role === 'backup' || health?.role === 'backup' ? 'backup' as const : 'primary' as const,
+          status: !linkUp || healthStatus === 'down' ? 'down' as const : healthStatus === 'degraded' ? 'degraded' as const : 'up' as const,
+          latencyMs: typeof health?.latency === 'number' ? health.latency : undefined,
+          jitterMs: typeof health?.jitter === 'number' ? health.jitter : undefined,
+          packetLossPct: typeof health?.packet_loss === 'number' ? health.packet_loss : undefined,
+          metadataJson: { interface: item, health },
+        };
+      });
   }
 
   /**
@@ -194,16 +359,57 @@ export class FortinetConnector implements BaseConnector {
    * Returns HA role change events with timestamps.
    */
   async syncEvents(): Promise<NormalizedEvent[]> {
-    return this.mockEvents();
+    if (this.demoMode) return this.mockEvents();
+
+    const events: Array<Record<string, unknown>> = this.config.managerType === 'fortimanager'
+      ? await this.getFortiManagerData<Array<Record<string, unknown>>>(
+          `/eventmgmt/adom/${encodeURIComponent(this.config.organizationIdOrTenant ?? 'root')}/alerts`,
+        )
+      : await this.getFortiGate<{ results?: Array<Record<string, unknown>> | { data?: Array<Record<string, unknown>> } }>(
+          '/api/v2/log/disk/event?type=system&rows=100',
+        ).then((payload) => Array.isArray(payload.results) ? payload.results : payload.results?.data ?? []);
+
+    return events.map((event, index) => {
+      const level = String(event.level ?? event.severity ?? 'information').toLowerCase();
+      const occurredAt = event.timestamp ?? event.eventtime ?? event.time;
+      return {
+        rawEventId: String(event.logid ?? event.id ?? event.event_id ?? `fortinet-${index}-${occurredAt ?? Date.now()}`),
+        eventSource: this.config.managerType === 'fortimanager' ? 'fortimanager' : 'fortigate_system',
+        severity: level === 'critical' || level === 'emergency' || level === 'alert'
+          ? 'critical'
+          : level === 'error' || level === 'high'
+            ? 'high'
+            : level === 'warning' || level === 'medium'
+              ? 'medium'
+              : 'informational',
+        eventType: String(event.subtype ?? event.type ?? event.category ?? 'system_event'),
+        title: String(event.msg ?? event.message ?? event.subject ?? 'Fortinet system event'),
+        description: event.description ? String(event.description) : event.msg ? String(event.msg) : undefined,
+        occurredAt: occurredAt ? new Date(typeof occurredAt === 'number' ? occurredAt * 1000 : String(occurredAt)) : new Date(),
+        controllerDeviceId: event.serial ? String(event.serial) : event.devserial ? String(event.devserial) : undefined,
+        category: String(event.subtype ?? event.category ?? 'system'),
+        rawPayloadJson: event,
+      };
+    });
   }
 
   async fullSync(): Promise<ConnectorSyncResult> {
-    const [devices, links, events] = await Promise.all([
+    const results = await Promise.allSettled([
       this.syncDevices(),
       this.syncLinks(),
       this.syncEvents(),
     ]);
-    return { devices, links, events, errors: [] };
+    const errors = results.flatMap((result, index) =>
+      result.status === 'rejected'
+        ? [`${['devices', 'links', 'events'][index]}: ${result.reason instanceof Error ? result.reason.message : String(result.reason)}`]
+        : [],
+    );
+    return {
+      devices: results[0].status === 'fulfilled' ? results[0].value : [],
+      links: results[1].status === 'fulfilled' ? results[1].value : [],
+      events: results[2].status === 'fulfilled' ? results[2].value : [],
+      errors,
+    };
   }
 
   // ── Mock data helpers (realistic Fortinet-style data for dev/demo mode) ──────

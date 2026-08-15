@@ -138,6 +138,21 @@ pnpm db:down
 pnpm db:push
 ```
 
+- Apply journaled migrations on a clean or migration-managed database:
+
+```bash
+pnpm db:migrate
+```
+
+- Adopt an existing database previously managed with `db:push`, then migrate:
+
+```bash
+pnpm db:baseline
+pnpm db:migrate
+```
+
+Run `db:baseline` only once on an existing database. It refuses to baseline an empty schema and does nothing when migration history already exists.
+
 - Seed sample data:
 
 ```bash
@@ -147,17 +162,17 @@ pnpm db:seed
 ## Troubleshooting
 
 - `DATABASE_URL, ensure the database is provisioned`
-	- Confirm `.env` exists at repo root.
-	- Confirm PostgreSQL is running: `pnpm db:up`.
-	- Reapply schema: `pnpm db:push`.
+  - Confirm `.env` exists at repo root.
+  - Confirm PostgreSQL is running: `pnpm db:up`.
+  - Reapply schema: `pnpm db:push`.
 
 - Windows error: `"export" no se reconoce...`
-	- This repo already uses cross-platform scripts.
-	- If you still see this, run `pnpm install` and retry.
+  - This repo already uses cross-platform scripts.
+  - If you still see this, run `pnpm install` and retry.
 
 - Seed errors during API startup
-	- Run seed explicitly first: `pnpm db:seed`.
-	- Then start API: `pnpm --filter @workspace/api-server run dev`.
+  - Run seed explicitly first: `pnpm db:seed`.
+  - Then start API: `pnpm --filter @workspace/api-server run dev`.
 
 ## Notes
 
@@ -182,20 +197,20 @@ Idempotency:
 
 - For integration calls to create endpoints, send `Idempotency-Key`
 - Supported endpoints:
-	- `POST /api/customers`
-	- `POST /api/sites`
-	- `POST /api/services`
-	- `POST /api/tickets`
+  - `POST /api/customers`
+  - `POST /api/sites`
+  - `POST /api/services`
+  - `POST /api/tickets`
 - Same key + same payload returns the original success response
 - Same key + different payload returns `409 CONFLICT`
 
 External identity tracking:
 
 - Customer, site, service, and ticket records now support:
-	- `externalSource`
-	- `externalId`
-	- `externalSyncedAt`
-	- `externalSyncStatus`
+  - `externalSource`
+  - `externalId`
+  - `externalSyncedAt`
+  - `externalSyncStatus`
 
 Upsert endpoints (InvoxAI):
 

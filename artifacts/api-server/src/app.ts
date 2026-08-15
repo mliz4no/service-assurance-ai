@@ -73,6 +73,7 @@ app.use(
     limit: Number(process.env.LOGIN_RATE_LIMIT_MAX ?? 10),
     standardHeaders: 'draft-8',
     legacyHeaders: false,
+    skip: () => process.env.NODE_ENV === 'test',
     message: { error: 'Too Many Requests', message: 'Too many login attempts. Try again later.' },
   }),
 );

@@ -24,7 +24,7 @@ Status legend: **Implemented** means the end-to-end path exists; **Partial** mea
 | Phase 3 — Nagios and ticketing       | Implemented | Nagios synchronization creates or updates deduplicated tickets. Ticket numbering is database-atomic and monitoring runs use a cross-instance advisory lock.                                                                                        |
 | Phase 4 — Outage correlation         | Implemented | Sibling target health and external outage signals classify isolated, shared, and regional outages and write context into ticket updates.                                                                                                           |
 | Phase 5 — IP/provider enrichment     | Implemented | Heuristic and IPinfo enrichment are available with an optional persistent `provider_lookups` cache and configurable TTL.                                                                                                                           |
-| Phase 6 — Controller integrations    | Partial     | Meraki, Palo Alto, and generic SD-WAN have live polling paths. Fortinet connection testing is live, but device/link/event synchronization still returns demo data.                                                                                 |
+| Phase 6 — Controller integrations    | Implemented | Meraki, Fortinet/FortiManager, Palo Alto, and generic SD-WAN have live device, link, and event polling paths with normalized partial-result handling.                                                                                              |
 | Phase 7 — Dashboard, reports, alerts | Partial     | Operational dashboards, incident views, escalation evaluation, email/webhook delivery, and ticket workflows exist. Durable delivery queues, complete historical reporting, and alert operations remain.                                            |
 | Phase 8 — Performance and delivery   | Partial     | Monorepo typecheck and builds pass, CI and an API container exist. Frontend route splitting, migration-history baselining, complete OpenAPI coverage, metrics, and production deployment documentation remain.                                     |
 
@@ -38,16 +38,14 @@ Status legend: **Implemented** means the end-to-end path exists; **Partial** mea
 - `/api/healthz` is a process liveness check and `/api/readyz` verifies database readiness.
 - `.env.example` documents the active API, monitoring, alert, enrichment, Salesforce, InvoxAI, and Avalara settings.
 - The complete monorepo typecheck passes and all application production builds complete.
-- The API test suite currently passes 84 of 86 tests. The two remaining failures are test-isolation failures caused by the login rate limiter returning `429` after repeated integration-test logins.
+- The API test suite passes all 86 tests. Test mode bypasses the process-wide login limiter while development and production throttling remain enabled.
+- Drizzle migrations are validated for clean installation and for adoption of an existing `db:push`-managed schema through `db:baseline`.
 
 ### 1.3 Remaining production priorities
 
-1. Add test-aware rate-limiter isolation without weakening production throttling.
-2. Baseline the historical Drizzle migration journal and validate both clean installs and upgrades from the current schema.
-3. Complete Fortinet live inventory, link, and event synchronization.
-4. Route-split the frontend and enforce bundle budgets in CI.
-5. Bring the OpenAPI contract and generated clients up to date with monitoring, map, controller, event, and Salesforce APIs.
-6. Add metrics, tracing, durable alert delivery, backup/restore exercises, and load testing.
+1. Route-split the frontend and enforce bundle budgets in CI.
+2. Bring the OpenAPI contract and generated clients up to date with monitoring, map, controller, event, and Salesforce APIs.
+3. Add metrics, tracing, durable alert delivery, backup/restore exercises, and load testing.
 
 ---
 
@@ -459,7 +457,7 @@ Enrich monitored targets and outages with provider/ASN/geographic metadata.
 
 Bring in controller-level status and outage signals from major vendors and platforms.
 
-**Status: Partial.** Meraki, Palo Alto, and generic SD-WAN expose live polling paths. Fortinet live synchronization remains incomplete.
+**Status: Implemented.** Meraki, Fortinet/FortiManager, Palo Alto, and generic SD-WAN expose live polling paths.
 
 ### Scope
 
@@ -497,7 +495,7 @@ The repository has a connector abstraction in [artifacts/api-server/src/connecto
 - [x] Polling and sync orchestration
 - [x] Normalized status data used by the outage map and incident engine
 - [x] Shared timeout, `Retry-After`, and bounded backoff handling
-- [ ] Replace Fortinet demo snapshots with live device, link, and event synchronization
+- [x] Replace Fortinet demo snapshots with live device, link, and event synchronization
 
 ### Acceptance criteria
 
@@ -800,9 +798,9 @@ Reduce startup cost, enforce release quality, and make deployments repeatable an
 
 ### Delivery and operations tasks
 
-- Baseline and repair Drizzle migration history before using `db:migrate` for production upgrades.
-- Validate clean database installation and upgrade from the current deployed schema.
-- Keep PostgreSQL-backed integration tests in CI and isolate login-rate-limit state per test.
+- [x] Baseline and repair Drizzle migration history for production upgrades.
+- [x] Validate clean database installation and adoption of the current `db:push`-managed schema.
+- [x] Keep PostgreSQL-backed integration tests in CI and isolate login-rate-limit state per test.
 - Publish versioned API container images and document migration-before-rollout ordering.
 - Expand `/api/readyz` as new mandatory dependencies are introduced.
 - Add request, database, scheduler, integration, and alert-delivery metrics.
