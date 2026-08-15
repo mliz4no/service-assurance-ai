@@ -1,4 +1,4 @@
-import { defineConfig } from 'vite';
+import { defineConfig, type PluginOption } from 'vite';
 import react from '@vitejs/plugin-react';
 import tailwindcss from '@tailwindcss/vite';
 import path from 'path';
@@ -14,20 +14,21 @@ if (Number.isNaN(port) || port <= 0) {
 }
 
 const basePath = process.env.BASE_PATH || '/';
+const compatiblePlugin = (plugin: unknown): PluginOption => plugin as PluginOption;
 
 export default defineConfig({
   base: basePath,
   plugins: [
-    mockupPreviewPlugin(),
-    react(),
-    tailwindcss(),
-    runtimeErrorOverlay(),
+    compatiblePlugin(mockupPreviewPlugin()),
+    compatiblePlugin(react()),
+    compatiblePlugin(tailwindcss()),
+    compatiblePlugin(runtimeErrorOverlay()),
     ...(process.env.NODE_ENV !== 'production' && process.env.REPL_ID !== undefined
       ? [
           await import('@replit/vite-plugin-cartographer').then((m) =>
-            m.cartographer({
+            compatiblePlugin(m.cartographer({
               root: path.resolve(import.meta.dirname, '..'),
-            }),
+            })),
           ),
         ]
       : []),

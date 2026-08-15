@@ -1,4 +1,5 @@
 import net from 'node:net';
+import { getCachedProviderLookup, setCachedProviderLookup } from './provider-lookup-cache';
 
 export type TargetEnrichment = {
   normalizedHostOrIp: string;
@@ -177,8 +178,24 @@ export async function resolveTargetEnrichmentWithProvider(hostOrIp: string): Pro
   }
 
   try {
+    const cached = await getCachedProviderLookup(fallback.normalizedHostOrIp);
+    if (cached) {
+      return {
+        ...fallback,
+        provider: cached.provider ?? fallback.provider,
+        region: cached.region ?? fallback.region,
+        confidence: cached.provider ? 'high' : 'medium',
+        asn: cached.asn,
+        country: cached.country,
+        city: cached.city,
+        source: cached.source === 'ipinfo' ? 'ipinfo' : 'heuristic',
+      };
+    }
+
     const enriched = await lookupIpinfo(fallback.normalizedHostOrIp);
     if (!enriched) return fallback;
+
+    await setCachedProviderLookup(fallback.normalizedHostOrIp, enriched);
 
     return {
       ...fallback,

@@ -1,8 +1,13 @@
 import { AppLayout } from '@/components/layout/app-layout';
-import { useGetDevice } from '@/lib/controller-hooks';
+import { useGetDevice, useUpdateDevice } from '@/lib/controller-hooks';
 import { useParams, Link } from 'wouter';
+import { useEffect, useState } from 'react';
 import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { Switch } from '@/components/ui/switch';
 import {
   Table,
   TableBody,
@@ -52,6 +57,14 @@ function metricCell(val: number | null, unit: string) {
 export default function DeviceDetailPage() {
   const { id } = useParams<{ id: string }>();
   const { data: device, isLoading } = useGetDevice(id!);
+  const updateDevice = useUpdateDevice();
+  const [publicLabel, setPublicLabel] = useState('');
+  const [isPublic, setIsPublic] = useState(false);
+
+  useEffect(() => {
+    setPublicLabel(device?.publicLabel ?? '');
+    setIsPublic(device?.isPublic ?? false);
+  }, [device?.publicLabel, device?.isPublic]);
 
   if (isLoading) {
     return (
@@ -105,7 +118,7 @@ export default function DeviceDetailPage() {
         </div>
 
         {/* Device info */}
-        <div className="grid grid-cols-2 gap-4">
+        <div className="grid gap-4 lg:grid-cols-3">
           <Card>
             <CardHeader>
               <CardTitle className="text-sm">Device Information</CardTitle>
@@ -171,6 +184,44 @@ export default function DeviceDetailPage() {
               ) : (
                 <div className="text-sm text-muted-foreground">No linked tickets</div>
               )}
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardHeader>
+              <CardTitle className="text-sm">Public Network Map</CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <div className="space-y-2">
+                <Label htmlFor="public-device-label">Public label</Label>
+                <Input
+                  id="public-device-label"
+                  value={publicLabel}
+                  onChange={(event) => setPublicLabel(event.target.value)}
+                  placeholder="Approved customer-facing label"
+                />
+              </div>
+              <div className="flex items-center justify-between gap-3">
+                <div>
+                  <Label htmlFor="public-device-visibility">Visible publicly</Label>
+                  <p className="text-xs text-muted-foreground">Requires a label and device or site coordinates.</p>
+                </div>
+                <Switch
+                  id="public-device-visibility"
+                  checked={isPublic}
+                  onCheckedChange={setIsPublic}
+                />
+              </div>
+              <Button
+                className="w-full"
+                disabled={updateDevice.isPending || (isPublic && !publicLabel.trim())}
+                onClick={() => updateDevice.mutate({
+                  id: device.id,
+                  data: { publicLabel: publicLabel.trim() || null, isPublic },
+                })}
+              >
+                Save map settings
+              </Button>
             </CardContent>
           </Card>
         </div>

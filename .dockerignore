@@ -1,0 +1,10 @@
+.git
+.github
+.env
+**/node_modules
+**/dist
+**/coverage
+screenshots
+attached_assets
+artifacts/engineering-deck
+artifacts/mockup-sandbox

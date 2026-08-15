@@ -1,0 +1,57 @@
+name: CI
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+permissions:
+  contents: read
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:16-alpine
+        env:
+          POSTGRES_DB: service_assurance
+          POSTGRES_USER: service_assurance
+          POSTGRES_PASSWORD: service_assurance
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U service_assurance"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+    env:
+      DATABASE_URL: postgresql://service_assurance:service_assurance@localhost:5432/service_assurance
+      NODE_ENV: test
+      PORT: 8080
+      SESSION_SECRET: ci-only-session-secret
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 11.6.0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm run db:push
+      - run: pnpm run typecheck
+      - run: pnpm run build
+      - run: pnpm --filter @workspace/api-server run test
+
+  container:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: docker/setup-buildx-action@v3
+      - uses: docker/build-push-action@v6
+        with:
+          context: .
+          push: false
+          tags: service-assurance-api:ci

@@ -8,6 +8,27 @@
       "when": 1774934100456,
       "tag": "0000_simple_rafael_vega",
       "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "7",
+      "when": 1786824811977,
+      "tag": "0002_production_foundation",
+      "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1786825009232,
+      "tag": "0002_wandering_post",
+      "breakpoints": true
+    },
+    {
+      "idx": 3,
+      "version": "7",
+      "when": 1786825076593,
+      "tag": "0003_heavy_romulus",
+      "breakpoints": true
     }
   ]
 }

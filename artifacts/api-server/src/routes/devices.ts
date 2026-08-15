@@ -146,6 +146,11 @@ router.get('/devices/:id', requireAuth, async (req, res): Promise<void> => {
 });
 
 router.put('/devices/:id', requireAuth, async (req, res): Promise<void> => {
+  if (!req.user || !['admin', 'ops'].includes(req.user.role)) {
+    res.status(403).json({ error: 'Forbidden', message: 'Internal user access required' });
+    return;
+  }
+
   const id = Array.isArray(req.params.id) ? req.params.id[0] : req.params.id;
   const [existing] = await db
     .select()
@@ -156,7 +161,7 @@ router.put('/devices/:id', requireAuth, async (req, res): Promise<void> => {
     return;
   }
 
-  const { customerId, siteId, hostname, status } = req.body;
+  const { customerId, siteId, hostname, status, publicLabel, isPublic } = req.body;
   const [updated] = await db
     .update(managedDevicesTable)
     .set({
@@ -164,6 +169,8 @@ router.put('/devices/:id', requireAuth, async (req, res): Promise<void> => {
       siteId: siteId ?? existing.siteId,
       hostname: hostname ?? existing.hostname,
       status: status ?? existing.status,
+      publicLabel: publicLabel === undefined ? existing.publicLabel : publicLabel,
+      isPublic: isPublic ?? existing.isPublic,
     })
     .where(eq(managedDevicesTable.id, id))
     .returning();

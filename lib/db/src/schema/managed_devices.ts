@@ -1,4 +1,4 @@
-import { doublePrecision, pgTable, text, timestamp, uuid, jsonb } from 'drizzle-orm/pg-core';
+import { boolean, doublePrecision, pgTable, text, timestamp, uuid, jsonb } from 'drizzle-orm/pg-core';
 import { createInsertSchema } from 'drizzle-zod';
 import { z } from 'zod/v4';
 import { controllersTable } from './controllers';
@@ -33,6 +33,8 @@ export const managedDevicesTable = pgTable('managed_devices', {
   longitude: doublePrecision('longitude'),
   /** Origin of the coordinate */
   geoSource: text('geo_source', { enum: ['manual', 'inherited_from_site', 'imported'] }),
+  publicLabel: text('public_label'),
+  isPublic: boolean('is_public').notNull().default(false),
   lastSeenAt: timestamp('last_seen_at', { withTimezone: true }),
   metadataJson: jsonb('metadata_json'),
   createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),

@@ -19,6 +19,7 @@ import {
 } from '@workspace/db';
 import { eq, and, inArray, isNull } from 'drizzle-orm';
 import { logger } from './logger';
+import { getNextTicketNumber } from './ticket-number';
 
 export interface CorrelationResult {
   action: 'created' | 'attached' | 'skipped';
@@ -96,23 +97,6 @@ function mapOutageType(eventType: string): 'outage' | 'impairment' | 'informatio
     return 'impairment';
   if (eventType.includes('checkin') || eventType.includes('info')) return 'informational';
   return 'unknown';
-}
-
-/** Generate a unique ticket number by scanning all existing tickets */
-async function getNextTicketNumber(): Promise<string> {
-  const allNumbers = await db
-    .select({ ticketNumber: ticketsTable.ticketNumber })
-    .from(ticketsTable);
-  if (allNumbers.length === 0) return 'SA-1001';
-  let max = 1000;
-  for (const row of allNumbers) {
-    const match = row.ticketNumber.match(/SA-(\d+)/);
-    if (match) {
-      const n = parseInt(match[1], 10);
-      if (n > max) max = n;
-    }
-  }
-  return `SA-${max + 1}`;
 }
 
 /**

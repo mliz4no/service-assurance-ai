@@ -23,3 +23,6 @@ export * from './invoice_complaint_events';
 export * from './avalara_config';
 export * from './monitored_targets';
 export * from './monitoring_checks';
+export * from './auth_sessions';
+export * from './ticket_number_counters';
+export * from './provider_lookups';

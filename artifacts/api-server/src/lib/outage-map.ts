@@ -1,4 +1,4 @@
-import { db, monitoredTargetsTable } from '@workspace/db';
+import { db, managedDevicesTable, monitoredTargetsTable, sitesTable } from '@workspace/db';
 import { and, eq, isNotNull, sql } from 'drizzle-orm';
 
 export type PublicNetworkMapPoint = {
@@ -66,7 +66,7 @@ export async function getPublicNetworkMapData(): Promise<PublicNetworkMapPoint[]
     )
     .orderBy(monitoredTargetsTable.publicLabel);
 
-  return (rows as PublicNetworkMapRow[]).map((row: PublicNetworkMapRow) => ({
+  const targetPoints = (rows as PublicNetworkMapRow[]).map((row: PublicNetworkMapRow) => ({
     id: row.id,
     label: row.publicLabel as string,
     status: row.status,
@@ -77,34 +77,50 @@ export async function getPublicNetworkMapData(): Promise<PublicNetworkMapPoint[]
     lastSeenAt: row.lastCheckedAt,
     source: row.statusSource,
   }));
+
+  const devices = await database
+    .select({
+      id: managedDevicesTable.id,
+      publicLabel: managedDevicesTable.publicLabel,
+      status: managedDevicesTable.status,
+      latitude: sql<number | null>`coalesce(${managedDevicesTable.latitude}, ${sitesTable.latitude})`,
+      longitude: sql<number | null>`coalesce(${managedDevicesTable.longitude}, ${sitesTable.longitude})`,
+      provider: managedDevicesTable.vendor,
+      region: sitesTable.state,
+      lastSeenAt: managedDevicesTable.lastSeenAt,
+    })
+    .from(managedDevicesTable)
+    .leftJoin(sitesTable, eq(managedDevicesTable.siteId, sitesTable.id))
+    .where(and(eq(managedDevicesTable.isPublic, true), isNotNull(managedDevicesTable.publicLabel)));
+
+  const devicePoints: PublicNetworkMapPoint[] = devices
+    .filter((device: typeof devices[number]) => device.latitude !== null && device.longitude !== null)
+    .map((device: typeof devices[number]) => ({
+      id: `device:${device.id}`,
+      label: device.publicLabel as string,
+      status: device.status === 'online' ? 'up' : device.status === 'offline' ? 'down' : device.status,
+      latitude: device.latitude as number,
+      longitude: device.longitude as number,
+      provider: device.provider,
+      region: device.region,
+      lastSeenAt: device.lastSeenAt,
+      source: 'controller',
+    }));
+
+  return [...targetPoints, ...devicePoints];
 }
 
 export async function getPublicNetworkMapSummary(): Promise<PublicNetworkMapSummary> {
-  const database = getDb();
-
-  const [summary] = await database
-    .select({
-      totalAssets: sql<number>`count(*)::int`,
-      activeOutages: sql<number>`count(*) filter (where ${monitoredTargetsTable.status} = 'down')::int`,
-      degradedServices: sql<number>`count(*) filter (where ${monitoredTargetsTable.status} = 'degraded')::int`,
-      unknownServices: sql<number>`count(*) filter (where ${monitoredTargetsTable.status} = 'unknown')::int`,
-      lastUpdatedAt: sql<Date | null>`max(${monitoredTargetsTable.lastCheckedAt})`,
-    })
-    .from(monitoredTargetsTable)
-    .where(
-      and(
-        eq(monitoredTargetsTable.isPublic, true),
-        isNotNull(monitoredTargetsTable.publicLabel),
-        isNotNull(monitoredTargetsTable.latitude),
-        isNotNull(monitoredTargetsTable.longitude),
-      ),
-    );
+  const points = await getPublicNetworkMapData();
+  const timestamps = points
+    .map((point) => point.lastSeenAt?.getTime())
+    .filter((timestamp): timestamp is number => timestamp !== undefined);
 
   return {
-    totalAssets: Number(summary?.totalAssets ?? 0),
-    activeOutages: Number(summary?.activeOutages ?? 0),
-    degradedServices: Number(summary?.degradedServices ?? 0),
-    unknownServices: Number(summary?.unknownServices ?? 0),
-    lastUpdatedAt: summary?.lastUpdatedAt ?? null,
+    totalAssets: points.length,
+    activeOutages: points.filter((point) => point.status === 'down').length,
+    degradedServices: points.filter((point) => point.status === 'degraded').length,
+    unknownServices: points.filter((point) => point.status === 'unknown').length,
+    lastUpdatedAt: timestamps.length > 0 ? new Date(Math.max(...timestamps)) : null,
   };
 }

@@ -14,6 +14,7 @@ export type MonitoringScheduler = {
 export function createMonitoringScheduler(options: {
   intervalMs: number;
   run: () => Promise<MonitoringJobResult>;
+  acquireLease?: () => Promise<(() => Promise<void>) | null>;
   runImmediately?: boolean;
   jobName?: string;
 }): MonitoringScheduler {
@@ -29,7 +30,14 @@ export function createMonitoringScheduler(options: {
 
     running = true;
     const startedAt = Date.now();
+    let releaseLease: (() => Promise<void>) | null = null;
     try {
+      releaseLease = options.acquireLease ? await options.acquireLease() : async () => undefined;
+      if (!releaseLease) {
+        logger.info({ jobName }, 'Monitoring job skipped because another instance holds the lease');
+        return null;
+      }
+
       const result = await options.run();
       logger.info({ jobName, durationMs: Date.now() - startedAt, ...result }, 'Monitoring job completed');
       return result;
@@ -37,6 +45,7 @@ export function createMonitoringScheduler(options: {
       logger.error({ jobName, durationMs: Date.now() - startedAt, error }, 'Monitoring job failed');
       return null;
     } finally {
+      await releaseLease?.();
       running = false;
     }
   };

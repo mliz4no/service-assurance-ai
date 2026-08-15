@@ -7,6 +7,7 @@ import { eq } from 'drizzle-orm';
 import crypto from 'crypto';
 import { createMonitoringScheduler, type MonitoringScheduler } from './lib/monitoring-scheduler';
 import { runNagiosMonitoring, runSyntheticMonitoring } from './lib/monitoring-execution';
+import { acquireDistributedLock } from './lib/distributed-lock';
 
 const rawPort = process.env['PORT'];
 
@@ -108,6 +109,7 @@ function startMonitoringScheduler(): MonitoringScheduler | null {
     intervalMs,
     runImmediately: process.env.MONITORING_RUN_IMMEDIATELY === 'true',
     jobName: `monitoring:${mode}`,
+    acquireLease: () => acquireDistributedLock(`service-assurance:monitoring:${mode}`),
     run: async () => {
       if (mode === 'nagios') return runNagiosMonitoring();
       if (mode === 'both') {

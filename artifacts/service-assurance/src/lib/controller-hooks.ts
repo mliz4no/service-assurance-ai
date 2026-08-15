@@ -80,6 +80,8 @@ export interface ManagedDeviceRecord {
   longitude: number | null;
   /** Origin of the coordinate */
   geoSource: string | null;
+  publicLabel: string | null;
+  isPublic: boolean;
   lastSeenAt: string | null;
   metadataJson: Record<string, unknown> | null;
   createdAt: string;

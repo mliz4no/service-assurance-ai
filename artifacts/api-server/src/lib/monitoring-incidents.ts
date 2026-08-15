@@ -8,6 +8,7 @@ import {
 } from '@workspace/db';
 import { and, eq, ne } from 'drizzle-orm';
 import { lookupExternalOutageSignal } from './external-outage-signal';
+import { getNextTicketNumber } from './ticket-number';
 
 type CheckStatus = 'up' | 'down' | 'degraded' | 'unknown';
 
@@ -97,22 +98,6 @@ async function classifyOutageContext(target: MonitoredTarget): Promise<{
     healthySiblingCount,
     impairedSiblingCount,
   };
-}
-
-async function getNextTicketNumber(): Promise<string> {
-  const rows = await db.select({ ticketNumber: ticketsTable.ticketNumber }).from(ticketsTable);
-
-  if (rows.length === 0) return 'SA-1001';
-
-  let max = 1000;
-  for (const row of rows) {
-    const match = row.ticketNumber.match(/SA-(\d+)/);
-    if (!match) continue;
-    const parsed = Number.parseInt(match[1], 10);
-    if (parsed > max) max = parsed;
-  }
-
-  return `SA-${max + 1}`;
 }
 
 export async function upsertIncidentTicketForMonitoringTarget(input: {

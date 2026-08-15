@@ -45,19 +45,33 @@ type TargetForm = {
   name: string;
   publicLabel: string;
   hostOrIp: string;
+  customerId: string;
+  siteId: string;
+  serviceId: string;
   targetType: MonitoredTarget['targetType'];
   provider: string;
   region: string;
+  latitude: string;
+  longitude: string;
   isPublic: boolean;
 };
+
+type CustomerOption = { id: string; name: string };
+type SiteOption = { id: string; customerId: string; siteName: string; latitude: number | null; longitude: number | null };
+type ServiceOption = { id: string; customerId: string; siteId: string | null; circuitId: string };
 
 const EMPTY_FORM: TargetForm = {
   name: '',
   publicLabel: '',
   hostOrIp: '',
+  customerId: '',
+  siteId: '',
+  serviceId: '',
   targetType: 'ip',
   provider: '',
   region: '',
+  latitude: '',
+  longitude: '',
   isPublic: false,
 };
 
@@ -74,6 +88,19 @@ export default function MonitoringPage() {
   const [createOpen, setCreateOpen] = useState(false);
   const [form, setForm] = useState<TargetForm>(EMPTY_FORM);
   const [selectedTargetId, setSelectedTargetId] = useState<string | null>(null);
+
+  const { data: customers = [] } = useQuery({
+    queryKey: ['customers', 'monitoring-options'],
+    queryFn: () => apiFetch<CustomerOption[]>('/customers'),
+  });
+  const { data: sites = [] } = useQuery({
+    queryKey: ['sites', 'monitoring-options'],
+    queryFn: () => apiFetch<SiteOption[]>('/sites'),
+  });
+  const { data: services = [] } = useQuery({
+    queryKey: ['services', 'monitoring-options'],
+    queryFn: () => apiFetch<ServiceOption[]>('/services'),
+  });
 
   const { data: targets = [], isLoading } = useQuery({
     queryKey: ['monitoring', 'targets'],
@@ -104,8 +131,13 @@ export default function MonitoringPage() {
         body: JSON.stringify({
           ...form,
           publicLabel: form.publicLabel || undefined,
+          customerId: form.customerId || undefined,
+          siteId: form.siteId || undefined,
+          serviceId: form.serviceId || undefined,
           provider: form.provider || undefined,
           region: form.region || undefined,
+          latitude: form.latitude ? Number(form.latitude) : undefined,
+          longitude: form.longitude ? Number(form.longitude) : undefined,
         }),
       }),
     onSuccess: async () => {
@@ -259,7 +291,34 @@ export default function MonitoringPage() {
             <div className="grid gap-2"><Label htmlFor="target-name">Name</Label><Input id="target-name" value={form.name} onChange={(event) => setForm({ ...form, name: event.target.value })} /></div>
             <div className="grid gap-2"><Label htmlFor="target-host">Host or IP</Label><Input id="target-host" value={form.hostOrIp} onChange={(event) => setForm({ ...form, hostOrIp: event.target.value })} /></div>
             <div className="grid gap-2"><Label>Type</Label><Select value={form.targetType} onValueChange={(targetType: TargetForm['targetType']) => setForm({ ...form, targetType })}><SelectTrigger><SelectValue /></SelectTrigger><SelectContent><SelectItem value="ip">IP</SelectItem><SelectItem value="hostname">Hostname</SelectItem><SelectItem value="service">Service</SelectItem><SelectItem value="controller">Controller</SelectItem></SelectContent></Select></div>
+            <div className="grid gap-2">
+              <Label>Customer</Label>
+              <Select value={form.customerId || 'none'} onValueChange={(customerId) => setForm({ ...form, customerId: customerId === 'none' ? '' : customerId, siteId: '', serviceId: '' })}>
+                <SelectTrigger><SelectValue /></SelectTrigger>
+                <SelectContent><SelectItem value="none">Unassigned</SelectItem>{customers.map((customer) => <SelectItem key={customer.id} value={customer.id}>{customer.name}</SelectItem>)}</SelectContent>
+              </Select>
+            </div>
+            <div className="grid grid-cols-2 gap-3">
+              <div className="grid gap-2">
+                <Label>Site</Label>
+                <Select value={form.siteId || 'none'} onValueChange={(siteId) => {
+                  const selected = sites.find((site) => site.id === siteId);
+                  setForm({ ...form, siteId: siteId === 'none' ? '' : siteId, serviceId: '', latitude: selected?.latitude?.toString() ?? form.latitude, longitude: selected?.longitude?.toString() ?? form.longitude });
+                }}>
+                  <SelectTrigger><SelectValue /></SelectTrigger>
+                  <SelectContent><SelectItem value="none">Unassigned</SelectItem>{sites.filter((site) => !form.customerId || site.customerId === form.customerId).map((site) => <SelectItem key={site.id} value={site.id}>{site.siteName}</SelectItem>)}</SelectContent>
+                </Select>
+              </div>
+              <div className="grid gap-2">
+                <Label>Service</Label>
+                <Select value={form.serviceId || 'none'} onValueChange={(serviceId) => setForm({ ...form, serviceId: serviceId === 'none' ? '' : serviceId })}>
+                  <SelectTrigger><SelectValue /></SelectTrigger>
+                  <SelectContent><SelectItem value="none">Unassigned</SelectItem>{services.filter((service) => (!form.customerId || service.customerId === form.customerId) && (!form.siteId || service.siteId === form.siteId)).map((service) => <SelectItem key={service.id} value={service.id}>{service.circuitId}</SelectItem>)}</SelectContent>
+                </Select>
+              </div>
+            </div>
             <div className="grid grid-cols-2 gap-3"><div className="grid gap-2"><Label htmlFor="target-provider">Provider</Label><Input id="target-provider" value={form.provider} onChange={(event) => setForm({ ...form, provider: event.target.value })} /></div><div className="grid gap-2"><Label htmlFor="target-region">Region</Label><Input id="target-region" value={form.region} onChange={(event) => setForm({ ...form, region: event.target.value })} /></div></div>
+            <div className="grid grid-cols-2 gap-3"><div className="grid gap-2"><Label htmlFor="target-latitude">Latitude</Label><Input id="target-latitude" type="number" step="any" value={form.latitude} onChange={(event) => setForm({ ...form, latitude: event.target.value })} /></div><div className="grid gap-2"><Label htmlFor="target-longitude">Longitude</Label><Input id="target-longitude" type="number" step="any" value={form.longitude} onChange={(event) => setForm({ ...form, longitude: event.target.value })} /></div></div>
             <div className="grid gap-2"><Label htmlFor="target-label">Public label</Label><Input id="target-label" value={form.publicLabel} onChange={(event) => setForm({ ...form, publicLabel: event.target.value })} /></div>
             <div className="flex items-center justify-between rounded-md border p-3"><div><Label>Public map visibility</Label><p className="text-xs text-muted-foreground">Requires a public label and coordinates to appear.</p></div><Switch checked={form.isPublic} onCheckedChange={(isPublic) => setForm({ ...form, isPublic })} /></div>
           </div>

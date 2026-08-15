@@ -26,6 +26,10 @@ vi.mock('../logger', () => ({
   logger: { info: vi.fn(), error: vi.fn(), warn: vi.fn() },
 }));
 
+vi.mock('../ticket-number', () => ({
+  getNextTicketNumber: vi.fn().mockResolvedValue('SA-1001'),
+}));
+
 describe('incident correlator', () => {
   beforeEach(() => {
     vi.clearAllMocks();

@@ -27,7 +27,7 @@ router.post('/auth/login', async (req, res): Promise<void> => {
   }
 
   const token = generateToken();
-  createSession(token, user.id);
+  await createSession(token, user.id);
 
   const { passwordHash: _, ...safeUser } = user;
   res.json({ user: safeUser, token });
@@ -35,7 +35,7 @@ router.post('/auth/login', async (req, res): Promise<void> => {
 
 router.post('/auth/logout', requireAuth, async (req, res): Promise<void> => {
   const token = req.headers.authorization?.replace('Bearer ', '');
-  if (token) deleteSession(token);
+  if (token) await deleteSession(token);
   res.json({ success: true, message: 'Logged out' });
 });
 
