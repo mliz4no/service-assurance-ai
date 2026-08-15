@@ -16,8 +16,8 @@
     "@workspace/scripts": "workspace:*",
     "cookie-parser": "^1.4.7",
     "cors": "^2",
-    "drizzle-orm": "catalog:",
     "dotenv": "^16.1.4",
+    "drizzle-orm": "catalog:",
     "express": "^5",
     "pino": "^9",
     "pino-http": "^10"
@@ -28,6 +28,7 @@
     "@types/express": "^5.0.6",
     "@types/node": "catalog:",
     "@types/supertest": "^6.0.3",
+    "@vitest/coverage-v8": "^2.1.9",
     "cross-env": "^7.0.3",
     "esbuild": "^0.27.3",
     "esbuild-plugin-pino": "^2.3.3",

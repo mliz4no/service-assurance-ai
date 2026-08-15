@@ -25,6 +25,122 @@ import {
 
 const router: IRouter = Router();
 
+type MonitoringOutageClassification = 'isolated_issue' | 'shared_outage' | 'regional_outage' | 'unknown';
+
+type MonitoringContext = {
+  classification: MonitoringOutageClassification;
+  confidence: 'high' | 'medium' | 'low';
+  reasonCode: string;
+  siblingCount?: number;
+  healthySiblingCount?: number;
+  impairedSiblingCount?: number;
+};
+
+type ControllerContext = {
+  classification: 'controller_outage' | 'controller_impairment' | 'controller_info';
+  confidence: 'high' | 'medium' | 'low';
+  reasonCode: string;
+};
+
+function parseMonitoringContext(rawText: string): MonitoringContext | null {
+  if (!rawText.includes('Classified as') && !rawText.includes('No sibling context available')) {
+    return null;
+  }
+
+  const matched = rawText.match(
+    /Classified as (shared_outage|isolated_issue|regional_outage|unknown); confidence=(high|medium|low); reason=([^;\.]+); siblings=(\d+), healthy=(\d+), impaired=(\d+)\./,
+  );
+  if (matched) {
+    return {
+      classification: matched[1] as MonitoringOutageClassification,
+      confidence: matched[2] as 'high' | 'medium' | 'low',
+      reasonCode: matched[3],
+      siblingCount: Number.parseInt(matched[4], 10),
+      healthySiblingCount: Number.parseInt(matched[5], 10),
+      impairedSiblingCount: Number.parseInt(matched[6], 10),
+    };
+  }
+
+  if (rawText.includes('No sibling context available for classification.')) {
+    const confidenceMatch = rawText.match(/confidence=(high|medium|low)/);
+    const reasonMatch = rawText.match(/reason=([^;\.]+)/);
+    return {
+      classification: 'unknown',
+      confidence: (confidenceMatch?.[1] ?? 'low') as 'high' | 'medium' | 'low',
+      reasonCode: reasonMatch?.[1] ?? 'no_context',
+    };
+  }
+
+  return null;
+}
+
+function parseControllerContext(rawText: string): ControllerContext | null {
+  const matched = rawText.match(
+    /Controller incident classification: (controller_outage|controller_impairment|controller_info); confidence=(high|medium|low); reason=([^\.]+)\./,
+  );
+
+  if (!matched) return null;
+
+  return {
+    classification: matched[1] as ControllerContext['classification'],
+    confidence: matched[2] as ControllerContext['confidence'],
+    reasonCode: matched[3],
+  };
+}
+
+async function getLatestMonitoringContexts(ticketIds: string[]): Promise<Map<string, MonitoringContext>> {
+  if (ticketIds.length === 0) return new Map();
+
+  const updates = await db
+    .select({
+      ticketId: ticketUpdatesTable.ticketId,
+      rawText: ticketUpdatesTable.rawText,
+      createdAt: ticketUpdatesTable.createdAt,
+    })
+    .from(ticketUpdatesTable)
+    .where(
+      and(
+        inArray(ticketUpdatesTable.ticketId, ticketIds),
+        eq(ticketUpdatesTable.updateType, 'system_event'),
+      ),
+    )
+    .orderBy(desc(ticketUpdatesTable.createdAt));
+
+  const byTicket = new Map<string, MonitoringContext>();
+  for (const update of updates) {
+    if (byTicket.has(update.ticketId)) continue;
+    const parsed = parseMonitoringContext(update.rawText);
+    if (!parsed) continue;
+    byTicket.set(update.ticketId, parsed);
+  }
+
+  return byTicket;
+}
+
+async function getLatestControllerContexts(ticketIds: string[]): Promise<Map<string, ControllerContext>> {
+  if (ticketIds.length === 0) return new Map();
+
+  const updates = await db
+    .select({
+      ticketId: ticketUpdatesTable.ticketId,
+      rawText: ticketUpdatesTable.rawText,
+      createdAt: ticketUpdatesTable.createdAt,
+    })
+    .from(ticketUpdatesTable)
+    .where(and(inArray(ticketUpdatesTable.ticketId, ticketIds), eq(ticketUpdatesTable.updateType, 'system_event')))
+    .orderBy(desc(ticketUpdatesTable.createdAt));
+
+  const byTicket = new Map<string, ControllerContext>();
+  for (const update of updates) {
+    if (byTicket.has(update.ticketId)) continue;
+    const parsed = parseControllerContext(update.rawText);
+    if (!parsed) continue;
+    byTicket.set(update.ticketId, parsed);
+  }
+
+  return byTicket;
+}
+
 async function getNextTicketNumber(): Promise<string> {
   const allNumbers = await db
     .select({ ticketNumber: ticketsTable.ticketNumber })
@@ -65,6 +181,8 @@ async function enrichTickets(tickets: (typeof ticketsTable.$inferSelect)[]) {
       ? db.select().from(usersTable).where(inArray(usersTable.id, assignedIds))
       : [],
   ]);
+  const monitoringContexts = await getLatestMonitoringContexts(tickets.map((ticket) => ticket.id));
+  const controllerContexts = await getLatestControllerContexts(tickets.map((ticket) => ticket.id));
 
   return tickets.map((ticket) => ({
     ...ticket,
@@ -72,6 +190,8 @@ async function enrichTickets(tickets: (typeof ticketsTable.$inferSelect)[]) {
     site: sites.find((s: typeof sitesTable.$inferSelect) => s.id === ticket.siteId) ?? null,
     service: services.find((s: typeof servicesTable.$inferSelect) => s.id === ticket.serviceId) ?? null,
     assignedTo: users.find((u: typeof usersTable.$inferSelect) => u.id === ticket.assignedToUserId) ?? null,
+    monitoringContext: monitoringContexts.get(ticket.id) ?? null,
+    controllerContext: controllerContexts.get(ticket.id) ?? null,
   }));
 }
 
@@ -364,6 +484,18 @@ router.get('/tickets/:id', requireAuth, async (req, res): Promise<void> => {
     ...u,
     createdBy: authors.find((a: typeof usersTable.$inferSelect) => a.id === u.createdByUserId) ?? null,
   }));
+  const monitoringContext =
+    updates
+      .slice()
+      .reverse()
+      .map((u: typeof ticketUpdatesTable.$inferSelect) => parseMonitoringContext(u.rawText))
+      .find((value: MonitoringContext | null): value is MonitoringContext => Boolean(value)) ?? null;
+  const controllerContext =
+    updates
+      .slice()
+      .reverse()
+      .map((u: typeof ticketUpdatesTable.$inferSelect) => parseControllerContext(u.rawText))
+      .find((value: ControllerContext | null): value is ControllerContext => Boolean(value)) ?? null;
 
   const { passwordHash: _1, ...safeCustomer } = customer ?? { passwordHash: undefined };
   const safeAssignedTo = assignedTo ? (({ passwordHash: _, ...rest }) => rest)(assignedTo) : null;
@@ -374,6 +506,8 @@ router.get('/tickets/:id', requireAuth, async (req, res): Promise<void> => {
     site,
     service,
     assignedTo: safeAssignedTo,
+    monitoringContext,
+    controllerContext,
     updates: updatesWithAuthors,
   });
 });

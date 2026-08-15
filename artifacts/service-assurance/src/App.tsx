@@ -29,6 +29,7 @@ import DeviceDetailPage from '@/pages/devices/detail';
 import NetworkLinksPage from '@/pages/network-links/index';
 import EventMonitorPage from '@/pages/events/index';
 import MapPage from '@/pages/map/index';
+import PublicNetworkMapPage from '@/pages/network-map-public';
 import InvoiceComplaintsList from '@/pages/invoice-complaints/index';
 import NewInvoiceComplaint from '@/pages/invoice-complaints/new';
 import InvoiceComplaintDetail from '@/pages/invoice-complaints/detail';
@@ -46,6 +47,7 @@ const queryClient = new QueryClient({
 function Router() {
   return (
     <Switch>
+      <Route path="/network-map" component={PublicNetworkMapPage} />
       <Route path="/" component={Login} />
 
       <Route path="/dashboard">

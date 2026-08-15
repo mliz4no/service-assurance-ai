@@ -21,3 +21,5 @@ export * from './integration_idempotency_keys';
 export * from './invoice_complaints';
 export * from './invoice_complaint_events';
 export * from './avalara_config';
+export * from './monitored_targets';
+export * from './monitoring_checks';

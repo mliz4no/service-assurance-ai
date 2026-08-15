@@ -15,6 +15,7 @@ import {
   deviceEventsTable,
   managedDevicesTable,
   networkLinksTable,
+  ticketUpdatesTable,
 } from '@workspace/db';
 import { eq, and, inArray, isNull } from 'drizzle-orm';
 import { logger } from './logger';
@@ -24,6 +25,42 @@ export interface CorrelationResult {
   ticketId?: string;
   ticketNumber?: string;
   reason: string;
+}
+
+type ControllerIncidentClassification = 'controller_outage' | 'controller_impairment' | 'controller_info';
+
+function classifyControllerIncident(params: {
+  severity: string;
+  eventType: string;
+  failoverActive: boolean;
+}): {
+  classification: ControllerIncidentClassification;
+  confidence: 'high' | 'medium' | 'low';
+  reasonCode: string;
+} {
+  if (params.failoverActive) {
+    return {
+      classification: 'controller_impairment',
+      confidence: 'high',
+      reasonCode: 'failover_active',
+    };
+  }
+
+  if (params.severity === 'critical' || params.severity === 'high') {
+    return {
+      classification: 'controller_outage',
+      confidence: 'high',
+      reasonCode: params.eventType.includes('down') || params.eventType.includes('offline')
+        ? 'event_type_outage'
+        : 'severity_high',
+    };
+  }
+
+  return {
+    classification: 'controller_info',
+    confidence: 'medium',
+    reasonCode: 'non_critical_event',
+  };
 }
 
 /** Rules for when to auto-create a ticket from a device event */
@@ -100,6 +137,12 @@ export async function correlateEvent(params: {
     return { action: 'skipped', reason: 'Informational event — no ticket needed' };
   }
 
+  const incidentContext = classifyControllerIncident({
+    severity: params.severity,
+    eventType: params.eventType,
+    failoverActive: params.failoverActive ?? false,
+  });
+
   // Skip if no customer context
   if (!params.customerId) {
     return { action: 'skipped', reason: 'No customer context — cannot create or correlate ticket' };
@@ -143,6 +186,13 @@ export async function correlateEvent(params: {
       correlationType: 'related',
     });
 
+    await db.insert(ticketUpdatesTable).values({
+      ticketId: matchedTicket.id,
+      updateType: 'system_event',
+      rawText: `Controller incident classification: ${incidentContext.classification}; confidence=${incidentContext.confidence}; reason=${incidentContext.reasonCode}.`,
+      visibility: 'internal',
+    });
+
     logger.info(
       { ticketId: matchedTicket.id, eventId: params.eventId },
       'Controller event correlated to existing ticket',
@@ -179,6 +229,13 @@ export async function correlateEvent(params: {
       failoverActive,
     })
     .returning();
+
+  await db.insert(ticketUpdatesTable).values({
+    ticketId: newTicket.id,
+    updateType: 'system_event',
+    rawText: `Controller incident classification: ${incidentContext.classification}; confidence=${incidentContext.confidence}; reason=${incidentContext.reasonCode}.`,
+    visibility: 'internal',
+  });
 
   // Link event to ticket
   await db.insert(incidentCorrelationsTable).values({

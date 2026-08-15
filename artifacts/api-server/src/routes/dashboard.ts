@@ -1,10 +1,64 @@
 import { Router, type IRouter } from 'express';
-import { db, customersTable, servicesTable, ticketsTable } from '@workspace/db';
-import { eq, and, lt, desc, count, ne } from 'drizzle-orm';
+import { db, customersTable, servicesTable, ticketsTable, ticketUpdatesTable } from '@workspace/db';
+import { eq, and, desc, count, inArray } from 'drizzle-orm';
 import { requireAuth } from '../middlewares/auth';
 import { normalizeStatus } from '../lib/ai';
 
 const router: IRouter = Router();
+
+type ParsedMonitoringContext = {
+  classification: 'shared_outage' | 'isolated_issue' | 'regional_outage' | 'unknown';
+  confidence: 'high' | 'medium' | 'low';
+  reasonCode: string;
+};
+
+type ParsedControllerContext = {
+  classification: 'controller_outage' | 'controller_impairment' | 'controller_info';
+  confidence: 'high' | 'medium' | 'low';
+  reasonCode: string;
+};
+
+function parseMonitoringContext(rawText: string): ParsedMonitoringContext | null {
+  const matched = rawText.match(
+    /Classified as (shared_outage|isolated_issue|regional_outage|unknown); confidence=(high|medium|low); reason=([^;\.]+); siblings=(\d+), healthy=(\d+), impaired=(\d+)\./,
+  );
+  if (matched) {
+    return {
+      classification: matched[1] as ParsedMonitoringContext['classification'],
+      confidence: matched[2] as ParsedMonitoringContext['confidence'],
+      reasonCode: matched[3],
+    };
+  }
+
+  if (rawText.includes('No sibling context available for classification.')) {
+    const confidenceMatch = rawText.match(/confidence=(high|medium|low)/);
+    const reasonMatch = rawText.match(/reason=([^;\.]+)/);
+    return {
+      classification: 'unknown',
+      confidence: (confidenceMatch?.[1] ?? 'low') as ParsedMonitoringContext['confidence'],
+      reasonCode: reasonMatch?.[1] ?? 'no_context',
+    };
+  }
+
+  return null;
+}
+
+function parseControllerContext(rawText: string): ParsedControllerContext | null {
+  const matched = rawText.match(
+    /Controller incident classification: (controller_outage|controller_impairment|controller_info); confidence=(high|medium|low); reason=([^\.]+)\./,
+  );
+  if (!matched) return null;
+
+  return {
+    classification: matched[1] as ParsedControllerContext['classification'],
+    confidence: matched[2] as ParsedControllerContext['confidence'],
+    reasonCode: matched[3],
+  };
+}
+
+function increment(map: Record<string, number>, key: string): void {
+  map[key] = (map[key] ?? 0) + 1;
+}
 
 router.get('/dashboard/summary', requireAuth, async (req, res): Promise<void> => {
   const customerCondition =
@@ -142,6 +196,184 @@ router.get('/dashboard/escalation-needed', requireAuth, async (req, res): Promis
   }));
 
   res.json(enriched);
+});
+
+router.get('/dashboard/outage-context-summary', requireAuth, async (req, res): Promise<void> => {
+  const openOnly = (req.query.openOnly as string | undefined) !== 'false';
+  const openStatuses = ['new', 'investigating', 'vendor_engaged', 'dispatch_scheduled', 'monitoring'];
+
+  const whereConditions = [];
+  if (req.user?.role === 'customer' && req.user.customerId) {
+    whereConditions.push(eq(ticketsTable.customerId, req.user.customerId));
+  }
+
+  const tickets = await db
+    .select({ id: ticketsTable.id, status: ticketsTable.status })
+    .from(ticketsTable)
+    .where(whereConditions.length > 0 ? whereConditions[0] : undefined);
+
+  const scopedTicketIds = tickets
+    .filter((ticket: { id: string; status: string }) => !openOnly || openStatuses.includes(ticket.status))
+    .map((ticket: { id: string; status: string }) => ticket.id);
+
+  if (scopedTicketIds.length === 0) {
+    res.json({
+      openOnly,
+      totals: { monitoring: 0, controller: 0 },
+      monitoring: { byClassification: {}, byConfidence: {}, byReasonCode: {} },
+      controller: { byClassification: {}, byConfidence: {}, byReasonCode: {} },
+    });
+    return;
+  }
+
+  const updates = await db
+    .select({ ticketId: ticketUpdatesTable.ticketId, rawText: ticketUpdatesTable.rawText })
+    .from(ticketUpdatesTable)
+    .where(and(inArray(ticketUpdatesTable.ticketId, scopedTicketIds), eq(ticketUpdatesTable.updateType, 'system_event')));
+
+  const monitoring = {
+    byClassification: {} as Record<string, number>,
+    byConfidence: {} as Record<string, number>,
+    byReasonCode: {} as Record<string, number>,
+  };
+  const controller = {
+    byClassification: {} as Record<string, number>,
+    byConfidence: {} as Record<string, number>,
+    byReasonCode: {} as Record<string, number>,
+  };
+
+  let monitoringTotal = 0;
+  let controllerTotal = 0;
+
+  for (const update of updates) {
+    const monitoringContext = parseMonitoringContext(update.rawText);
+    if (monitoringContext) {
+      monitoringTotal += 1;
+      increment(monitoring.byClassification, monitoringContext.classification);
+      increment(monitoring.byConfidence, monitoringContext.confidence);
+      increment(monitoring.byReasonCode, monitoringContext.reasonCode);
+    }
+
+    const controllerContext = parseControllerContext(update.rawText);
+    if (controllerContext) {
+      controllerTotal += 1;
+      increment(controller.byClassification, controllerContext.classification);
+      increment(controller.byConfidence, controllerContext.confidence);
+      increment(controller.byReasonCode, controllerContext.reasonCode);
+    }
+  }
+
+  res.json({
+    openOnly,
+    totals: {
+      monitoring: monitoringTotal,
+      controller: controllerTotal,
+    },
+    monitoring,
+    controller,
+  });
+});
+
+router.get('/dashboard/outage-context-report', requireAuth, async (req, res): Promise<void> => {
+  const source = (req.query.source as string | undefined) ?? 'monitoring';
+  const classification = (req.query.classification as string | undefined) ?? undefined;
+  const reasonCode = (req.query.reasonCode as string | undefined) ?? undefined;
+  const openOnly = (req.query.openOnly as string | undefined) !== 'false';
+  const openStatuses = ['new', 'investigating', 'vendor_engaged', 'dispatch_scheduled', 'monitoring'];
+
+  if (!['monitoring', 'controller'].includes(source)) {
+    res.status(400).json({ error: 'Bad Request', message: 'source must be monitoring or controller' });
+    return;
+  }
+
+  const whereConditions = [];
+  if (req.user?.role === 'customer' && req.user.customerId) {
+    whereConditions.push(eq(ticketsTable.customerId, req.user.customerId));
+  }
+
+  const tickets = await db
+    .select({
+      id: ticketsTable.id,
+      ticketNumber: ticketsTable.ticketNumber,
+      customerId: ticketsTable.customerId,
+      title: ticketsTable.title,
+      status: ticketsTable.status,
+      severity: ticketsTable.severity,
+      openedAt: ticketsTable.openedAt,
+    })
+    .from(ticketsTable)
+    .where(whereConditions.length > 0 ? whereConditions[0] : undefined)
+    .orderBy(desc(ticketsTable.openedAt));
+
+  const scopedTickets = tickets.filter(
+    (ticket: { status: string }) => !openOnly || openStatuses.includes(ticket.status),
+  );
+
+  if (scopedTickets.length === 0) {
+    res.json([]);
+    return;
+  }
+
+  const ticketIds = scopedTickets.map((ticket: { id: string }) => ticket.id);
+  const updates = await db
+    .select({
+      ticketId: ticketUpdatesTable.ticketId,
+      rawText: ticketUpdatesTable.rawText,
+      createdAt: ticketUpdatesTable.createdAt,
+    })
+    .from(ticketUpdatesTable)
+    .where(and(inArray(ticketUpdatesTable.ticketId, ticketIds), eq(ticketUpdatesTable.updateType, 'system_event')))
+    .orderBy(desc(ticketUpdatesTable.createdAt));
+
+  const latestByTicket = new Map<string, ParsedMonitoringContext | ParsedControllerContext>();
+  for (const update of updates) {
+    if (latestByTicket.has(update.ticketId)) continue;
+    const parsed = source === 'monitoring'
+      ? parseMonitoringContext(update.rawText)
+      : parseControllerContext(update.rawText);
+    if (!parsed) continue;
+    latestByTicket.set(update.ticketId, parsed);
+  }
+
+  const customerIds = [
+    ...new Set(scopedTickets.map((ticket: (typeof scopedTickets)[number]) => ticket.customerId)),
+  ];
+  const customers = customerIds.length
+    ? await db.select().from(customersTable).where(inArray(customersTable.id, customerIds as string[]))
+    : [];
+
+  const filtered = scopedTickets
+    .map((ticket: (typeof scopedTickets)[number]) => ({
+      ...ticket,
+      customer: customers.find((customer: typeof customersTable.$inferSelect) => customer.id === ticket.customerId) ?? null,
+      context: latestByTicket.get(ticket.id) ?? null,
+    }))
+    .filter(
+      (
+        ticket: (typeof scopedTickets)[number] & {
+          customer: typeof customersTable.$inferSelect | null;
+          context: ParsedMonitoringContext | ParsedControllerContext | null;
+        },
+      ) => ticket.context,
+    )
+    .filter(
+      (
+        ticket: (typeof scopedTickets)[number] & {
+          customer: typeof customersTable.$inferSelect | null;
+          context: ParsedMonitoringContext | ParsedControllerContext | null;
+        },
+      ) => (classification ? ticket.context?.classification === classification : true),
+    )
+    .filter(
+      (
+        ticket: (typeof scopedTickets)[number] & {
+          customer: typeof customersTable.$inferSelect | null;
+          context: ParsedMonitoringContext | ParsedControllerContext | null;
+        },
+      ) => (reasonCode ? ticket.context?.reasonCode === reasonCode : true),
+    );
+
+  res.json(filtered);
 });
 
 router.get('/admin/config-health', requireAuth, async (_req, res): Promise<void> => {

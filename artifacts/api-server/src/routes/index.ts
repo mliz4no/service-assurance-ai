@@ -20,6 +20,8 @@ import salesforceRouter from './salesforce';
 import integrationsInvoxaiRouter from './integrations-invoxai';
 import invoiceComplaintsRouter from './invoice-complaints';
 import avalaraRouter from './avalara';
+import publicNetworkMapRouter from './public-network-map';
+import monitoringTargetsRouter from './monitoring-targets';
 
 const router: IRouter = Router();
 
@@ -44,5 +46,7 @@ router.use(salesforceRouter);
 router.use(integrationsInvoxaiRouter);
 router.use(invoiceComplaintsRouter);
 router.use(avalaraRouter);
+router.use(publicNetworkMapRouter);
+router.use(monitoringTargetsRouter);
 
 export default router;
