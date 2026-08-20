@@ -14,13 +14,11 @@ import {
   Server,
   Network,
   Activity,
-  Handshake,
   FileText,
 } from 'lucide-react';
 import { useLogout } from '@workspace/api-client-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Badge } from '@/components/ui/badge';
 
 interface AppLayoutProps {
   children: React.ReactNode;
@@ -29,7 +27,7 @@ interface AppLayoutProps {
 
 export function AppLayout({ children, title }: AppLayoutProps) {
   const { user } = useAuth();
-  const [location, setLocation] = useLocation();
+  const [location] = useLocation();
   const logout = useLogout();
 
   const handleLogout = () => {
@@ -45,35 +43,23 @@ export function AppLayout({ children, title }: AppLayoutProps) {
     });
   };
 
-  const isAdminOrOps = user?.role === 'admin' || user?.role === 'ops';
-  const isPartner = false;
-
-  const navItems = isAdminOrOps
-    ? [
-        { href: '/dashboard', label: 'Dashboard', icon: LayoutDashboard },
-        { href: '/tickets', label: 'Tickets', icon: TicketCheck },
-        { href: '/customers', label: 'Customers', icon: Building2 },
-        { href: '/sites', label: 'Sites', icon: MapPin },
-        { href: '/services', label: 'Services', icon: Globe2 },
-        { href: '/invoice-complaints', label: 'Invoice Complaints', icon: FileText },
-        { href: '/controllers', label: 'Controllers', icon: Server },
-        { href: '/devices', label: 'Devices', icon: Server },
-        { href: '/network-links', label: 'Network Links', icon: Network },
-        { href: '/events', label: 'Event Monitor', icon: Activity },
-        { href: '/monitoring', label: 'Monitoring', icon: Activity },
-        { href: '/map', label: 'Network Map', icon: MapPin },
-        ...(user?.role === 'admin' ? [{ href: '/admin', label: 'Admin', icon: Settings }] : []),
-      ]
-    : isPartner
-      ? [
-          { href: '/customers', label: 'My Customers', icon: Building2 },
-          { href: '/sites', label: 'My Sites', icon: MapPin },
-          { href: '/services', label: 'My Services', icon: Globe2 },
-          { href: '/tickets', label: 'My Incidents', icon: TicketCheck },
-          { href: '/devices', label: 'My Devices', icon: Server },
-          { href: '/map', label: 'Network Map', icon: MapPin },
-        ]
-      : [{ href: '/my-tickets', label: 'My Tickets', icon: TicketCheck }];
+  const navItems = [
+    { href: '/dashboard', label: 'Dashboard', icon: LayoutDashboard },
+    { href: '/tickets', label: 'Tickets', icon: TicketCheck },
+    { href: '/my-tickets', label: 'My Tickets', icon: TicketCheck },
+    { href: '/customers', label: 'Customers', icon: Building2 },
+    { href: '/sites', label: 'Sites', icon: MapPin },
+    { href: '/services', label: 'Services', icon: Globe2 },
+    { href: '/invoice-complaints', label: 'Invoice Complaints', icon: FileText },
+    { href: '/controllers', label: 'Controllers', icon: Server },
+    { href: '/devices', label: 'Devices', icon: Server },
+    { href: '/network-links', label: 'Network Links', icon: Network },
+    { href: '/events', label: 'Event Monitor', icon: Activity },
+    { href: '/monitoring', label: 'Monitoring', icon: Activity },
+    { href: '/network-map', label: 'Public Network Map', icon: Globe2 },
+    { href: '/map', label: 'Infrastructure Map', icon: MapPin },
+    { href: '/admin', label: 'Admin', icon: Settings },
+  ];
 
   const roleLabel: Record<string, string> = {
     admin: 'Admin',
@@ -95,21 +81,13 @@ export function AppLayout({ children, title }: AppLayoutProps) {
           </div>
         </div>
 
-        {isPartner && (
-          <div className="px-4 py-2.5 border-b border-sidebar-border/30 bg-blue-900/20">
-            <div className="flex items-center gap-1.5 text-xs text-blue-300">
-              <Handshake className="w-3.5 h-3.5" />
-              <span className="font-medium">Partner Portal</span>
-            </div>
-          </div>
-        )}
-
         <div className="flex-1 overflow-y-auto py-4 px-3 flex flex-col gap-1">
           <div className="text-xs font-semibold text-sidebar-foreground/50 uppercase tracking-wider mb-2 px-3">
             Navigation
           </div>
           {navItems.map((item) => {
-            const isActive = location.startsWith(item.href);
+            const isActive =
+              location === item.href || (item.href !== '/' && location.startsWith(`${item.href}/`));
             return (
               <Link
                 key={item.href}
@@ -131,7 +109,7 @@ export function AppLayout({ children, title }: AppLayoutProps) {
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-2 max-w-[140px]">
               <div className="w-8 h-8 rounded-full bg-sidebar-accent flex items-center justify-center text-sidebar-accent-foreground">
-                {isPartner ? <Handshake className="w-4 h-4" /> : <UserIcon className="w-4 h-4" />}
+                <UserIcon className="w-4 h-4" />
               </div>
               <div className="flex flex-col overflow-hidden">
                 <span className="text-sm font-medium truncate" title={user?.name}>
@@ -163,11 +141,6 @@ export function AppLayout({ children, title }: AppLayoutProps) {
             {title || 'Dashboard'}
           </h1>
           <div className="flex items-center gap-4">
-            {isPartner && (
-              <Badge variant="outline" className="text-xs text-blue-700 border-blue-200 bg-blue-50">
-                Partner View
-              </Badge>
-            )}
             <div className="relative hidden md:block w-64">
               <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
               <Input

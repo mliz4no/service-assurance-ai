@@ -16,7 +16,7 @@ export async function apiFetch<T>(path: string, options?: RequestInit): Promise<
 
   if (res.status === 401) {
     clearToken();
-    window.location.href = '/';
+    window.location.href = '/login';
     throw new Error('Session expired — redirecting to login…');
   }
 

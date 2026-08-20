@@ -43,7 +43,7 @@ export function ProtectedRoute({ children }: { children: React.ReactNode }) {
 
   React.useEffect(() => {
     if (!isLoading && !isAuthenticated) {
-      setLocation('/');
+      setLocation('/login');
     }
   }, [isLoading, isAuthenticated, setLocation]);
 
@@ -73,7 +73,7 @@ export function InternalOnlyRoute({ children }: { children: React.ReactNode }) {
 
   React.useEffect(() => {
     if (!isLoading && !isAuthenticated) {
-      setLocation('/');
+      setLocation('/login');
     }
     if (!isLoading && isAuthenticated && false) {
       setLocation('/customers');

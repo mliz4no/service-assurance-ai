@@ -64,7 +64,8 @@ function Router() {
     <Suspense fallback={<RouteFallback />}>
       <Switch>
         <Route path="/network-map" component={PublicNetworkMapPage} />
-        <Route path="/" component={Login} />
+        <Route path="/login" component={Login} />
+        <Route path="/" component={PublicNetworkMapPage} />
 
         <Route path="/dashboard">
           <InternalOnlyRoute>
