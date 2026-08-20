@@ -85,6 +85,7 @@ import type {
   PreviewExternalOutageSignalParams,
   PublicNetworkMapPoint,
   PublicNetworkMapSummary,
+  PublicOutageRegion,
   RunMonitoringRequest,
   SalesforceConfig,
   SalesforceStatus,
@@ -3592,6 +3593,70 @@ export function useGetPublicNetworkMapSummary<
   request?: SecondParameter<typeof customFetch>;
 }): UseQueryResult<TData, TError> & { queryKey: QueryKey } {
   const queryOptions = getGetPublicNetworkMapSummaryQueryOptions(options);
+
+  const query = useQuery(queryOptions) as UseQueryResult<TData, TError> & { queryKey: QueryKey };
+
+  return { ...query, queryKey: queryOptions.queryKey };
+}
+
+/**
+ * @summary Classify public network impact by region
+ */
+export const getGetPublicOutageRegionsUrl = () => {
+  return `/api/public/network-map/regions`;
+};
+
+export const getPublicOutageRegions = async (
+  options?: RequestInit,
+): Promise<PublicOutageRegion[]> => {
+  return customFetch<PublicOutageRegion[]>(getGetPublicOutageRegionsUrl(), {
+    ...options,
+    method: 'GET',
+  });
+};
+
+export const getGetPublicOutageRegionsQueryKey = () => {
+  return [`/api/public/network-map/regions`] as const;
+};
+
+export const getGetPublicOutageRegionsQueryOptions = <
+  TData = Awaited<ReturnType<typeof getPublicOutageRegions>>,
+  TError = ErrorType<unknown>,
+>(options?: {
+  query?: UseQueryOptions<Awaited<ReturnType<typeof getPublicOutageRegions>>, TError, TData>;
+  request?: SecondParameter<typeof customFetch>;
+}) => {
+  const { query: queryOptions, request: requestOptions } = options ?? {};
+
+  const queryKey = queryOptions?.queryKey ?? getGetPublicOutageRegionsQueryKey();
+
+  const queryFn: QueryFunction<Awaited<ReturnType<typeof getPublicOutageRegions>>> = ({ signal }) =>
+    getPublicOutageRegions({ signal, ...requestOptions });
+
+  return { queryKey, queryFn, ...queryOptions } as UseQueryOptions<
+    Awaited<ReturnType<typeof getPublicOutageRegions>>,
+    TError,
+    TData
+  > & { queryKey: QueryKey };
+};
+
+export type GetPublicOutageRegionsQueryResult = NonNullable<
+  Awaited<ReturnType<typeof getPublicOutageRegions>>
+>;
+export type GetPublicOutageRegionsQueryError = ErrorType<unknown>;
+
+/**
+ * @summary Classify public network impact by region
+ */
+
+export function useGetPublicOutageRegions<
+  TData = Awaited<ReturnType<typeof getPublicOutageRegions>>,
+  TError = ErrorType<unknown>,
+>(options?: {
+  query?: UseQueryOptions<Awaited<ReturnType<typeof getPublicOutageRegions>>, TError, TData>;
+  request?: SecondParameter<typeof customFetch>;
+}): UseQueryResult<TData, TError> & { queryKey: QueryKey } {
+  const queryOptions = getGetPublicOutageRegionsQueryOptions(options);
 
   const query = useQuery(queryOptions) as UseQueryResult<TData, TError> & { queryKey: QueryKey };
 

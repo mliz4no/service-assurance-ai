@@ -1289,6 +1289,36 @@ export interface PublicNetworkMapSummary {
   lastUpdatedAt?: string | null;
 }
 
+export type PublicOutageRegionClassification =
+  (typeof PublicOutageRegionClassification)[keyof typeof PublicOutageRegionClassification];
+
+export const PublicOutageRegionClassification = {
+  operational: 'operational',
+  degraded: 'degraded',
+  localized_outage: 'localized_outage',
+  widespread_outage: 'widespread_outage',
+  unknown: 'unknown',
+} as const;
+
+export interface PublicOutageRegion {
+  region: string;
+  classification: PublicOutageRegionClassification;
+  totalAssets: number;
+  affectedAssets: number;
+  downAssets: number;
+  degradedAssets: number;
+  unknownAssets: number;
+  /**
+   * @minimum 0
+   * @maximum 100
+   */
+  affectedPercentage: number;
+  latitude: number;
+  longitude: number;
+  providers: string[];
+  lastUpdatedAt?: string | null;
+}
+
 export type MonitoredTargetTargetType =
   (typeof MonitoredTargetTargetType)[keyof typeof MonitoredTargetTargetType];
 

@@ -157,6 +157,8 @@ export * from './previewExternalOutageSignalParams';
 export * from './publicNetworkMapPoint';
 export * from './publicNetworkMapPointSource';
 export * from './publicNetworkMapSummary';
+export * from './publicOutageRegion';
+export * from './publicOutageRegionClassification';
 export * from './runMonitoringRequest';
 export * from './salesforceConfig';
 export * from './salesforceStatus';

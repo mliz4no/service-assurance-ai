@@ -2145,6 +2145,37 @@ export const GetPublicNetworkMapSummaryResponse = zod.object({
 });
 
 /**
+ * @summary Classify public network impact by region
+ */
+export const getPublicOutageRegionsResponseAffectedPercentageMin = 0;
+export const getPublicOutageRegionsResponseAffectedPercentageMax = 100;
+
+export const GetPublicOutageRegionsResponseItem = zod.object({
+  region: zod.string(),
+  classification: zod.enum([
+    'operational',
+    'degraded',
+    'localized_outage',
+    'widespread_outage',
+    'unknown',
+  ]),
+  totalAssets: zod.number(),
+  affectedAssets: zod.number(),
+  downAssets: zod.number(),
+  degradedAssets: zod.number(),
+  unknownAssets: zod.number(),
+  affectedPercentage: zod
+    .number()
+    .min(getPublicOutageRegionsResponseAffectedPercentageMin)
+    .max(getPublicOutageRegionsResponseAffectedPercentageMax),
+  latitude: zod.number(),
+  longitude: zod.number(),
+  providers: zod.array(zod.string()),
+  lastUpdatedAt: zod.coerce.date().nullish(),
+});
+export const GetPublicOutageRegionsResponse = zod.array(GetPublicOutageRegionsResponseItem);
+
+/**
  * @summary List monitoring targets
  */
 export const GetMonitoringTargetsQueryParams = zod.object({

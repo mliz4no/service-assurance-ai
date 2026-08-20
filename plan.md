@@ -19,7 +19,7 @@ Status legend: **Implemented** means the end-to-end path exists; **Partial** mea
 | Phase                                | Status      | Current state                                                                                                                                                                                                                                      |
 | ------------------------------------ | ----------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | Phase 0 — Foundation                 | Implemented | Environment template, structured logging, correlation IDs, security headers, restricted production CORS, login throttling, request limits, persistent database sessions, liveness/readiness endpoints, and centralized error handling are present. |
-| Phase 1 — Public outage map          | Implemented | Anonymous `/network-map`, public map and summary APIs, filters, summary metrics, monitored targets, and explicitly approved controller devices are supported.                                                                                      |
+| Phase 1 — Public outage map          | Implemented | The public map is the landing page and includes filters, summary metrics, approved targets/devices, affected-region classification, and geographic outage-area overlays.                                                                           |
 | Phase 2 — Monitoring targets         | Implemented | Target CRUD, internal monitoring UI, customer/site/service assignment, coordinates, HTTP/TCP checks, scheduler, persistence, and manual execution are present. ICMP remains optional future work.                                                  |
 | Phase 3 — Nagios and ticketing       | Implemented | Nagios synchronization creates or updates deduplicated tickets. Ticket numbering is database-atomic and monitoring runs use a cross-instance advisory lock.                                                                                        |
 | Phase 4 — Outage correlation         | Implemented | Sibling target health and external outage signals classify isolated, shared, and regional outages and write context into ticket updates.                                                                                                           |
@@ -38,7 +38,7 @@ Status legend: **Implemented** means the end-to-end path exists; **Partial** mea
 - `/api/healthz` is a process liveness check and `/api/readyz` verifies database readiness.
 - `.env.example` documents the active API, monitoring, alert, enrichment, Salesforce, InvoxAI, and Avalara settings.
 - The complete monorepo typecheck passes and all application production builds complete.
-- The API test suite passes all 86 tests. Test mode bypasses the process-wide login limiter while development and production throttling remain enabled.
+- The API test suite passes all 89 tests. Test mode bypasses the process-wide login limiter while development and production throttling remain enabled.
 - Drizzle migrations are validated for clean installation and for adoption of an existing `db:push`-managed schema through `db:baseline`.
 
 ### 1.3 Remaining production priorities
@@ -200,7 +200,7 @@ Prepare the app for monitoring and public status features without changing the c
 
 Ship a public-facing outage map without login, using a basic status source.
 
-**Status: Implemented.** Controller devices are included only after explicit public visibility approval.
+**Status: Implemented.** Controller devices require explicit public visibility approval. Approved points are grouped into operational, degraded, localized-outage, widespread-outage, or unknown regions.
 
 ### Scope
 
@@ -244,6 +244,8 @@ Ship a public-facing outage map without login, using a basic status source.
 
 - Public page accessible at /network-map
 - Public API returning aggregate map data
+- Public regional classification API at /api/public/network-map/regions
+- Affected-region summaries and scaled geographic outage areas
 - Internal admin view to manage visibility and status source
 
 ### Acceptance criteria
@@ -251,6 +253,7 @@ Ship a public-facing outage map without login, using a basic status source.
 - Anonymous users can open /network-map and view the map.
 - The map can display live status from known targets.
 - Limited filters work without login.
+- Affected regions are ranked by impact and can filter the visible map points.
 
 ---
 

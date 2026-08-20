@@ -1132,6 +1132,22 @@ paths:
               schema:
                 $ref: '#/components/schemas/PublicNetworkMapSummary'
 
+  /public/network-map/regions:
+    get:
+      operationId: getPublicOutageRegions
+      tags: [public-network-map]
+      summary: Classify public network impact by region
+      security: []
+      responses:
+        '200':
+          description: Regional outage classifications ordered by impact
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/PublicOutageRegion'
+
   /monitoring/targets:
     get:
       operationId: getMonitoringTargets
@@ -3785,6 +3801,40 @@ components:
         unknownServices: { type: integer }
         lastUpdatedAt: { type: string, format: date-time, nullable: true }
       required: [totalAssets, activeOutages, degradedServices, unknownServices]
+
+    PublicOutageRegion:
+      type: object
+      properties:
+        region: { type: string }
+        classification:
+          type: string
+          enum: [operational, degraded, localized_outage, widespread_outage, unknown]
+        totalAssets: { type: integer }
+        affectedAssets: { type: integer }
+        downAssets: { type: integer }
+        degradedAssets: { type: integer }
+        unknownAssets: { type: integer }
+        affectedPercentage: { type: integer, minimum: 0, maximum: 100 }
+        latitude: { type: number, format: double }
+        longitude: { type: number, format: double }
+        providers:
+          type: array
+          items: { type: string }
+        lastUpdatedAt: { type: string, format: date-time, nullable: true }
+      required:
+        [
+          region,
+          classification,
+          totalAssets,
+          affectedAssets,
+          downAssets,
+          degradedAssets,
+          unknownAssets,
+          affectedPercentage,
+          latitude,
+          longitude,
+          providers,
+        ]
 
     MonitoredTarget:
       type: object

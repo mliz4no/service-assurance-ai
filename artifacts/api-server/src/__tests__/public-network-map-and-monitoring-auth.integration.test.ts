@@ -84,7 +84,17 @@ describe.sequential('public network map and monitoring auth boundaries', () => {
 
     const point = response.body[0] as Record<string, unknown>;
     expect(Object.keys(point).sort()).toEqual(
-      ['id', 'label', 'lastSeenAt', 'latitude', 'longitude', 'provider', 'region', 'source', 'status'].sort(),
+      [
+        'id',
+        'label',
+        'lastSeenAt',
+        'latitude',
+        'longitude',
+        'provider',
+        'region',
+        'source',
+        'status',
+      ].sort(),
     );
     expect(point.label).toBe('VT-PUBLIC-1');
     expect(point.status).toBe('degraded');
@@ -100,6 +110,24 @@ describe.sequential('public network map and monitoring auth boundaries', () => {
     expect(response.body.activeOutages).toBe(0);
     expect(response.body.degradedServices).toBe(1);
     expect(response.body.unknownServices).toBe(0);
+  });
+
+  it('classifies affected public regions without exposing private targets', async () => {
+    const response = await request(app).get('/api/public/network-map/regions');
+
+    expect(response.status).toBe(200);
+    expect(response.body).toEqual([
+      expect.objectContaining({
+        region: 'north-east',
+        classification: 'degraded',
+        totalAssets: 1,
+        affectedAssets: 1,
+        downAssets: 0,
+        degradedAssets: 1,
+        affectedPercentage: 100,
+        providers: ['Carrier B'],
+      }),
+    ]);
   });
 
   it('rejects integration credentials on monitoring targets endpoints', async () => {
