@@ -6,9 +6,4 @@
  * OpenAPI spec version: 0.1.0
  */
 
-export type EvaluateEscalationResponseContactsItem = {
-  name?: string;
-  email?: string;
-  role?: string;
-  reason?: string;
-};
+export type DeviceEventRawPayloadJson = { [key: string]: unknown } | null;

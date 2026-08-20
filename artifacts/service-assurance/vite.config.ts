@@ -41,6 +41,30 @@ export default defineConfig({
   build: {
     outDir: path.resolve(import.meta.dirname, 'dist/public'),
     emptyOutDir: true,
+    manifest: true,
+    rollupOptions: {
+      output: {
+        manualChunks(id) {
+          if (!id.includes('node_modules')) return undefined;
+          if (id.includes('leaflet')) return 'vendor-map';
+          if (id.includes('recharts') || id.includes('d3-')) return 'vendor-charts';
+          if (id.includes('@radix-ui')) return 'vendor-ui';
+          if (id.includes('react-hook-form') || id.includes('@hookform') || id.includes('/zod/')) {
+            return 'vendor-forms';
+          }
+          if (
+            id.includes('/react/') ||
+            id.includes('/react-dom/') ||
+            id.includes('/scheduler/') ||
+            id.includes('/wouter/') ||
+            id.includes('@tanstack/react-query')
+          ) {
+            return 'vendor-framework';
+          }
+          return undefined;
+        },
+      },
+    },
   },
   server: {
     port,

@@ -788,16 +788,16 @@ export interface EscalationNotification {
   notifiedAt: string;
 }
 
-export type EvaluateEscalationResponseContactsItem = {
+export type EscalationEvaluationResultContactsItem = {
   name?: string;
   email?: string;
   role?: string;
   reason?: string;
 };
 
-export interface EvaluateEscalationResponse {
+export interface EscalationEvaluationResult {
   notified: number;
-  contacts: EvaluateEscalationResponseContactsItem[];
+  contacts: EscalationEvaluationResultContactsItem[];
 }
 
 export type MatrixScopeType = (typeof MatrixScopeType)[keyof typeof MatrixScopeType];
@@ -1250,6 +1250,745 @@ export interface AvalaraStatus {
   recent: AvalaraStatusItem[];
 }
 
+export type MonitoringStatus = (typeof MonitoringStatus)[keyof typeof MonitoringStatus];
+
+export const MonitoringStatus = {
+  up: 'up',
+  down: 'down',
+  degraded: 'degraded',
+  unknown: 'unknown',
+} as const;
+
+export type PublicNetworkMapPointSource =
+  (typeof PublicNetworkMapPointSource)[keyof typeof PublicNetworkMapPointSource];
+
+export const PublicNetworkMapPointSource = {
+  manual: 'manual',
+  nagios: 'nagios',
+  controller: 'controller',
+  synthetic: 'synthetic',
+} as const;
+
+export interface PublicNetworkMapPoint {
+  id: string;
+  label: string;
+  status: MonitoringStatus;
+  latitude: number;
+  longitude: number;
+  provider?: string | null;
+  region?: string | null;
+  lastSeenAt?: string | null;
+  source: PublicNetworkMapPointSource;
+}
+
+export interface PublicNetworkMapSummary {
+  totalAssets: number;
+  activeOutages: number;
+  degradedServices: number;
+  unknownServices: number;
+  lastUpdatedAt?: string | null;
+}
+
+export type MonitoredTargetTargetType =
+  (typeof MonitoredTargetTargetType)[keyof typeof MonitoredTargetTargetType];
+
+export const MonitoredTargetTargetType = {
+  ip: 'ip',
+  hostname: 'hostname',
+  service: 'service',
+  controller: 'controller',
+} as const;
+
+export type MonitoredTargetStatusSource =
+  (typeof MonitoredTargetStatusSource)[keyof typeof MonitoredTargetStatusSource];
+
+export const MonitoredTargetStatusSource = {
+  manual: 'manual',
+  nagios: 'nagios',
+  controller: 'controller',
+  synthetic: 'synthetic',
+} as const;
+
+export interface MonitoredTarget {
+  id: string;
+  name: string;
+  publicLabel?: string | null;
+  hostOrIp: string;
+  customerId?: string | null;
+  siteId?: string | null;
+  serviceId?: string | null;
+  targetType: MonitoredTargetTargetType;
+  provider?: string | null;
+  region?: string | null;
+  latitude?: number | null;
+  longitude?: number | null;
+  status: MonitoringStatus;
+  statusSource: MonitoredTargetStatusSource;
+  isPublic: boolean;
+  lastCheckedAt?: string | null;
+  lastSuccessAt?: string | null;
+  lastFailureAt?: string | null;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export type CreateMonitoringTargetRequestTargetType =
+  (typeof CreateMonitoringTargetRequestTargetType)[keyof typeof CreateMonitoringTargetRequestTargetType];
+
+export const CreateMonitoringTargetRequestTargetType = {
+  ip: 'ip',
+  hostname: 'hostname',
+  service: 'service',
+  controller: 'controller',
+} as const;
+
+export type CreateMonitoringTargetRequestStatusSource =
+  (typeof CreateMonitoringTargetRequestStatusSource)[keyof typeof CreateMonitoringTargetRequestStatusSource];
+
+export const CreateMonitoringTargetRequestStatusSource = {
+  manual: 'manual',
+  nagios: 'nagios',
+  controller: 'controller',
+  synthetic: 'synthetic',
+} as const;
+
+export interface CreateMonitoringTargetRequest {
+  name: string;
+  publicLabel?: string | null;
+  hostOrIp: string;
+  customerId?: string | null;
+  siteId?: string | null;
+  serviceId?: string | null;
+  targetType?: CreateMonitoringTargetRequestTargetType;
+  provider?: string | null;
+  region?: string | null;
+  latitude?: number | null;
+  longitude?: number | null;
+  status?: MonitoringStatus;
+  statusSource?: CreateMonitoringTargetRequestStatusSource;
+  isPublic?: boolean;
+}
+
+export type UpdateMonitoringTargetRequestTargetType =
+  (typeof UpdateMonitoringTargetRequestTargetType)[keyof typeof UpdateMonitoringTargetRequestTargetType];
+
+export const UpdateMonitoringTargetRequestTargetType = {
+  ip: 'ip',
+  hostname: 'hostname',
+  service: 'service',
+  controller: 'controller',
+} as const;
+
+export type UpdateMonitoringTargetRequestStatusSource =
+  (typeof UpdateMonitoringTargetRequestStatusSource)[keyof typeof UpdateMonitoringTargetRequestStatusSource];
+
+export const UpdateMonitoringTargetRequestStatusSource = {
+  manual: 'manual',
+  nagios: 'nagios',
+  controller: 'controller',
+  synthetic: 'synthetic',
+} as const;
+
+export interface UpdateMonitoringTargetRequest {
+  name?: string;
+  publicLabel?: string | null;
+  hostOrIp?: string;
+  customerId?: string | null;
+  siteId?: string | null;
+  serviceId?: string | null;
+  targetType?: UpdateMonitoringTargetRequestTargetType;
+  provider?: string | null;
+  region?: string | null;
+  latitude?: number | null;
+  longitude?: number | null;
+  status?: MonitoringStatus;
+  statusSource?: UpdateMonitoringTargetRequestStatusSource;
+  isPublic?: boolean;
+}
+
+export type MonitoringCheckSource =
+  (typeof MonitoringCheckSource)[keyof typeof MonitoringCheckSource];
+
+export const MonitoringCheckSource = {
+  manual: 'manual',
+  synthetic: 'synthetic',
+  nagios: 'nagios',
+  controller: 'controller',
+} as const;
+
+export type MonitoringCheckCheckType =
+  (typeof MonitoringCheckCheckType)[keyof typeof MonitoringCheckCheckType];
+
+export const MonitoringCheckCheckType = {
+  http: 'http',
+  tcp: 'tcp',
+} as const;
+
+export type MonitoringCheckPayloadJson = { [key: string]: unknown } | null;
+
+export interface MonitoringCheck {
+  id: string;
+  targetId: string;
+  source: MonitoringCheckSource;
+  checkType: MonitoringCheckCheckType;
+  status: MonitoringStatus;
+  responseTimeMs?: number | null;
+  payloadJson?: MonitoringCheckPayloadJson;
+  checkedAt: string;
+  createdAt: string;
+}
+
+export interface RunMonitoringRequest {
+  targetId?: string;
+  targetIds?: string[];
+}
+
+export type MonitoringExecutionItemCheckType =
+  (typeof MonitoringExecutionItemCheckType)[keyof typeof MonitoringExecutionItemCheckType];
+
+export const MonitoringExecutionItemCheckType = {
+  http: 'http',
+  tcp: 'tcp',
+} as const;
+
+export type MonitoringExecutionItemTicketAction =
+  (typeof MonitoringExecutionItemTicketAction)[keyof typeof MonitoringExecutionItemTicketAction];
+
+export const MonitoringExecutionItemTicketAction = {
+  skipped: 'skipped',
+  created: 'created',
+  updated: 'updated',
+} as const;
+
+export type TargetEnrichmentIpType =
+  (typeof TargetEnrichmentIpType)[keyof typeof TargetEnrichmentIpType];
+
+export const TargetEnrichmentIpType = {
+  ipv4: 'ipv4',
+  ipv6: 'ipv6',
+  hostname: 'hostname',
+} as const;
+
+export type TargetEnrichmentConfidence =
+  (typeof TargetEnrichmentConfidence)[keyof typeof TargetEnrichmentConfidence];
+
+export const TargetEnrichmentConfidence = {
+  high: 'high',
+  medium: 'medium',
+  low: 'low',
+} as const;
+
+export type TargetEnrichmentSource =
+  (typeof TargetEnrichmentSource)[keyof typeof TargetEnrichmentSource];
+
+export const TargetEnrichmentSource = {
+  heuristic: 'heuristic',
+  ipinfo: 'ipinfo',
+} as const;
+
+export interface TargetEnrichment {
+  normalizedHostOrIp: string;
+  ipType: TargetEnrichmentIpType;
+  provider?: string | null;
+  region?: string | null;
+  confidence: TargetEnrichmentConfidence;
+  asn?: string | null;
+  country?: string | null;
+  city?: string | null;
+  source?: TargetEnrichmentSource;
+}
+
+export interface MonitoringExecutionItem {
+  targetId: string;
+  checkId: string;
+  status: MonitoringStatus;
+  checkType: MonitoringExecutionItemCheckType;
+  responseTimeMs?: number | null;
+  ticketAction: MonitoringExecutionItemTicketAction;
+  ticketId?: string | null;
+  outageClassification?: string | null;
+  enrichment: TargetEnrichment;
+}
+
+export interface MonitoringExecutionResponse {
+  startedAt?: string;
+  syncedAt?: string;
+  processed: number;
+  createdTickets: number;
+  updatedTickets: number;
+  results: MonitoringExecutionItem[];
+}
+
+export type MonitoringEnrichmentRequest = unknown & {
+  targetId?: string;
+  hostOrIp?: string;
+};
+
+export interface MonitoringEnrichmentResponse {
+  targetId?: string;
+  hostOrIp?: string;
+  enrichment: TargetEnrichment;
+}
+
+export type ExternalOutagePreviewQuery = {
+  region?: string | null;
+  provider?: string | null;
+};
+
+export type ExternalOutagePreviewSignal = { [key: string]: unknown } | null;
+
+export interface ExternalOutagePreview {
+  configured: boolean;
+  query: ExternalOutagePreviewQuery;
+  signal?: ExternalOutagePreviewSignal;
+}
+
+export type ControllerVendor = (typeof ControllerVendor)[keyof typeof ControllerVendor];
+
+export const ControllerVendor = {
+  meraki: 'meraki',
+  fortinet: 'fortinet',
+  palo_alto: 'palo_alto',
+  sdwan: 'sdwan',
+} as const;
+
+export type ControllerType = (typeof ControllerType)[keyof typeof ControllerType];
+
+export const ControllerType = {
+  sdwan: 'sdwan',
+  firewall_manager: 'firewall_manager',
+  network_manager: 'network_manager',
+} as const;
+
+export type ControllerAuthType = (typeof ControllerAuthType)[keyof typeof ControllerAuthType];
+
+export const ControllerAuthType = {
+  api_key: 'api_key',
+  oauth: 'oauth',
+  basic: 'basic',
+} as const;
+
+export type ControllerLastPollStatus =
+  | (typeof ControllerLastPollStatus)[keyof typeof ControllerLastPollStatus]
+  | null;
+
+export const ControllerLastPollStatus = {
+  success: 'success',
+  failed: 'failed',
+  running: 'running',
+} as const;
+
+export interface Controller {
+  id: string;
+  name: string;
+  vendor: ControllerVendor;
+  type: ControllerType;
+  baseUrl: string;
+  authType: ControllerAuthType;
+  apiKeyEncryptedOrPlaceholder?: string | null;
+  organizationIdOrTenant?: string | null;
+  pollingEnabled: boolean;
+  pollingIntervalSeconds: number;
+  lastPolledAt?: string | null;
+  lastPollStatus?: ControllerLastPollStatus;
+  lastPollMessage?: string | null;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export type ControllerSummary = Controller & {
+  deviceCount: number;
+  eventCount: number;
+};
+
+export type CreateControllerRequestVendor =
+  (typeof CreateControllerRequestVendor)[keyof typeof CreateControllerRequestVendor];
+
+export const CreateControllerRequestVendor = {
+  meraki: 'meraki',
+  fortinet: 'fortinet',
+  palo_alto: 'palo_alto',
+  sdwan: 'sdwan',
+} as const;
+
+export type CreateControllerRequestType =
+  (typeof CreateControllerRequestType)[keyof typeof CreateControllerRequestType];
+
+export const CreateControllerRequestType = {
+  sdwan: 'sdwan',
+  firewall_manager: 'firewall_manager',
+  network_manager: 'network_manager',
+} as const;
+
+export type CreateControllerRequestAuthType =
+  (typeof CreateControllerRequestAuthType)[keyof typeof CreateControllerRequestAuthType];
+
+export const CreateControllerRequestAuthType = {
+  api_key: 'api_key',
+  oauth: 'oauth',
+  basic: 'basic',
+} as const;
+
+export interface CreateControllerRequest {
+  name: string;
+  vendor: CreateControllerRequestVendor;
+  type: CreateControllerRequestType;
+  baseUrl: string;
+  authType?: CreateControllerRequestAuthType;
+  apiKeyEncryptedOrPlaceholder?: string | null;
+  organizationIdOrTenant?: string | null;
+  pollingEnabled?: boolean;
+  pollingIntervalSeconds?: number;
+}
+
+export type UpdateControllerRequestVendor =
+  (typeof UpdateControllerRequestVendor)[keyof typeof UpdateControllerRequestVendor];
+
+export const UpdateControllerRequestVendor = {
+  meraki: 'meraki',
+  fortinet: 'fortinet',
+  palo_alto: 'palo_alto',
+  sdwan: 'sdwan',
+} as const;
+
+export type UpdateControllerRequestType =
+  (typeof UpdateControllerRequestType)[keyof typeof UpdateControllerRequestType];
+
+export const UpdateControllerRequestType = {
+  sdwan: 'sdwan',
+  firewall_manager: 'firewall_manager',
+  network_manager: 'network_manager',
+} as const;
+
+export type UpdateControllerRequestAuthType =
+  (typeof UpdateControllerRequestAuthType)[keyof typeof UpdateControllerRequestAuthType];
+
+export const UpdateControllerRequestAuthType = {
+  api_key: 'api_key',
+  oauth: 'oauth',
+  basic: 'basic',
+} as const;
+
+export interface UpdateControllerRequest {
+  name?: string;
+  vendor?: UpdateControllerRequestVendor;
+  type?: UpdateControllerRequestType;
+  baseUrl?: string;
+  authType?: UpdateControllerRequestAuthType;
+  apiKeyEncryptedOrPlaceholder?: string | null;
+  organizationIdOrTenant?: string | null;
+  pollingEnabled?: boolean;
+  pollingIntervalSeconds?: number;
+}
+
+export type ControllerSyncLogStatus =
+  (typeof ControllerSyncLogStatus)[keyof typeof ControllerSyncLogStatus];
+
+export const ControllerSyncLogStatus = {
+  running: 'running',
+  success: 'success',
+  failed: 'failed',
+} as const;
+
+export interface ControllerSyncLog {
+  id: string;
+  controllerId: string;
+  syncType: string;
+  startedAt: string;
+  completedAt?: string | null;
+  status: ControllerSyncLogStatus;
+  message?: string | null;
+  recordsProcessed?: number | null;
+}
+
+export type DeviceEventSeverity = (typeof DeviceEventSeverity)[keyof typeof DeviceEventSeverity];
+
+export const DeviceEventSeverity = {
+  informational: 'informational',
+  low: 'low',
+  medium: 'medium',
+  high: 'high',
+  critical: 'critical',
+} as const;
+
+export type DeviceEventRawPayloadJson = { [key: string]: unknown } | null;
+
+export interface DeviceEvent {
+  id: string;
+  controllerId: string;
+  managedDeviceId?: string | null;
+  customerId?: string | null;
+  siteId?: string | null;
+  serviceId?: string | null;
+  rawEventId: string;
+  eventSource: string;
+  severity: DeviceEventSeverity;
+  eventType: string;
+  title: string;
+  description?: string | null;
+  normalizedStatus?: string | null;
+  aiSummary?: string | null;
+  aiProbableImpact?: string | null;
+  aiCustomerUpdate?: string | null;
+  confidenceScore?: number | null;
+  category?: string | null;
+  rawPayloadJson?: DeviceEventRawPayloadJson;
+  occurredAt: string;
+  createdAt: string;
+}
+
+export type ControllerDetail = Controller & {
+  recentSyncLogs: ControllerSyncLog[];
+  deviceCount: number;
+  linkCount: number;
+  eventCount: number;
+  recentEvents: DeviceEvent[];
+};
+
+export interface ConnectionTestResponse {
+  ok: boolean;
+  message?: string;
+}
+
+export type ControllerSyncStartResponseLogsItem = {
+  controllerId: string;
+  syncLogId: string;
+};
+
+export interface ControllerSyncStartResponse {
+  syncLogId?: string;
+  message: string;
+  started?: number;
+  logs?: ControllerSyncStartResponseLogsItem[];
+}
+
+export type DeviceStatus = (typeof DeviceStatus)[keyof typeof DeviceStatus];
+
+export const DeviceStatus = {
+  online: 'online',
+  offline: 'offline',
+  degraded: 'degraded',
+  unknown: 'unknown',
+} as const;
+
+export type ManagedDeviceDeviceType =
+  (typeof ManagedDeviceDeviceType)[keyof typeof ManagedDeviceDeviceType];
+
+export const ManagedDeviceDeviceType = {
+  firewall: 'firewall',
+  sdwan_edge: 'sdwan_edge',
+  appliance: 'appliance',
+  switch: 'switch',
+  gateway: 'gateway',
+} as const;
+
+export type ManagedDeviceHaState =
+  | (typeof ManagedDeviceHaState)[keyof typeof ManagedDeviceHaState]
+  | null;
+
+export const ManagedDeviceHaState = {
+  active: 'active',
+  standby: 'standby',
+  standalone: 'standalone',
+  unknown: 'unknown',
+} as const;
+
+export type ManagedDeviceGeoSource =
+  | (typeof ManagedDeviceGeoSource)[keyof typeof ManagedDeviceGeoSource]
+  | null;
+
+export const ManagedDeviceGeoSource = {
+  manual: 'manual',
+  inherited_from_site: 'inherited_from_site',
+  imported: 'imported',
+} as const;
+
+export type ManagedDeviceMetadataJson = { [key: string]: unknown } | null;
+
+export interface ManagedDevice {
+  id: string;
+  controllerId: string;
+  customerId?: string | null;
+  siteId?: string | null;
+  hostname: string;
+  deviceType: ManagedDeviceDeviceType;
+  vendor: string;
+  serialNumber?: string | null;
+  controllerDeviceId: string;
+  model?: string | null;
+  mgmtIp?: string | null;
+  status: DeviceStatus;
+  haState?: ManagedDeviceHaState;
+  networkName?: string | null;
+  latitude?: number | null;
+  longitude?: number | null;
+  geoSource?: ManagedDeviceGeoSource;
+  publicLabel?: string | null;
+  isPublic: boolean;
+  lastSeenAt?: string | null;
+  metadataJson?: ManagedDeviceMetadataJson;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export type ManagedDeviceSummary = ManagedDevice & {
+  controller?: Controller | null;
+  customer?: Customer | null;
+  site?: Site | null;
+};
+
+export type NetworkLinkLinkType = (typeof NetworkLinkLinkType)[keyof typeof NetworkLinkLinkType];
+
+export const NetworkLinkLinkType = {
+  internet: 'internet',
+  mpls: 'mpls',
+  lte: 'lte',
+  broadband: 'broadband',
+  wan_uplink: 'wan_uplink',
+  vpn_tunnel: 'vpn_tunnel',
+  sdwan_transport: 'sdwan_transport',
+} as const;
+
+export type NetworkLinkRole = (typeof NetworkLinkRole)[keyof typeof NetworkLinkRole];
+
+export const NetworkLinkRole = {
+  primary: 'primary',
+  backup: 'backup',
+  unknown: 'unknown',
+} as const;
+
+export type LinkStatus = (typeof LinkStatus)[keyof typeof LinkStatus];
+
+export const LinkStatus = {
+  up: 'up',
+  down: 'down',
+  degraded: 'degraded',
+  unknown: 'unknown',
+} as const;
+
+export type NetworkLinkMetadataJson = { [key: string]: unknown } | null;
+
+export interface NetworkLink {
+  id: string;
+  managedDeviceId: string;
+  serviceId?: string | null;
+  customerId?: string | null;
+  siteId?: string | null;
+  linkName: string;
+  linkType: NetworkLinkLinkType;
+  providerName?: string | null;
+  circuitId?: string | null;
+  role: NetworkLinkRole;
+  status: LinkStatus;
+  latencyMs?: number | null;
+  jitterMs?: number | null;
+  packetLossPct?: number | null;
+  failoverActive: boolean;
+  networkName?: string | null;
+  lastPolledAt?: string | null;
+  metadataJson?: NetworkLinkMetadataJson;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export type ManagedDeviceDetail = ManagedDeviceSummary & {
+  links: NetworkLink[];
+  recentEvents: DeviceEvent[];
+  linkedTickets: Ticket[];
+};
+
+export interface UpdateManagedDeviceRequest {
+  customerId?: string | null;
+  siteId?: string | null;
+  hostname?: string;
+  status?: DeviceStatus;
+  publicLabel?: string | null;
+  isPublic?: boolean;
+}
+
+export type NetworkLinkDetail = NetworkLink & {
+  device?: ManagedDevice | null;
+  customer?: Customer | null;
+  site?: Site | null;
+  service?: Service | null;
+};
+
+export type DeviceEventSummary = DeviceEvent & {
+  controller?: Controller | null;
+  customer?: Customer | null;
+};
+
+export type DeviceEventDetailCorrelationsItem = { [key: string]: unknown };
+
+export type DeviceEventDetail = DeviceEventSummary & {
+  device?: ManagedDevice | null;
+  site?: Site | null;
+  linkedTickets?: Ticket[];
+  correlations?: DeviceEventDetailCorrelationsItem[];
+};
+
+export interface SalesforceConfig {
+  clientId: string;
+  clientSecret: string;
+  loginUrl: string;
+  instanceUrl: string;
+  username: string;
+  password: string;
+  hasClientSecret: boolean;
+  hasPassword: boolean;
+}
+
+export interface UpdateSalesforceConfigRequest {
+  clientId?: string;
+  clientSecret?: string;
+  loginUrl?: string;
+  instanceUrl?: string;
+  username?: string;
+  password?: string;
+}
+
+export type SalesforceSyncResponseAccounts = { [key: string]: unknown };
+
+export type SalesforceSyncResponseContacts = { [key: string]: unknown };
+
+export interface SalesforceSyncResponse {
+  success: boolean;
+  synced?: number;
+  created?: number;
+  updated?: number;
+  skipped?: number;
+  message?: string;
+  accounts?: SalesforceSyncResponseAccounts;
+  contacts?: SalesforceSyncResponseContacts;
+}
+
+export type CrmSyncLogStatus = (typeof CrmSyncLogStatus)[keyof typeof CrmSyncLogStatus];
+
+export const CrmSyncLogStatus = {
+  running: 'running',
+  success: 'success',
+  failed: 'failed',
+} as const;
+
+export interface CrmSyncLog {
+  id: string;
+  connector: string;
+  syncType: string;
+  startedAt: string;
+  completedAt?: string | null;
+  status: CrmSyncLogStatus;
+  message?: string | null;
+  recordsProcessed?: number | null;
+}
+
+export interface SalesforceStatus {
+  configured: boolean;
+  accountsSynced: number;
+  contactsSynced: number;
+  lastSyncAt?: string | null;
+  recentLogs: CrmSyncLog[];
+}
+
 export type GetRecentTicketsParams = {
   limit?: number;
 };
@@ -1298,6 +2037,58 @@ export type GetTicketsParams = {
 export type GetEscalationMatrixParams = {
   scopeType: MatrixScopeType;
   scopeId?: string;
+};
+
+export type GetMonitoringTargetsParams = {
+  search?: string;
+  status?: MonitoringStatus;
+  isPublic?: boolean;
+};
+
+export type GetMonitoringChecksParams = {
+  targetId?: string;
+  /**
+   * @minimum 1
+   * @maximum 500
+   */
+  limit?: number;
+};
+
+export type PreviewExternalOutageSignalParams = {
+  region?: string;
+  provider?: string;
+};
+
+export type GetManagedDevicesParams = {
+  customerId?: string;
+  siteId?: string;
+  controllerId?: string;
+  status?: DeviceStatus;
+  search?: string;
+};
+
+export type GetNetworkLinksParams = {
+  customerId?: string;
+  siteId?: string;
+  status?: LinkStatus;
+  role?: GetNetworkLinksRole;
+  search?: string;
+};
+
+export type GetNetworkLinksRole = (typeof GetNetworkLinksRole)[keyof typeof GetNetworkLinksRole];
+
+export const GetNetworkLinksRole = {
+  primary: 'primary',
+  backup: 'backup',
+  unknown: 'unknown',
+} as const;
+
+export type GetDeviceEventsParams = {
+  controllerId?: string;
+  customerId?: string;
+  siteId?: string;
+  severity?: DeviceEventSeverity;
+  search?: string;
 };
 
 export type GetInvoiceComplaintsParams = {

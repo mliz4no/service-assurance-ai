@@ -40,9 +40,12 @@ jobs:
           node-version: 24
           cache: pnpm
       - run: pnpm install --frozen-lockfile
+      - run: pnpm run api:codegen
+      - run: git diff --exit-code -- lib/api-client-react/src/generated lib/api-zod/src/generated lib/api-zod/src/index.ts
       - run: pnpm run db:migrate
       - run: pnpm run typecheck
       - run: pnpm run build
+      - run: pnpm --filter @workspace/service-assurance run bundle:check
       - run: pnpm --filter @workspace/api-server run test
 
   container:

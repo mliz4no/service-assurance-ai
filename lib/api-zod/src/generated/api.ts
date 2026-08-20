@@ -2118,6 +2118,1572 @@ export const UpsertInvoxaiTicketResponse = zod.object({
 });
 
 /**
+ * @summary List public-safe monitored assets
+ */
+export const GetPublicNetworkMapResponseItem = zod.object({
+  id: zod.string(),
+  label: zod.string(),
+  status: zod.enum(['up', 'down', 'degraded', 'unknown']),
+  latitude: zod.number(),
+  longitude: zod.number(),
+  provider: zod.string().nullish(),
+  region: zod.string().nullish(),
+  lastSeenAt: zod.coerce.date().nullish(),
+  source: zod.enum(['manual', 'nagios', 'controller', 'synthetic']),
+});
+export const GetPublicNetworkMapResponse = zod.array(GetPublicNetworkMapResponseItem);
+
+/**
+ * @summary Get public network status totals
+ */
+export const GetPublicNetworkMapSummaryResponse = zod.object({
+  totalAssets: zod.number(),
+  activeOutages: zod.number(),
+  degradedServices: zod.number(),
+  unknownServices: zod.number(),
+  lastUpdatedAt: zod.coerce.date().nullish(),
+});
+
+/**
+ * @summary List monitoring targets
+ */
+export const GetMonitoringTargetsQueryParams = zod.object({
+  search: zod.coerce.string().optional(),
+  status: zod.enum(['up', 'down', 'degraded', 'unknown']).optional(),
+  isPublic: zod.coerce.boolean().optional(),
+});
+
+export const GetMonitoringTargetsResponseItem = zod.object({
+  id: zod.string().uuid(),
+  name: zod.string(),
+  publicLabel: zod.string().nullish(),
+  hostOrIp: zod.string(),
+  customerId: zod.string().uuid().nullish(),
+  siteId: zod.string().uuid().nullish(),
+  serviceId: zod.string().uuid().nullish(),
+  targetType: zod.enum(['ip', 'hostname', 'service', 'controller']),
+  provider: zod.string().nullish(),
+  region: zod.string().nullish(),
+  latitude: zod.number().nullish(),
+  longitude: zod.number().nullish(),
+  status: zod.enum(['up', 'down', 'degraded', 'unknown']),
+  statusSource: zod.enum(['manual', 'nagios', 'controller', 'synthetic']),
+  isPublic: zod.boolean(),
+  lastCheckedAt: zod.coerce.date().nullish(),
+  lastSuccessAt: zod.coerce.date().nullish(),
+  lastFailureAt: zod.coerce.date().nullish(),
+  createdAt: zod.coerce.date(),
+  updatedAt: zod.coerce.date(),
+});
+export const GetMonitoringTargetsResponse = zod.array(GetMonitoringTargetsResponseItem);
+
+/**
+ * @summary Create a monitoring target
+ */
+export const createMonitoringTargetBodyTargetTypeDefault = `ip`;
+export const createMonitoringTargetBodyIsPublicDefault = false;
+
+export const CreateMonitoringTargetBody = zod.object({
+  name: zod.string(),
+  publicLabel: zod.string().nullish(),
+  hostOrIp: zod.string(),
+  customerId: zod.string().uuid().nullish(),
+  siteId: zod.string().uuid().nullish(),
+  serviceId: zod.string().uuid().nullish(),
+  targetType: zod
+    .enum(['ip', 'hostname', 'service', 'controller'])
+    .default(createMonitoringTargetBodyTargetTypeDefault),
+  provider: zod.string().nullish(),
+  region: zod.string().nullish(),
+  latitude: zod.number().nullish(),
+  longitude: zod.number().nullish(),
+  status: zod.enum(['up', 'down', 'degraded', 'unknown']).optional(),
+  statusSource: zod.enum(['manual', 'nagios', 'controller', 'synthetic']).optional(),
+  isPublic: zod.boolean().default(createMonitoringTargetBodyIsPublicDefault),
+});
+
+/**
+ * @summary Get a monitoring target
+ */
+export const GetMonitoringTargetParams = zod.object({
+  id: zod.coerce.string().uuid(),
+});
+
+export const GetMonitoringTargetResponse = zod.object({
+  id: zod.string().uuid(),
+  name: zod.string(),
+  publicLabel: zod.string().nullish(),
+  hostOrIp: zod.string(),
+  customerId: zod.string().uuid().nullish(),
+  siteId: zod.string().uuid().nullish(),
+  serviceId: zod.string().uuid().nullish(),
+  targetType: zod.enum(['ip', 'hostname', 'service', 'controller']),
+  provider: zod.string().nullish(),
+  region: zod.string().nullish(),
+  latitude: zod.number().nullish(),
+  longitude: zod.number().nullish(),
+  status: zod.enum(['up', 'down', 'degraded', 'unknown']),
+  statusSource: zod.enum(['manual', 'nagios', 'controller', 'synthetic']),
+  isPublic: zod.boolean(),
+  lastCheckedAt: zod.coerce.date().nullish(),
+  lastSuccessAt: zod.coerce.date().nullish(),
+  lastFailureAt: zod.coerce.date().nullish(),
+  createdAt: zod.coerce.date(),
+  updatedAt: zod.coerce.date(),
+});
+
+/**
+ * @summary Update a monitoring target
+ */
+export const UpdateMonitoringTargetParams = zod.object({
+  id: zod.coerce.string().uuid(),
+});
+
+export const UpdateMonitoringTargetBody = zod.object({
+  name: zod.string().optional(),
+  publicLabel: zod.string().nullish(),
+  hostOrIp: zod.string().optional(),
+  customerId: zod.string().uuid().nullish(),
+  siteId: zod.string().uuid().nullish(),
+  serviceId: zod.string().uuid().nullish(),
+  targetType: zod.enum(['ip', 'hostname', 'service', 'controller']).optional(),
+  provider: zod.string().nullish(),
+  region: zod.string().nullish(),
+  latitude: zod.number().nullish(),
+  longitude: zod.number().nullish(),
+  status: zod.enum(['up', 'down', 'degraded', 'unknown']).optional(),
+  statusSource: zod.enum(['manual', 'nagios', 'controller', 'synthetic']).optional(),
+  isPublic: zod.boolean().optional(),
+});
+
+export const UpdateMonitoringTargetResponse = zod.object({
+  id: zod.string().uuid(),
+  name: zod.string(),
+  publicLabel: zod.string().nullish(),
+  hostOrIp: zod.string(),
+  customerId: zod.string().uuid().nullish(),
+  siteId: zod.string().uuid().nullish(),
+  serviceId: zod.string().uuid().nullish(),
+  targetType: zod.enum(['ip', 'hostname', 'service', 'controller']),
+  provider: zod.string().nullish(),
+  region: zod.string().nullish(),
+  latitude: zod.number().nullish(),
+  longitude: zod.number().nullish(),
+  status: zod.enum(['up', 'down', 'degraded', 'unknown']),
+  statusSource: zod.enum(['manual', 'nagios', 'controller', 'synthetic']),
+  isPublic: zod.boolean(),
+  lastCheckedAt: zod.coerce.date().nullish(),
+  lastSuccessAt: zod.coerce.date().nullish(),
+  lastFailureAt: zod.coerce.date().nullish(),
+  createdAt: zod.coerce.date(),
+  updatedAt: zod.coerce.date(),
+});
+
+/**
+ * @summary Delete a monitoring target
+ */
+export const DeleteMonitoringTargetParams = zod.object({
+  id: zod.coerce.string().uuid(),
+});
+
+export const DeleteMonitoringTargetResponse = zod.object({
+  success: zod.boolean(),
+  message: zod.string().optional(),
+});
+
+/**
+ * @summary List recent monitoring checks
+ */
+export const getMonitoringChecksQueryLimitDefault = 50;
+export const getMonitoringChecksQueryLimitMax = 500;
+
+export const GetMonitoringChecksQueryParams = zod.object({
+  targetId: zod.coerce.string().uuid().optional(),
+  limit: zod.coerce
+    .number()
+    .min(1)
+    .max(getMonitoringChecksQueryLimitMax)
+    .default(getMonitoringChecksQueryLimitDefault),
+});
+
+export const GetMonitoringChecksResponseItem = zod.object({
+  id: zod.string().uuid(),
+  targetId: zod.string().uuid(),
+  source: zod.enum(['manual', 'synthetic', 'nagios', 'controller']),
+  checkType: zod.enum(['http', 'tcp']),
+  status: zod.enum(['up', 'down', 'degraded', 'unknown']),
+  responseTimeMs: zod.number().nullish(),
+  payloadJson: zod.record(zod.string(), zod.unknown()).nullish(),
+  checkedAt: zod.coerce.date(),
+  createdAt: zod.coerce.date(),
+});
+export const GetMonitoringChecksResponse = zod.array(GetMonitoringChecksResponseItem);
+
+/**
+ * @summary Run synthetic monitoring checks
+ */
+export const RunMonitoringChecksBody = zod.object({
+  targetId: zod.string().uuid().optional(),
+  targetIds: zod.array(zod.string().uuid()).optional(),
+});
+
+export const RunMonitoringChecksResponse = zod.object({
+  startedAt: zod.coerce.date().optional(),
+  syncedAt: zod.coerce.date().optional(),
+  processed: zod.number(),
+  createdTickets: zod.number(),
+  updatedTickets: zod.number(),
+  results: zod.array(
+    zod.object({
+      targetId: zod.string().uuid(),
+      checkId: zod.string().uuid(),
+      status: zod.enum(['up', 'down', 'degraded', 'unknown']),
+      checkType: zod.enum(['http', 'tcp']),
+      responseTimeMs: zod.number().nullish(),
+      ticketAction: zod.enum(['skipped', 'created', 'updated']),
+      ticketId: zod.string().uuid().nullish(),
+      outageClassification: zod.string().nullish(),
+      enrichment: zod.object({
+        normalizedHostOrIp: zod.string(),
+        ipType: zod.enum(['ipv4', 'ipv6', 'hostname']),
+        provider: zod.string().nullish(),
+        region: zod.string().nullish(),
+        confidence: zod.enum(['high', 'medium', 'low']),
+        asn: zod.string().nullish(),
+        country: zod.string().nullish(),
+        city: zod.string().nullish(),
+        source: zod.enum(['heuristic', 'ipinfo']).optional(),
+      }),
+    }),
+  ),
+});
+
+/**
+ * @summary Synchronize checks from Nagios
+ */
+export const SyncNagiosMonitoringChecksBody = zod.object({
+  targetId: zod.string().uuid().optional(),
+  targetIds: zod.array(zod.string().uuid()).optional(),
+});
+
+export const SyncNagiosMonitoringChecksResponse = zod.object({
+  startedAt: zod.coerce.date().optional(),
+  syncedAt: zod.coerce.date().optional(),
+  processed: zod.number(),
+  createdTickets: zod.number(),
+  updatedTickets: zod.number(),
+  results: zod.array(
+    zod.object({
+      targetId: zod.string().uuid(),
+      checkId: zod.string().uuid(),
+      status: zod.enum(['up', 'down', 'degraded', 'unknown']),
+      checkType: zod.enum(['http', 'tcp']),
+      responseTimeMs: zod.number().nullish(),
+      ticketAction: zod.enum(['skipped', 'created', 'updated']),
+      ticketId: zod.string().uuid().nullish(),
+      outageClassification: zod.string().nullish(),
+      enrichment: zod.object({
+        normalizedHostOrIp: zod.string(),
+        ipType: zod.enum(['ipv4', 'ipv6', 'hostname']),
+        provider: zod.string().nullish(),
+        region: zod.string().nullish(),
+        confidence: zod.enum(['high', 'medium', 'low']),
+        asn: zod.string().nullish(),
+        country: zod.string().nullish(),
+        city: zod.string().nullish(),
+        source: zod.enum(['heuristic', 'ipinfo']).optional(),
+      }),
+    }),
+  ),
+});
+
+/**
+ * @summary Resolve provider and geographic enrichment
+ */
+export const LookupMonitoringEnrichmentBody = zod.union([zod.unknown(), zod.unknown()]).and(
+  zod.object({
+    targetId: zod.string().uuid().optional(),
+    hostOrIp: zod.string().optional(),
+  }),
+);
+
+export const LookupMonitoringEnrichmentResponse = zod.object({
+  targetId: zod.string().uuid().optional(),
+  hostOrIp: zod.string().optional(),
+  enrichment: zod.object({
+    normalizedHostOrIp: zod.string(),
+    ipType: zod.enum(['ipv4', 'ipv6', 'hostname']),
+    provider: zod.string().nullish(),
+    region: zod.string().nullish(),
+    confidence: zod.enum(['high', 'medium', 'low']),
+    asn: zod.string().nullish(),
+    country: zod.string().nullish(),
+    city: zod.string().nullish(),
+    source: zod.enum(['heuristic', 'ipinfo']).optional(),
+  }),
+});
+
+/**
+ * @summary Preview an external outage correlation signal
+ */
+export const PreviewExternalOutageSignalQueryParams = zod.object({
+  region: zod.coerce.string().optional(),
+  provider: zod.coerce.string().optional(),
+});
+
+export const PreviewExternalOutageSignalResponse = zod.object({
+  configured: zod.boolean(),
+  query: zod.object({
+    region: zod.string().nullish(),
+    provider: zod.string().nullish(),
+  }),
+  signal: zod.record(zod.string(), zod.unknown()).nullish(),
+});
+
+/**
+ * @summary List controller integrations
+ */
+export const GetControllersResponseItem = zod
+  .object({
+    id: zod.string().uuid(),
+    name: zod.string(),
+    vendor: zod.enum(['meraki', 'fortinet', 'palo_alto', 'sdwan']),
+    type: zod.enum(['sdwan', 'firewall_manager', 'network_manager']),
+    baseUrl: zod.string(),
+    authType: zod.enum(['api_key', 'oauth', 'basic']),
+    apiKeyEncryptedOrPlaceholder: zod.string().nullish(),
+    organizationIdOrTenant: zod.string().nullish(),
+    pollingEnabled: zod.boolean(),
+    pollingIntervalSeconds: zod.number(),
+    lastPolledAt: zod.coerce.date().nullish(),
+    lastPollStatus: zod.enum(['success', 'failed', 'running']).nullish(),
+    lastPollMessage: zod.string().nullish(),
+    createdAt: zod.coerce.date(),
+    updatedAt: zod.coerce.date(),
+  })
+  .and(
+    zod.object({
+      deviceCount: zod.number(),
+      eventCount: zod.number(),
+    }),
+  );
+export const GetControllersResponse = zod.array(GetControllersResponseItem);
+
+/**
+ * @summary Create a controller integration
+ */
+export const createControllerBodyAuthTypeDefault = `api_key`;
+export const createControllerBodyPollingEnabledDefault = false;
+export const createControllerBodyPollingIntervalSecondsDefault = 300;
+
+export const CreateControllerBody = zod.object({
+  name: zod.string(),
+  vendor: zod.enum(['meraki', 'fortinet', 'palo_alto', 'sdwan']),
+  type: zod.enum(['sdwan', 'firewall_manager', 'network_manager']),
+  baseUrl: zod.string(),
+  authType: zod.enum(['api_key', 'oauth', 'basic']).default(createControllerBodyAuthTypeDefault),
+  apiKeyEncryptedOrPlaceholder: zod.string().nullish(),
+  organizationIdOrTenant: zod.string().nullish(),
+  pollingEnabled: zod.boolean().default(createControllerBodyPollingEnabledDefault),
+  pollingIntervalSeconds: zod.number().default(createControllerBodyPollingIntervalSecondsDefault),
+});
+
+/**
+ * @summary Start synchronization for all enabled controllers
+ */
+export const SyncAllControllersResponse = zod.object({
+  syncLogId: zod.string().uuid().optional(),
+  message: zod.string(),
+  started: zod.number().optional(),
+  logs: zod
+    .array(
+      zod.object({
+        controllerId: zod.string().uuid(),
+        syncLogId: zod.string().uuid(),
+      }),
+    )
+    .optional(),
+});
+
+/**
+ * @summary Get controller details
+ */
+export const GetControllerParams = zod.object({
+  id: zod.coerce.string().uuid(),
+});
+
+export const GetControllerResponse = zod
+  .object({
+    id: zod.string().uuid(),
+    name: zod.string(),
+    vendor: zod.enum(['meraki', 'fortinet', 'palo_alto', 'sdwan']),
+    type: zod.enum(['sdwan', 'firewall_manager', 'network_manager']),
+    baseUrl: zod.string(),
+    authType: zod.enum(['api_key', 'oauth', 'basic']),
+    apiKeyEncryptedOrPlaceholder: zod.string().nullish(),
+    organizationIdOrTenant: zod.string().nullish(),
+    pollingEnabled: zod.boolean(),
+    pollingIntervalSeconds: zod.number(),
+    lastPolledAt: zod.coerce.date().nullish(),
+    lastPollStatus: zod.enum(['success', 'failed', 'running']).nullish(),
+    lastPollMessage: zod.string().nullish(),
+    createdAt: zod.coerce.date(),
+    updatedAt: zod.coerce.date(),
+  })
+  .and(
+    zod.object({
+      recentSyncLogs: zod.array(
+        zod.object({
+          id: zod.string().uuid(),
+          controllerId: zod.string().uuid(),
+          syncType: zod.string(),
+          startedAt: zod.coerce.date(),
+          completedAt: zod.coerce.date().nullish(),
+          status: zod.enum(['running', 'success', 'failed']),
+          message: zod.string().nullish(),
+          recordsProcessed: zod.number().nullish(),
+        }),
+      ),
+      deviceCount: zod.number(),
+      linkCount: zod.number(),
+      eventCount: zod.number(),
+      recentEvents: zod.array(
+        zod.object({
+          id: zod.string().uuid(),
+          controllerId: zod.string().uuid(),
+          managedDeviceId: zod.string().uuid().nullish(),
+          customerId: zod.string().uuid().nullish(),
+          siteId: zod.string().uuid().nullish(),
+          serviceId: zod.string().uuid().nullish(),
+          rawEventId: zod.string(),
+          eventSource: zod.string(),
+          severity: zod.enum(['informational', 'low', 'medium', 'high', 'critical']),
+          eventType: zod.string(),
+          title: zod.string(),
+          description: zod.string().nullish(),
+          normalizedStatus: zod.string().nullish(),
+          aiSummary: zod.string().nullish(),
+          aiProbableImpact: zod.string().nullish(),
+          aiCustomerUpdate: zod.string().nullish(),
+          confidenceScore: zod.number().nullish(),
+          category: zod.string().nullish(),
+          rawPayloadJson: zod.record(zod.string(), zod.unknown()).nullish(),
+          occurredAt: zod.coerce.date(),
+          createdAt: zod.coerce.date(),
+        }),
+      ),
+    }),
+  );
+
+/**
+ * @summary Update a controller integration
+ */
+export const UpdateControllerParams = zod.object({
+  id: zod.coerce.string().uuid(),
+});
+
+export const UpdateControllerBody = zod.object({
+  name: zod.string().optional(),
+  vendor: zod.enum(['meraki', 'fortinet', 'palo_alto', 'sdwan']).optional(),
+  type: zod.enum(['sdwan', 'firewall_manager', 'network_manager']).optional(),
+  baseUrl: zod.string().optional(),
+  authType: zod.enum(['api_key', 'oauth', 'basic']).optional(),
+  apiKeyEncryptedOrPlaceholder: zod.string().nullish(),
+  organizationIdOrTenant: zod.string().nullish(),
+  pollingEnabled: zod.boolean().optional(),
+  pollingIntervalSeconds: zod.number().optional(),
+});
+
+export const UpdateControllerResponse = zod.object({
+  id: zod.string().uuid(),
+  name: zod.string(),
+  vendor: zod.enum(['meraki', 'fortinet', 'palo_alto', 'sdwan']),
+  type: zod.enum(['sdwan', 'firewall_manager', 'network_manager']),
+  baseUrl: zod.string(),
+  authType: zod.enum(['api_key', 'oauth', 'basic']),
+  apiKeyEncryptedOrPlaceholder: zod.string().nullish(),
+  organizationIdOrTenant: zod.string().nullish(),
+  pollingEnabled: zod.boolean(),
+  pollingIntervalSeconds: zod.number(),
+  lastPolledAt: zod.coerce.date().nullish(),
+  lastPollStatus: zod.enum(['success', 'failed', 'running']).nullish(),
+  lastPollMessage: zod.string().nullish(),
+  createdAt: zod.coerce.date(),
+  updatedAt: zod.coerce.date(),
+});
+
+/**
+ * @summary Delete a controller integration
+ */
+export const DeleteControllerParams = zod.object({
+  id: zod.coerce.string().uuid(),
+});
+
+export const DeleteControllerResponse = zod.object({
+  success: zod.boolean(),
+  message: zod.string().optional(),
+});
+
+/**
+ * @summary Test a controller connection
+ */
+export const TestControllerConnectionParams = zod.object({
+  id: zod.coerce.string().uuid(),
+});
+
+export const TestControllerConnectionResponse = zod.object({
+  ok: zod.boolean(),
+  message: zod.string().optional(),
+});
+
+/**
+ * @summary Start controller synchronization
+ */
+export const SyncControllerParams = zod.object({
+  id: zod.coerce.string().uuid(),
+});
+
+export const SyncControllerResponse = zod.object({
+  syncLogId: zod.string().uuid().optional(),
+  message: zod.string(),
+  started: zod.number().optional(),
+  logs: zod
+    .array(
+      zod.object({
+        controllerId: zod.string().uuid(),
+        syncLogId: zod.string().uuid(),
+      }),
+    )
+    .optional(),
+});
+
+/**
+ * @summary List managed devices
+ */
+export const GetManagedDevicesQueryParams = zod.object({
+  customerId: zod.coerce.string().uuid().optional(),
+  siteId: zod.coerce.string().uuid().optional(),
+  controllerId: zod.coerce.string().uuid().optional(),
+  status: zod.enum(['online', 'offline', 'degraded', 'unknown']).optional(),
+  search: zod.coerce.string().optional(),
+});
+
+export const GetManagedDevicesResponseItem = zod
+  .object({
+    id: zod.string().uuid(),
+    controllerId: zod.string().uuid(),
+    customerId: zod.string().uuid().nullish(),
+    siteId: zod.string().uuid().nullish(),
+    hostname: zod.string(),
+    deviceType: zod.enum(['firewall', 'sdwan_edge', 'appliance', 'switch', 'gateway']),
+    vendor: zod.string(),
+    serialNumber: zod.string().nullish(),
+    controllerDeviceId: zod.string(),
+    model: zod.string().nullish(),
+    mgmtIp: zod.string().nullish(),
+    status: zod.enum(['online', 'offline', 'degraded', 'unknown']),
+    haState: zod.enum(['active', 'standby', 'standalone', 'unknown']).nullish(),
+    networkName: zod.string().nullish(),
+    latitude: zod.number().nullish(),
+    longitude: zod.number().nullish(),
+    geoSource: zod.enum(['manual', 'inherited_from_site', 'imported']).nullish(),
+    publicLabel: zod.string().nullish(),
+    isPublic: zod.boolean(),
+    lastSeenAt: zod.coerce.date().nullish(),
+    metadataJson: zod.record(zod.string(), zod.unknown()).nullish(),
+    createdAt: zod.coerce.date(),
+    updatedAt: zod.coerce.date(),
+  })
+  .and(
+    zod.object({
+      controller: zod
+        .object({
+          id: zod.string().uuid(),
+          name: zod.string(),
+          vendor: zod.enum(['meraki', 'fortinet', 'palo_alto', 'sdwan']),
+          type: zod.enum(['sdwan', 'firewall_manager', 'network_manager']),
+          baseUrl: zod.string(),
+          authType: zod.enum(['api_key', 'oauth', 'basic']),
+          apiKeyEncryptedOrPlaceholder: zod.string().nullish(),
+          organizationIdOrTenant: zod.string().nullish(),
+          pollingEnabled: zod.boolean(),
+          pollingIntervalSeconds: zod.number(),
+          lastPolledAt: zod.coerce.date().nullish(),
+          lastPollStatus: zod.enum(['success', 'failed', 'running']).nullish(),
+          lastPollMessage: zod.string().nullish(),
+          createdAt: zod.coerce.date(),
+          updatedAt: zod.coerce.date(),
+        })
+        .nullish(),
+      customer: zod
+        .object({
+          id: zod.string(),
+          name: zod.string(),
+          accountNumber: zod.string().nullish(),
+          status: zod.enum(['active', 'inactive']),
+          primaryContactName: zod.string().nullish(),
+          primaryContactEmail: zod.string().nullish(),
+          primaryContactPhone: zod.string().nullish(),
+          notes: zod.string().nullish(),
+          externalSource: zod.string().nullish(),
+          externalId: zod.string().nullish(),
+          externalSyncedAt: zod.coerce.date().nullish(),
+          externalSyncStatus: zod.string().nullish(),
+          createdAt: zod.coerce.date(),
+          updatedAt: zod.coerce.date(),
+        })
+        .nullish(),
+      site: zod
+        .object({
+          id: zod.string(),
+          customerId: zod.string(),
+          siteName: zod.string(),
+          address1: zod.string().nullish(),
+          address2: zod.string().nullish(),
+          city: zod.string().nullish(),
+          state: zod.string().nullish(),
+          postalCode: zod.string().nullish(),
+          country: zod.string().nullish(),
+          timezone: zod.string().nullish(),
+          siteCode: zod.string().nullish(),
+          notes: zod.string().nullish(),
+          lconName: zod.string().nullish(),
+          lconPhone: zod.string().nullish(),
+          lconEmail: zod.string().nullish(),
+          latitude: zod.number().nullish(),
+          longitude: zod.number().nullish(),
+          geoSource: zod.enum(['manual', 'geocoded', 'imported']).nullish(),
+          externalSource: zod.string().nullish(),
+          externalId: zod.string().nullish(),
+          externalSyncedAt: zod.coerce.date().nullish(),
+          externalSyncStatus: zod.string().nullish(),
+          createdAt: zod.coerce.date(),
+          updatedAt: zod.coerce.date(),
+        })
+        .nullish(),
+    }),
+  );
+export const GetManagedDevicesResponse = zod.array(GetManagedDevicesResponseItem);
+
+/**
+ * @summary Get managed device details
+ */
+export const GetManagedDeviceParams = zod.object({
+  id: zod.coerce.string().uuid(),
+});
+
+export const GetManagedDeviceResponse = zod
+  .object({
+    id: zod.string().uuid(),
+    controllerId: zod.string().uuid(),
+    customerId: zod.string().uuid().nullish(),
+    siteId: zod.string().uuid().nullish(),
+    hostname: zod.string(),
+    deviceType: zod.enum(['firewall', 'sdwan_edge', 'appliance', 'switch', 'gateway']),
+    vendor: zod.string(),
+    serialNumber: zod.string().nullish(),
+    controllerDeviceId: zod.string(),
+    model: zod.string().nullish(),
+    mgmtIp: zod.string().nullish(),
+    status: zod.enum(['online', 'offline', 'degraded', 'unknown']),
+    haState: zod.enum(['active', 'standby', 'standalone', 'unknown']).nullish(),
+    networkName: zod.string().nullish(),
+    latitude: zod.number().nullish(),
+    longitude: zod.number().nullish(),
+    geoSource: zod.enum(['manual', 'inherited_from_site', 'imported']).nullish(),
+    publicLabel: zod.string().nullish(),
+    isPublic: zod.boolean(),
+    lastSeenAt: zod.coerce.date().nullish(),
+    metadataJson: zod.record(zod.string(), zod.unknown()).nullish(),
+    createdAt: zod.coerce.date(),
+    updatedAt: zod.coerce.date(),
+  })
+  .and(
+    zod.object({
+      controller: zod
+        .object({
+          id: zod.string().uuid(),
+          name: zod.string(),
+          vendor: zod.enum(['meraki', 'fortinet', 'palo_alto', 'sdwan']),
+          type: zod.enum(['sdwan', 'firewall_manager', 'network_manager']),
+          baseUrl: zod.string(),
+          authType: zod.enum(['api_key', 'oauth', 'basic']),
+          apiKeyEncryptedOrPlaceholder: zod.string().nullish(),
+          organizationIdOrTenant: zod.string().nullish(),
+          pollingEnabled: zod.boolean(),
+          pollingIntervalSeconds: zod.number(),
+          lastPolledAt: zod.coerce.date().nullish(),
+          lastPollStatus: zod.enum(['success', 'failed', 'running']).nullish(),
+          lastPollMessage: zod.string().nullish(),
+          createdAt: zod.coerce.date(),
+          updatedAt: zod.coerce.date(),
+        })
+        .nullish(),
+      customer: zod
+        .object({
+          id: zod.string(),
+          name: zod.string(),
+          accountNumber: zod.string().nullish(),
+          status: zod.enum(['active', 'inactive']),
+          primaryContactName: zod.string().nullish(),
+          primaryContactEmail: zod.string().nullish(),
+          primaryContactPhone: zod.string().nullish(),
+          notes: zod.string().nullish(),
+          externalSource: zod.string().nullish(),
+          externalId: zod.string().nullish(),
+          externalSyncedAt: zod.coerce.date().nullish(),
+          externalSyncStatus: zod.string().nullish(),
+          createdAt: zod.coerce.date(),
+          updatedAt: zod.coerce.date(),
+        })
+        .nullish(),
+      site: zod
+        .object({
+          id: zod.string(),
+          customerId: zod.string(),
+          siteName: zod.string(),
+          address1: zod.string().nullish(),
+          address2: zod.string().nullish(),
+          city: zod.string().nullish(),
+          state: zod.string().nullish(),
+          postalCode: zod.string().nullish(),
+          country: zod.string().nullish(),
+          timezone: zod.string().nullish(),
+          siteCode: zod.string().nullish(),
+          notes: zod.string().nullish(),
+          lconName: zod.string().nullish(),
+          lconPhone: zod.string().nullish(),
+          lconEmail: zod.string().nullish(),
+          latitude: zod.number().nullish(),
+          longitude: zod.number().nullish(),
+          geoSource: zod.enum(['manual', 'geocoded', 'imported']).nullish(),
+          externalSource: zod.string().nullish(),
+          externalId: zod.string().nullish(),
+          externalSyncedAt: zod.coerce.date().nullish(),
+          externalSyncStatus: zod.string().nullish(),
+          createdAt: zod.coerce.date(),
+          updatedAt: zod.coerce.date(),
+        })
+        .nullish(),
+    }),
+  )
+  .and(
+    zod.object({
+      links: zod.array(
+        zod.object({
+          id: zod.string().uuid(),
+          managedDeviceId: zod.string().uuid(),
+          serviceId: zod.string().uuid().nullish(),
+          customerId: zod.string().uuid().nullish(),
+          siteId: zod.string().uuid().nullish(),
+          linkName: zod.string(),
+          linkType: zod.enum([
+            'internet',
+            'mpls',
+            'lte',
+            'broadband',
+            'wan_uplink',
+            'vpn_tunnel',
+            'sdwan_transport',
+          ]),
+          providerName: zod.string().nullish(),
+          circuitId: zod.string().nullish(),
+          role: zod.enum(['primary', 'backup', 'unknown']),
+          status: zod.enum(['up', 'down', 'degraded', 'unknown']),
+          latencyMs: zod.number().nullish(),
+          jitterMs: zod.number().nullish(),
+          packetLossPct: zod.number().nullish(),
+          failoverActive: zod.boolean(),
+          networkName: zod.string().nullish(),
+          lastPolledAt: zod.coerce.date().nullish(),
+          metadataJson: zod.record(zod.string(), zod.unknown()).nullish(),
+          createdAt: zod.coerce.date(),
+          updatedAt: zod.coerce.date(),
+        }),
+      ),
+      recentEvents: zod.array(
+        zod.object({
+          id: zod.string().uuid(),
+          controllerId: zod.string().uuid(),
+          managedDeviceId: zod.string().uuid().nullish(),
+          customerId: zod.string().uuid().nullish(),
+          siteId: zod.string().uuid().nullish(),
+          serviceId: zod.string().uuid().nullish(),
+          rawEventId: zod.string(),
+          eventSource: zod.string(),
+          severity: zod.enum(['informational', 'low', 'medium', 'high', 'critical']),
+          eventType: zod.string(),
+          title: zod.string(),
+          description: zod.string().nullish(),
+          normalizedStatus: zod.string().nullish(),
+          aiSummary: zod.string().nullish(),
+          aiProbableImpact: zod.string().nullish(),
+          aiCustomerUpdate: zod.string().nullish(),
+          confidenceScore: zod.number().nullish(),
+          category: zod.string().nullish(),
+          rawPayloadJson: zod.record(zod.string(), zod.unknown()).nullish(),
+          occurredAt: zod.coerce.date(),
+          createdAt: zod.coerce.date(),
+        }),
+      ),
+      linkedTickets: zod.array(
+        zod.object({
+          id: zod.string(),
+          ticketNumber: zod.string(),
+          customerId: zod.string(),
+          siteId: zod.string().nullish(),
+          serviceId: zod.string().nullish(),
+          title: zod.string(),
+          description: zod.string().nullish(),
+          source: zod.enum(['manual', 'email', 'api']),
+          severity: zod.enum(['low', 'medium', 'high', 'critical']),
+          status: zod.enum([
+            'new',
+            'investigating',
+            'vendor_engaged',
+            'dispatch_scheduled',
+            'monitoring',
+            'resolved',
+            'closed',
+          ]),
+          outageType: zod.enum(['outage', 'impairment', 'informational', 'unknown']),
+          impactLevel: zod.enum(['low', 'medium', 'high']).nullish(),
+          urgencyLevel: zod.enum(['low', 'medium', 'high']).nullish(),
+          vendorTicketId: zod.string().nullish(),
+          assignedToUserId: zod.string().nullish(),
+          openedAt: zod.coerce.date(),
+          lastUpdatedAt: zod.coerce.date(),
+          resolvedAt: zod.coerce.date().nullish(),
+          nextEscalationAt: zod.coerce.date().nullish(),
+          slaTargetMinutes: zod.number().nullish(),
+          aiSummary: zod.string().nullish(),
+          aiNormalizedStatus: zod.string().nullish(),
+          aiCustomerUpdate: zod.string().nullish(),
+          aiLastGeneratedAt: zod.coerce.date().nullish(),
+          externalSource: zod.string().nullish(),
+          externalId: zod.string().nullish(),
+          externalSyncedAt: zod.coerce.date().nullish(),
+          externalSyncStatus: zod.string().nullish(),
+          createdAt: zod.coerce.date(),
+          updatedAt: zod.coerce.date(),
+        }),
+      ),
+    }),
+  );
+
+/**
+ * @summary Update managed device assignment and public visibility
+ */
+export const UpdateManagedDeviceParams = zod.object({
+  id: zod.coerce.string().uuid(),
+});
+
+export const UpdateManagedDeviceBody = zod.object({
+  customerId: zod.string().uuid().nullish(),
+  siteId: zod.string().uuid().nullish(),
+  hostname: zod.string().optional(),
+  status: zod.enum(['online', 'offline', 'degraded', 'unknown']).optional(),
+  publicLabel: zod.string().nullish(),
+  isPublic: zod.boolean().optional(),
+});
+
+export const UpdateManagedDeviceResponse = zod.object({
+  id: zod.string().uuid(),
+  controllerId: zod.string().uuid(),
+  customerId: zod.string().uuid().nullish(),
+  siteId: zod.string().uuid().nullish(),
+  hostname: zod.string(),
+  deviceType: zod.enum(['firewall', 'sdwan_edge', 'appliance', 'switch', 'gateway']),
+  vendor: zod.string(),
+  serialNumber: zod.string().nullish(),
+  controllerDeviceId: zod.string(),
+  model: zod.string().nullish(),
+  mgmtIp: zod.string().nullish(),
+  status: zod.enum(['online', 'offline', 'degraded', 'unknown']),
+  haState: zod.enum(['active', 'standby', 'standalone', 'unknown']).nullish(),
+  networkName: zod.string().nullish(),
+  latitude: zod.number().nullish(),
+  longitude: zod.number().nullish(),
+  geoSource: zod.enum(['manual', 'inherited_from_site', 'imported']).nullish(),
+  publicLabel: zod.string().nullish(),
+  isPublic: zod.boolean(),
+  lastSeenAt: zod.coerce.date().nullish(),
+  metadataJson: zod.record(zod.string(), zod.unknown()).nullish(),
+  createdAt: zod.coerce.date(),
+  updatedAt: zod.coerce.date(),
+});
+
+/**
+ * @summary List network links
+ */
+export const GetNetworkLinksQueryParams = zod.object({
+  customerId: zod.coerce.string().uuid().optional(),
+  siteId: zod.coerce.string().uuid().optional(),
+  status: zod.enum(['up', 'down', 'degraded', 'unknown']).optional(),
+  role: zod.enum(['primary', 'backup', 'unknown']).optional(),
+  search: zod.coerce.string().optional(),
+});
+
+export const GetNetworkLinksResponseItem = zod
+  .object({
+    id: zod.string().uuid(),
+    managedDeviceId: zod.string().uuid(),
+    serviceId: zod.string().uuid().nullish(),
+    customerId: zod.string().uuid().nullish(),
+    siteId: zod.string().uuid().nullish(),
+    linkName: zod.string(),
+    linkType: zod.enum([
+      'internet',
+      'mpls',
+      'lte',
+      'broadband',
+      'wan_uplink',
+      'vpn_tunnel',
+      'sdwan_transport',
+    ]),
+    providerName: zod.string().nullish(),
+    circuitId: zod.string().nullish(),
+    role: zod.enum(['primary', 'backup', 'unknown']),
+    status: zod.enum(['up', 'down', 'degraded', 'unknown']),
+    latencyMs: zod.number().nullish(),
+    jitterMs: zod.number().nullish(),
+    packetLossPct: zod.number().nullish(),
+    failoverActive: zod.boolean(),
+    networkName: zod.string().nullish(),
+    lastPolledAt: zod.coerce.date().nullish(),
+    metadataJson: zod.record(zod.string(), zod.unknown()).nullish(),
+    createdAt: zod.coerce.date(),
+    updatedAt: zod.coerce.date(),
+  })
+  .and(
+    zod.object({
+      device: zod
+        .object({
+          id: zod.string().uuid(),
+          controllerId: zod.string().uuid(),
+          customerId: zod.string().uuid().nullish(),
+          siteId: zod.string().uuid().nullish(),
+          hostname: zod.string(),
+          deviceType: zod.enum(['firewall', 'sdwan_edge', 'appliance', 'switch', 'gateway']),
+          vendor: zod.string(),
+          serialNumber: zod.string().nullish(),
+          controllerDeviceId: zod.string(),
+          model: zod.string().nullish(),
+          mgmtIp: zod.string().nullish(),
+          status: zod.enum(['online', 'offline', 'degraded', 'unknown']),
+          haState: zod.enum(['active', 'standby', 'standalone', 'unknown']).nullish(),
+          networkName: zod.string().nullish(),
+          latitude: zod.number().nullish(),
+          longitude: zod.number().nullish(),
+          geoSource: zod.enum(['manual', 'inherited_from_site', 'imported']).nullish(),
+          publicLabel: zod.string().nullish(),
+          isPublic: zod.boolean(),
+          lastSeenAt: zod.coerce.date().nullish(),
+          metadataJson: zod.record(zod.string(), zod.unknown()).nullish(),
+          createdAt: zod.coerce.date(),
+          updatedAt: zod.coerce.date(),
+        })
+        .nullish(),
+      customer: zod
+        .object({
+          id: zod.string(),
+          name: zod.string(),
+          accountNumber: zod.string().nullish(),
+          status: zod.enum(['active', 'inactive']),
+          primaryContactName: zod.string().nullish(),
+          primaryContactEmail: zod.string().nullish(),
+          primaryContactPhone: zod.string().nullish(),
+          notes: zod.string().nullish(),
+          externalSource: zod.string().nullish(),
+          externalId: zod.string().nullish(),
+          externalSyncedAt: zod.coerce.date().nullish(),
+          externalSyncStatus: zod.string().nullish(),
+          createdAt: zod.coerce.date(),
+          updatedAt: zod.coerce.date(),
+        })
+        .nullish(),
+      site: zod
+        .object({
+          id: zod.string(),
+          customerId: zod.string(),
+          siteName: zod.string(),
+          address1: zod.string().nullish(),
+          address2: zod.string().nullish(),
+          city: zod.string().nullish(),
+          state: zod.string().nullish(),
+          postalCode: zod.string().nullish(),
+          country: zod.string().nullish(),
+          timezone: zod.string().nullish(),
+          siteCode: zod.string().nullish(),
+          notes: zod.string().nullish(),
+          lconName: zod.string().nullish(),
+          lconPhone: zod.string().nullish(),
+          lconEmail: zod.string().nullish(),
+          latitude: zod.number().nullish(),
+          longitude: zod.number().nullish(),
+          geoSource: zod.enum(['manual', 'geocoded', 'imported']).nullish(),
+          externalSource: zod.string().nullish(),
+          externalId: zod.string().nullish(),
+          externalSyncedAt: zod.coerce.date().nullish(),
+          externalSyncStatus: zod.string().nullish(),
+          createdAt: zod.coerce.date(),
+          updatedAt: zod.coerce.date(),
+        })
+        .nullish(),
+      service: zod
+        .object({
+          id: zod.string(),
+          customerId: zod.string(),
+          siteId: zod.string(),
+          vendorName: zod.string(),
+          serviceType: zod.enum(['DIA', 'Broadband', 'SD-WAN', 'Voice', 'Wireless', 'Other']),
+          circuitId: zod.string().nullish(),
+          bandwidth: zod.string().nullish(),
+          status: zod.enum(['active', 'pending', 'down', 'impaired', 'disconnected']),
+          installDate: zod.string().nullish(),
+          monthlyRecurringCharge: zod.number().nullish(),
+          supportReference: zod.string().nullish(),
+          notes: zod.string().nullish(),
+          externalSource: zod.string().nullish(),
+          externalId: zod.string().nullish(),
+          externalSyncedAt: zod.coerce.date().nullish(),
+          externalSyncStatus: zod.string().nullish(),
+          createdAt: zod.coerce.date(),
+          updatedAt: zod.coerce.date(),
+        })
+        .nullish(),
+    }),
+  );
+export const GetNetworkLinksResponse = zod.array(GetNetworkLinksResponseItem);
+
+/**
+ * @summary Get a network link
+ */
+export const GetNetworkLinkParams = zod.object({
+  id: zod.coerce.string().uuid(),
+});
+
+export const GetNetworkLinkResponse = zod
+  .object({
+    id: zod.string().uuid(),
+    managedDeviceId: zod.string().uuid(),
+    serviceId: zod.string().uuid().nullish(),
+    customerId: zod.string().uuid().nullish(),
+    siteId: zod.string().uuid().nullish(),
+    linkName: zod.string(),
+    linkType: zod.enum([
+      'internet',
+      'mpls',
+      'lte',
+      'broadband',
+      'wan_uplink',
+      'vpn_tunnel',
+      'sdwan_transport',
+    ]),
+    providerName: zod.string().nullish(),
+    circuitId: zod.string().nullish(),
+    role: zod.enum(['primary', 'backup', 'unknown']),
+    status: zod.enum(['up', 'down', 'degraded', 'unknown']),
+    latencyMs: zod.number().nullish(),
+    jitterMs: zod.number().nullish(),
+    packetLossPct: zod.number().nullish(),
+    failoverActive: zod.boolean(),
+    networkName: zod.string().nullish(),
+    lastPolledAt: zod.coerce.date().nullish(),
+    metadataJson: zod.record(zod.string(), zod.unknown()).nullish(),
+    createdAt: zod.coerce.date(),
+    updatedAt: zod.coerce.date(),
+  })
+  .and(
+    zod.object({
+      device: zod
+        .object({
+          id: zod.string().uuid(),
+          controllerId: zod.string().uuid(),
+          customerId: zod.string().uuid().nullish(),
+          siteId: zod.string().uuid().nullish(),
+          hostname: zod.string(),
+          deviceType: zod.enum(['firewall', 'sdwan_edge', 'appliance', 'switch', 'gateway']),
+          vendor: zod.string(),
+          serialNumber: zod.string().nullish(),
+          controllerDeviceId: zod.string(),
+          model: zod.string().nullish(),
+          mgmtIp: zod.string().nullish(),
+          status: zod.enum(['online', 'offline', 'degraded', 'unknown']),
+          haState: zod.enum(['active', 'standby', 'standalone', 'unknown']).nullish(),
+          networkName: zod.string().nullish(),
+          latitude: zod.number().nullish(),
+          longitude: zod.number().nullish(),
+          geoSource: zod.enum(['manual', 'inherited_from_site', 'imported']).nullish(),
+          publicLabel: zod.string().nullish(),
+          isPublic: zod.boolean(),
+          lastSeenAt: zod.coerce.date().nullish(),
+          metadataJson: zod.record(zod.string(), zod.unknown()).nullish(),
+          createdAt: zod.coerce.date(),
+          updatedAt: zod.coerce.date(),
+        })
+        .nullish(),
+      customer: zod
+        .object({
+          id: zod.string(),
+          name: zod.string(),
+          accountNumber: zod.string().nullish(),
+          status: zod.enum(['active', 'inactive']),
+          primaryContactName: zod.string().nullish(),
+          primaryContactEmail: zod.string().nullish(),
+          primaryContactPhone: zod.string().nullish(),
+          notes: zod.string().nullish(),
+          externalSource: zod.string().nullish(),
+          externalId: zod.string().nullish(),
+          externalSyncedAt: zod.coerce.date().nullish(),
+          externalSyncStatus: zod.string().nullish(),
+          createdAt: zod.coerce.date(),
+          updatedAt: zod.coerce.date(),
+        })
+        .nullish(),
+      site: zod
+        .object({
+          id: zod.string(),
+          customerId: zod.string(),
+          siteName: zod.string(),
+          address1: zod.string().nullish(),
+          address2: zod.string().nullish(),
+          city: zod.string().nullish(),
+          state: zod.string().nullish(),
+          postalCode: zod.string().nullish(),
+          country: zod.string().nullish(),
+          timezone: zod.string().nullish(),
+          siteCode: zod.string().nullish(),
+          notes: zod.string().nullish(),
+          lconName: zod.string().nullish(),
+          lconPhone: zod.string().nullish(),
+          lconEmail: zod.string().nullish(),
+          latitude: zod.number().nullish(),
+          longitude: zod.number().nullish(),
+          geoSource: zod.enum(['manual', 'geocoded', 'imported']).nullish(),
+          externalSource: zod.string().nullish(),
+          externalId: zod.string().nullish(),
+          externalSyncedAt: zod.coerce.date().nullish(),
+          externalSyncStatus: zod.string().nullish(),
+          createdAt: zod.coerce.date(),
+          updatedAt: zod.coerce.date(),
+        })
+        .nullish(),
+      service: zod
+        .object({
+          id: zod.string(),
+          customerId: zod.string(),
+          siteId: zod.string(),
+          vendorName: zod.string(),
+          serviceType: zod.enum(['DIA', 'Broadband', 'SD-WAN', 'Voice', 'Wireless', 'Other']),
+          circuitId: zod.string().nullish(),
+          bandwidth: zod.string().nullish(),
+          status: zod.enum(['active', 'pending', 'down', 'impaired', 'disconnected']),
+          installDate: zod.string().nullish(),
+          monthlyRecurringCharge: zod.number().nullish(),
+          supportReference: zod.string().nullish(),
+          notes: zod.string().nullish(),
+          externalSource: zod.string().nullish(),
+          externalId: zod.string().nullish(),
+          externalSyncedAt: zod.coerce.date().nullish(),
+          externalSyncStatus: zod.string().nullish(),
+          createdAt: zod.coerce.date(),
+          updatedAt: zod.coerce.date(),
+        })
+        .nullish(),
+    }),
+  );
+
+/**
+ * @summary List device events
+ */
+export const GetDeviceEventsQueryParams = zod.object({
+  controllerId: zod.coerce.string().uuid().optional(),
+  customerId: zod.coerce.string().uuid().optional(),
+  siteId: zod.coerce.string().uuid().optional(),
+  severity: zod.enum(['informational', 'low', 'medium', 'high', 'critical']).optional(),
+  search: zod.coerce.string().optional(),
+});
+
+export const GetDeviceEventsResponseItem = zod
+  .object({
+    id: zod.string().uuid(),
+    controllerId: zod.string().uuid(),
+    managedDeviceId: zod.string().uuid().nullish(),
+    customerId: zod.string().uuid().nullish(),
+    siteId: zod.string().uuid().nullish(),
+    serviceId: zod.string().uuid().nullish(),
+    rawEventId: zod.string(),
+    eventSource: zod.string(),
+    severity: zod.enum(['informational', 'low', 'medium', 'high', 'critical']),
+    eventType: zod.string(),
+    title: zod.string(),
+    description: zod.string().nullish(),
+    normalizedStatus: zod.string().nullish(),
+    aiSummary: zod.string().nullish(),
+    aiProbableImpact: zod.string().nullish(),
+    aiCustomerUpdate: zod.string().nullish(),
+    confidenceScore: zod.number().nullish(),
+    category: zod.string().nullish(),
+    rawPayloadJson: zod.record(zod.string(), zod.unknown()).nullish(),
+    occurredAt: zod.coerce.date(),
+    createdAt: zod.coerce.date(),
+  })
+  .and(
+    zod.object({
+      controller: zod
+        .object({
+          id: zod.string().uuid(),
+          name: zod.string(),
+          vendor: zod.enum(['meraki', 'fortinet', 'palo_alto', 'sdwan']),
+          type: zod.enum(['sdwan', 'firewall_manager', 'network_manager']),
+          baseUrl: zod.string(),
+          authType: zod.enum(['api_key', 'oauth', 'basic']),
+          apiKeyEncryptedOrPlaceholder: zod.string().nullish(),
+          organizationIdOrTenant: zod.string().nullish(),
+          pollingEnabled: zod.boolean(),
+          pollingIntervalSeconds: zod.number(),
+          lastPolledAt: zod.coerce.date().nullish(),
+          lastPollStatus: zod.enum(['success', 'failed', 'running']).nullish(),
+          lastPollMessage: zod.string().nullish(),
+          createdAt: zod.coerce.date(),
+          updatedAt: zod.coerce.date(),
+        })
+        .nullish(),
+      customer: zod
+        .object({
+          id: zod.string(),
+          name: zod.string(),
+          accountNumber: zod.string().nullish(),
+          status: zod.enum(['active', 'inactive']),
+          primaryContactName: zod.string().nullish(),
+          primaryContactEmail: zod.string().nullish(),
+          primaryContactPhone: zod.string().nullish(),
+          notes: zod.string().nullish(),
+          externalSource: zod.string().nullish(),
+          externalId: zod.string().nullish(),
+          externalSyncedAt: zod.coerce.date().nullish(),
+          externalSyncStatus: zod.string().nullish(),
+          createdAt: zod.coerce.date(),
+          updatedAt: zod.coerce.date(),
+        })
+        .nullish(),
+    }),
+  );
+export const GetDeviceEventsResponse = zod.array(GetDeviceEventsResponseItem);
+
+/**
+ * @summary Get device event details
+ */
+export const GetDeviceEventParams = zod.object({
+  id: zod.coerce.string().uuid(),
+});
+
+export const GetDeviceEventResponse = zod
+  .object({
+    id: zod.string().uuid(),
+    controllerId: zod.string().uuid(),
+    managedDeviceId: zod.string().uuid().nullish(),
+    customerId: zod.string().uuid().nullish(),
+    siteId: zod.string().uuid().nullish(),
+    serviceId: zod.string().uuid().nullish(),
+    rawEventId: zod.string(),
+    eventSource: zod.string(),
+    severity: zod.enum(['informational', 'low', 'medium', 'high', 'critical']),
+    eventType: zod.string(),
+    title: zod.string(),
+    description: zod.string().nullish(),
+    normalizedStatus: zod.string().nullish(),
+    aiSummary: zod.string().nullish(),
+    aiProbableImpact: zod.string().nullish(),
+    aiCustomerUpdate: zod.string().nullish(),
+    confidenceScore: zod.number().nullish(),
+    category: zod.string().nullish(),
+    rawPayloadJson: zod.record(zod.string(), zod.unknown()).nullish(),
+    occurredAt: zod.coerce.date(),
+    createdAt: zod.coerce.date(),
+  })
+  .and(
+    zod.object({
+      controller: zod
+        .object({
+          id: zod.string().uuid(),
+          name: zod.string(),
+          vendor: zod.enum(['meraki', 'fortinet', 'palo_alto', 'sdwan']),
+          type: zod.enum(['sdwan', 'firewall_manager', 'network_manager']),
+          baseUrl: zod.string(),
+          authType: zod.enum(['api_key', 'oauth', 'basic']),
+          apiKeyEncryptedOrPlaceholder: zod.string().nullish(),
+          organizationIdOrTenant: zod.string().nullish(),
+          pollingEnabled: zod.boolean(),
+          pollingIntervalSeconds: zod.number(),
+          lastPolledAt: zod.coerce.date().nullish(),
+          lastPollStatus: zod.enum(['success', 'failed', 'running']).nullish(),
+          lastPollMessage: zod.string().nullish(),
+          createdAt: zod.coerce.date(),
+          updatedAt: zod.coerce.date(),
+        })
+        .nullish(),
+      customer: zod
+        .object({
+          id: zod.string(),
+          name: zod.string(),
+          accountNumber: zod.string().nullish(),
+          status: zod.enum(['active', 'inactive']),
+          primaryContactName: zod.string().nullish(),
+          primaryContactEmail: zod.string().nullish(),
+          primaryContactPhone: zod.string().nullish(),
+          notes: zod.string().nullish(),
+          externalSource: zod.string().nullish(),
+          externalId: zod.string().nullish(),
+          externalSyncedAt: zod.coerce.date().nullish(),
+          externalSyncStatus: zod.string().nullish(),
+          createdAt: zod.coerce.date(),
+          updatedAt: zod.coerce.date(),
+        })
+        .nullish(),
+    }),
+  )
+  .and(
+    zod.object({
+      device: zod
+        .object({
+          id: zod.string().uuid(),
+          controllerId: zod.string().uuid(),
+          customerId: zod.string().uuid().nullish(),
+          siteId: zod.string().uuid().nullish(),
+          hostname: zod.string(),
+          deviceType: zod.enum(['firewall', 'sdwan_edge', 'appliance', 'switch', 'gateway']),
+          vendor: zod.string(),
+          serialNumber: zod.string().nullish(),
+          controllerDeviceId: zod.string(),
+          model: zod.string().nullish(),
+          mgmtIp: zod.string().nullish(),
+          status: zod.enum(['online', 'offline', 'degraded', 'unknown']),
+          haState: zod.enum(['active', 'standby', 'standalone', 'unknown']).nullish(),
+          networkName: zod.string().nullish(),
+          latitude: zod.number().nullish(),
+          longitude: zod.number().nullish(),
+          geoSource: zod.enum(['manual', 'inherited_from_site', 'imported']).nullish(),
+          publicLabel: zod.string().nullish(),
+          isPublic: zod.boolean(),
+          lastSeenAt: zod.coerce.date().nullish(),
+          metadataJson: zod.record(zod.string(), zod.unknown()).nullish(),
+          createdAt: zod.coerce.date(),
+          updatedAt: zod.coerce.date(),
+        })
+        .nullish(),
+      site: zod
+        .object({
+          id: zod.string(),
+          customerId: zod.string(),
+          siteName: zod.string(),
+          address1: zod.string().nullish(),
+          address2: zod.string().nullish(),
+          city: zod.string().nullish(),
+          state: zod.string().nullish(),
+          postalCode: zod.string().nullish(),
+          country: zod.string().nullish(),
+          timezone: zod.string().nullish(),
+          siteCode: zod.string().nullish(),
+          notes: zod.string().nullish(),
+          lconName: zod.string().nullish(),
+          lconPhone: zod.string().nullish(),
+          lconEmail: zod.string().nullish(),
+          latitude: zod.number().nullish(),
+          longitude: zod.number().nullish(),
+          geoSource: zod.enum(['manual', 'geocoded', 'imported']).nullish(),
+          externalSource: zod.string().nullish(),
+          externalId: zod.string().nullish(),
+          externalSyncedAt: zod.coerce.date().nullish(),
+          externalSyncStatus: zod.string().nullish(),
+          createdAt: zod.coerce.date(),
+          updatedAt: zod.coerce.date(),
+        })
+        .nullish(),
+      linkedTickets: zod
+        .array(
+          zod.object({
+            id: zod.string(),
+            ticketNumber: zod.string(),
+            customerId: zod.string(),
+            siteId: zod.string().nullish(),
+            serviceId: zod.string().nullish(),
+            title: zod.string(),
+            description: zod.string().nullish(),
+            source: zod.enum(['manual', 'email', 'api']),
+            severity: zod.enum(['low', 'medium', 'high', 'critical']),
+            status: zod.enum([
+              'new',
+              'investigating',
+              'vendor_engaged',
+              'dispatch_scheduled',
+              'monitoring',
+              'resolved',
+              'closed',
+            ]),
+            outageType: zod.enum(['outage', 'impairment', 'informational', 'unknown']),
+            impactLevel: zod.enum(['low', 'medium', 'high']).nullish(),
+            urgencyLevel: zod.enum(['low', 'medium', 'high']).nullish(),
+            vendorTicketId: zod.string().nullish(),
+            assignedToUserId: zod.string().nullish(),
+            openedAt: zod.coerce.date(),
+            lastUpdatedAt: zod.coerce.date(),
+            resolvedAt: zod.coerce.date().nullish(),
+            nextEscalationAt: zod.coerce.date().nullish(),
+            slaTargetMinutes: zod.number().nullish(),
+            aiSummary: zod.string().nullish(),
+            aiNormalizedStatus: zod.string().nullish(),
+            aiCustomerUpdate: zod.string().nullish(),
+            aiLastGeneratedAt: zod.coerce.date().nullish(),
+            externalSource: zod.string().nullish(),
+            externalId: zod.string().nullish(),
+            externalSyncedAt: zod.coerce.date().nullish(),
+            externalSyncStatus: zod.string().nullish(),
+            createdAt: zod.coerce.date(),
+            updatedAt: zod.coerce.date(),
+          }),
+        )
+        .optional(),
+      correlations: zod.array(zod.record(zod.string(), zod.unknown())).optional(),
+    }),
+  );
+
+/**
+ * @summary Generate AI analysis for a device event
+ */
+export const AnalyzeDeviceEventParams = zod.object({
+  id: zod.coerce.string().uuid(),
+});
+
+export const AnalyzeDeviceEventResponse = zod.object({
+  id: zod.string().uuid(),
+  controllerId: zod.string().uuid(),
+  managedDeviceId: zod.string().uuid().nullish(),
+  customerId: zod.string().uuid().nullish(),
+  siteId: zod.string().uuid().nullish(),
+  serviceId: zod.string().uuid().nullish(),
+  rawEventId: zod.string(),
+  eventSource: zod.string(),
+  severity: zod.enum(['informational', 'low', 'medium', 'high', 'critical']),
+  eventType: zod.string(),
+  title: zod.string(),
+  description: zod.string().nullish(),
+  normalizedStatus: zod.string().nullish(),
+  aiSummary: zod.string().nullish(),
+  aiProbableImpact: zod.string().nullish(),
+  aiCustomerUpdate: zod.string().nullish(),
+  confidenceScore: zod.number().nullish(),
+  category: zod.string().nullish(),
+  rawPayloadJson: zod.record(zod.string(), zod.unknown()).nullish(),
+  occurredAt: zod.coerce.date(),
+  createdAt: zod.coerce.date(),
+});
+
+/**
+ * @summary Get masked Salesforce configuration
+ */
+export const GetSalesforceConfigResponse = zod.object({
+  clientId: zod.string(),
+  clientSecret: zod.string(),
+  loginUrl: zod.string(),
+  instanceUrl: zod.string(),
+  username: zod.string(),
+  password: zod.string(),
+  hasClientSecret: zod.boolean(),
+  hasPassword: zod.boolean(),
+});
+
+/**
+ * @summary Save Salesforce configuration
+ */
+export const UpdateSalesforceConfigBody = zod.object({
+  clientId: zod.string().optional(),
+  clientSecret: zod.string().optional(),
+  loginUrl: zod.string().optional(),
+  instanceUrl: zod.string().optional(),
+  username: zod.string().optional(),
+  password: zod.string().optional(),
+});
+
+export const UpdateSalesforceConfigResponse = zod.object({
+  success: zod.boolean(),
+  message: zod.string().optional(),
+});
+
+/**
+ * @summary Test Salesforce connectivity
+ */
+export const TestSalesforceConnectionResponse = zod.object({
+  ok: zod.boolean(),
+  message: zod.string().optional(),
+});
+
+/**
+ * @summary Synchronize Salesforce accounts
+ */
+export const SyncSalesforceAccountsResponse = zod.object({
+  success: zod.boolean(),
+  synced: zod.number().optional(),
+  created: zod.number().optional(),
+  updated: zod.number().optional(),
+  skipped: zod.number().optional(),
+  message: zod.string().optional(),
+  accounts: zod.record(zod.string(), zod.unknown()).optional(),
+  contacts: zod.record(zod.string(), zod.unknown()).optional(),
+});
+
+/**
+ * @summary Synchronize Salesforce contacts
+ */
+export const SyncSalesforceContactsResponse = zod.object({
+  success: zod.boolean(),
+  synced: zod.number().optional(),
+  created: zod.number().optional(),
+  updated: zod.number().optional(),
+  skipped: zod.number().optional(),
+  message: zod.string().optional(),
+  accounts: zod.record(zod.string(), zod.unknown()).optional(),
+  contacts: zod.record(zod.string(), zod.unknown()).optional(),
+});
+
+/**
+ * @summary Synchronize Salesforce accounts and contacts
+ */
+export const SyncSalesforceResponse = zod.object({
+  success: zod.boolean(),
+  synced: zod.number().optional(),
+  created: zod.number().optional(),
+  updated: zod.number().optional(),
+  skipped: zod.number().optional(),
+  message: zod.string().optional(),
+  accounts: zod.record(zod.string(), zod.unknown()).optional(),
+  contacts: zod.record(zod.string(), zod.unknown()).optional(),
+});
+
+/**
+ * @summary Get Salesforce synchronization status
+ */
+export const GetSalesforceStatusResponse = zod.object({
+  configured: zod.boolean(),
+  accountsSynced: zod.number(),
+  contactsSynced: zod.number(),
+  lastSyncAt: zod.coerce.date().nullish(),
+  recentLogs: zod.array(
+    zod.object({
+      id: zod.string().uuid(),
+      connector: zod.string(),
+      syncType: zod.string(),
+      startedAt: zod.coerce.date(),
+      completedAt: zod.coerce.date().nullish(),
+      status: zod.enum(['running', 'success', 'failed']),
+      message: zod.string().nullish(),
+      recordsProcessed: zod.number().nullish(),
+    }),
+  ),
+});
+
+/**
  * @summary List invoice complaints
  */
 export const GetInvoiceComplaintsQueryParams = zod.object({

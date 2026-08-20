@@ -1,8 +1,15 @@
 import { useMemo, useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { MapContainer, TileLayer, CircleMarker, Popup } from 'react-leaflet';
+import 'leaflet/dist/leaflet.css';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
 import { Badge } from '@/components/ui/badge';
 import { apiFetch } from '@/lib/api';
 
@@ -45,7 +52,11 @@ export default function PublicNetworkMapPage() {
   const [providerFilter, setProviderFilter] = useState<string>('all');
   const [regionFilter, setRegionFilter] = useState<string>('all');
 
-  const { data: points = [], isLoading: pointsLoading, isError: pointsError } = useQuery({
+  const {
+    data: points = [],
+    isLoading: pointsLoading,
+    isError: pointsError,
+  } = useQuery({
     queryKey: ['public-network-map'],
     queryFn: () => apiFetch<PublicMapPoint[]>('/public/network-map'),
     refetchInterval: 30000,
@@ -59,15 +70,23 @@ export default function PublicNetworkMapPage() {
 
   const providers = useMemo(
     () =>
-      [...new Set(points.map((point) => point.provider).filter((provider): provider is string => !!provider))]
-        .sort((a, b) => a.localeCompare(b)),
+      [
+        ...new Set(
+          points
+            .map((point) => point.provider)
+            .filter((provider): provider is string => !!provider),
+        ),
+      ].sort((a, b) => a.localeCompare(b)),
     [points],
   );
 
   const regions = useMemo(
     () =>
-      [...new Set(points.map((point) => point.region).filter((region): region is string => !!region))]
-        .sort((a, b) => a.localeCompare(b)),
+      [
+        ...new Set(
+          points.map((point) => point.region).filter((region): region is string => !!region),
+        ),
+      ].sort((a, b) => a.localeCompare(b)),
     [points],
   );
 
@@ -102,27 +121,43 @@ export default function PublicNetworkMapPage() {
         <section className="grid grid-cols-2 gap-3 md:grid-cols-4">
           <Card>
             <CardHeader className="pb-2">
-              <CardTitle className="text-xs text-muted-foreground uppercase tracking-wide">Assets</CardTitle>
+              <CardTitle className="text-xs text-muted-foreground uppercase tracking-wide">
+                Assets
+              </CardTitle>
             </CardHeader>
-            <CardContent className="text-2xl font-bold">{summaryLoading ? '...' : (summary?.totalAssets ?? 0)}</CardContent>
+            <CardContent className="text-2xl font-bold">
+              {summaryLoading ? '...' : (summary?.totalAssets ?? 0)}
+            </CardContent>
           </Card>
           <Card>
             <CardHeader className="pb-2">
-              <CardTitle className="text-xs text-muted-foreground uppercase tracking-wide">Active Outages</CardTitle>
+              <CardTitle className="text-xs text-muted-foreground uppercase tracking-wide">
+                Active Outages
+              </CardTitle>
             </CardHeader>
-            <CardContent className="text-2xl font-bold text-red-600">{summaryLoading ? '...' : (summary?.activeOutages ?? 0)}</CardContent>
+            <CardContent className="text-2xl font-bold text-red-600">
+              {summaryLoading ? '...' : (summary?.activeOutages ?? 0)}
+            </CardContent>
           </Card>
           <Card>
             <CardHeader className="pb-2">
-              <CardTitle className="text-xs text-muted-foreground uppercase tracking-wide">Degraded</CardTitle>
+              <CardTitle className="text-xs text-muted-foreground uppercase tracking-wide">
+                Degraded
+              </CardTitle>
             </CardHeader>
-            <CardContent className="text-2xl font-bold text-amber-600">{summaryLoading ? '...' : (summary?.degradedServices ?? 0)}</CardContent>
+            <CardContent className="text-2xl font-bold text-amber-600">
+              {summaryLoading ? '...' : (summary?.degradedServices ?? 0)}
+            </CardContent>
           </Card>
           <Card>
             <CardHeader className="pb-2">
-              <CardTitle className="text-xs text-muted-foreground uppercase tracking-wide">Last Updated</CardTitle>
+              <CardTitle className="text-xs text-muted-foreground uppercase tracking-wide">
+                Last Updated
+              </CardTitle>
             </CardHeader>
-            <CardContent className="text-sm font-medium">{formatLastUpdated(summary?.lastUpdatedAt ?? null)}</CardContent>
+            <CardContent className="text-sm font-medium">
+              {formatLastUpdated(summary?.lastUpdatedAt ?? null)}
+            </CardContent>
           </Card>
         </section>
 

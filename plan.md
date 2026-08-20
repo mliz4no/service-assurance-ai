@@ -26,7 +26,7 @@ Status legend: **Implemented** means the end-to-end path exists; **Partial** mea
 | Phase 5 — IP/provider enrichment     | Implemented | Heuristic and IPinfo enrichment are available with an optional persistent `provider_lookups` cache and configurable TTL.                                                                                                                           |
 | Phase 6 — Controller integrations    | Implemented | Meraki, Fortinet/FortiManager, Palo Alto, and generic SD-WAN have live device, link, and event polling paths with normalized partial-result handling.                                                                                              |
 | Phase 7 — Dashboard, reports, alerts | Partial     | Operational dashboards, incident views, escalation evaluation, email/webhook delivery, and ticket workflows exist. Durable delivery queues, complete historical reporting, and alert operations remain.                                            |
-| Phase 8 — Performance and delivery   | Partial     | Monorepo typecheck and builds pass, CI and an API container exist. Frontend route splitting, migration-history baselining, complete OpenAPI coverage, metrics, and production deployment documentation remain.                                     |
+| Phase 8 — Performance and delivery   | Partial     | Monorepo typecheck/builds, CI, API container, route splitting, bundle budgets, migration baselining, and generated OpenAPI clients are complete. Metrics and production deployment validation remain.                                              |
 
 ### 1.2 Verified production-foundation work
 
@@ -43,9 +43,9 @@ Status legend: **Implemented** means the end-to-end path exists; **Partial** mea
 
 ### 1.3 Remaining production priorities
 
-1. Route-split the frontend and enforce bundle budgets in CI.
-2. Bring the OpenAPI contract and generated clients up to date with monitoring, map, controller, event, and Salesforce APIs.
-3. Add metrics, tracing, durable alert delivery, backup/restore exercises, and load testing.
+1. Add metrics, tracing, and durable alert delivery.
+2. Add backup/restore, load, soak, and replica failover exercises.
+3. Publish versioned containers and production rollout documentation.
 
 ---
 
@@ -773,18 +773,19 @@ Reduce startup cost, enforce release quality, and make deployments repeatable an
 ### Current baseline
 
 - The main frontend production build succeeds.
-- The primary JavaScript bundle is approximately **998 KB minified / 272 KB gzip**.
-- Vite reports a chunk-size warning because the main chunk exceeds 500 KB.
-- The router currently imports enough application surface eagerly that feature pages are bundled into the initial application chunk.
+- The previous primary JavaScript bundle was approximately **998 KB minified / 272 KB gzip**.
+- Route-level lazy loading and stable vendor chunks reduce the complete initial static JavaScript graph to **391.8 KiB**.
+- The largest emitted JavaScript chunk is approximately **249.3 KiB**.
+- Leaflet, forms, admin, controllers, monitoring, invoice complaints, and ticket workflows load only when their routes require them.
 
 ### Frontend route-splitting tasks
 
-1. Convert page-level imports in the application router to `React.lazy` dynamic imports.
-2. Add a stable route loading state with no layout shift.
-3. Keep authentication and the application shell in the initial chunk.
-4. Isolate Leaflet/map code, controller operations, administration, invoice complaints, and ticket detail workflows into route chunks.
-5. Configure intentional Vite chunk grouping only where automatic route splitting still produces oversized shared chunks.
-6. Add a CI bundle-budget check using generated build metadata or a bundle-size reporting tool.
+1. [x] Convert page-level imports in the application router to `React.lazy` dynamic imports.
+2. [x] Add a stable route loading state.
+3. [x] Keep authentication state and application providers in the initial chunk.
+4. [x] Isolate Leaflet/map code, controller operations, administration, invoice complaints, and ticket detail workflows into route chunks.
+5. [x] Configure intentional framework, UI, forms, and map vendor chunks.
+6. [x] Add a manifest-based CI bundle-budget check.
 
 ### Performance acceptance criteria
 
@@ -795,6 +796,13 @@ Reduce startup cost, enforce release quality, and make deployments repeatable an
 - Login, dashboard, ticket list, ticket detail, monitoring, and public map routes render correctly after direct navigation and browser refresh.
 - Desktop and mobile smoke tests show no loading-state overlap or layout shift.
 - CI fails when the agreed bundle budget is exceeded.
+
+### OpenAPI and generated clients
+
+- [x] Document public map, monitoring, controller, managed device, network link, device event, and Salesforce endpoints.
+- [x] Add bearer security metadata, request parameters, operational enums, and typed response models.
+- [x] Regenerate React Query and Zod clients through Orval.
+- [x] Add CI code-generation drift detection.
 
 ### Delivery and operations tasks
 

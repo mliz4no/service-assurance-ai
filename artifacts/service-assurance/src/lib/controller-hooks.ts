@@ -1,6 +1,6 @@
 /**
- * Custom React Query hooks for the controller integration endpoints.
- * These are hand-written since the OpenAPI spec is not regenerated.
+ * Compatibility hooks used by the current controller UI.
+ * Equivalent generated hooks are exported by @workspace/api-client-react.
  */
 
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';

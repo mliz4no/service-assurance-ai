@@ -33,6 +33,20 @@ tags:
     description: Invoice complaint workflow
   - name: integrations
     description: Third-party integration settings
+  - name: public-network-map
+    description: Anonymous public network status
+  - name: monitoring
+    description: Monitoring targets, checks, and enrichment
+  - name: controllers
+    description: Network controller integrations
+  - name: devices
+    description: Controller-managed network devices
+  - name: network-links
+    description: WAN and transport links
+  - name: device-events
+    description: Controller and device events
+  - name: salesforce
+    description: Salesforce CRM synchronization
 
 paths:
   /healthz:
@@ -41,12 +55,12 @@ paths:
       tags: [health]
       summary: Health check
       responses:
-        "200":
+        '200':
           description: Healthy
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/HealthStatus"
+                $ref: '#/components/schemas/HealthStatus'
 
   /auth/login:
     post:
@@ -58,20 +72,20 @@ paths:
         content:
           application/json:
             schema:
-              $ref: "#/components/schemas/LoginRequest"
+              $ref: '#/components/schemas/LoginRequest'
       responses:
-        "200":
+        '200':
           description: Login successful
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/AuthResponse"
-        "401":
+                $ref: '#/components/schemas/AuthResponse'
+        '401':
           description: Invalid credentials
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/ErrorResponse"
+                $ref: '#/components/schemas/ErrorResponse'
 
   /auth/logout:
     post:
@@ -79,12 +93,12 @@ paths:
       tags: [auth]
       summary: Logout current user
       responses:
-        "200":
+        '200':
           description: Logged out
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/SuccessResponse"
+                $ref: '#/components/schemas/SuccessResponse'
 
   /auth/me:
     get:
@@ -92,18 +106,18 @@ paths:
       tags: [auth]
       summary: Get current authenticated user
       responses:
-        "200":
+        '200':
           description: Current user
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/User"
-        "401":
+                $ref: '#/components/schemas/User'
+        '401':
           description: Not authenticated
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/ErrorResponse"
+                $ref: '#/components/schemas/ErrorResponse'
 
   /dashboard/summary:
     get:
@@ -111,12 +125,12 @@ paths:
       tags: [dashboard]
       summary: Get dashboard summary stats
       responses:
-        "200":
+        '200':
           description: Dashboard summary
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/DashboardSummary"
+                $ref: '#/components/schemas/DashboardSummary'
 
   /dashboard/recent-tickets:
     get:
@@ -129,14 +143,14 @@ paths:
           schema:
             type: number
       responses:
-        "200":
+        '200':
           description: Recent tickets
           content:
             application/json:
               schema:
                 type: array
                 items:
-                  $ref: "#/components/schemas/TicketWithRelations"
+                  $ref: '#/components/schemas/TicketWithRelations'
 
   /dashboard/escalation-needed:
     get:
@@ -144,14 +158,14 @@ paths:
       tags: [dashboard]
       summary: Get tickets needing escalation
       responses:
-        "200":
+        '200':
           description: Tickets needing escalation
           content:
             application/json:
               schema:
                 type: array
                 items:
-                  $ref: "#/components/schemas/TicketWithRelations"
+                  $ref: '#/components/schemas/TicketWithRelations'
 
   /customers:
     get:
@@ -180,14 +194,14 @@ paths:
           schema:
             type: boolean
       responses:
-        "200":
+        '200':
           description: List of customers
           content:
             application/json:
               schema:
                 type: array
                 items:
-                  $ref: "#/components/schemas/Customer"
+                  $ref: '#/components/schemas/Customer'
     post:
       operationId: createCustomer
       tags: [customers]
@@ -203,14 +217,14 @@ paths:
         content:
           application/json:
             schema:
-              $ref: "#/components/schemas/CreateCustomerRequest"
+              $ref: '#/components/schemas/CreateCustomerRequest'
       responses:
-        "201":
+        '201':
           description: Created customer
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/Customer"
+                $ref: '#/components/schemas/Customer'
 
   /customers/{id}:
     get:
@@ -224,18 +238,18 @@ paths:
           schema:
             type: string
       responses:
-        "200":
+        '200':
           description: Customer
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/CustomerWithRelations"
-        "404":
+                $ref: '#/components/schemas/CustomerWithRelations'
+        '404':
           description: Not found
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/ErrorResponse"
+                $ref: '#/components/schemas/ErrorResponse'
     put:
       operationId: updateCustomer
       tags: [customers]
@@ -251,14 +265,14 @@ paths:
         content:
           application/json:
             schema:
-              $ref: "#/components/schemas/UpdateCustomerRequest"
+              $ref: '#/components/schemas/UpdateCustomerRequest'
       responses:
-        "200":
+        '200':
           description: Updated customer
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/Customer"
+                $ref: '#/components/schemas/Customer'
     delete:
       operationId: deleteCustomer
       tags: [customers]
@@ -270,12 +284,12 @@ paths:
           schema:
             type: string
       responses:
-        "200":
+        '200':
           description: Deleted
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/SuccessResponse"
+                $ref: '#/components/schemas/SuccessResponse'
 
   /customers/{id}/contacts:
     get:
@@ -289,14 +303,14 @@ paths:
           schema:
             type: string
       responses:
-        "200":
+        '200':
           description: Customer escalation contacts
           content:
             application/json:
               schema:
                 type: array
                 items:
-                  $ref: "#/components/schemas/CustomerContact"
+                  $ref: '#/components/schemas/CustomerContact'
     post:
       operationId: createCustomerContact
       tags: [customers]
@@ -312,14 +326,14 @@ paths:
         content:
           application/json:
             schema:
-              $ref: "#/components/schemas/CreateCustomerContactRequest"
+              $ref: '#/components/schemas/CreateCustomerContactRequest'
       responses:
-        "201":
+        '201':
           description: Created customer contact
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/CustomerContact"
+                $ref: '#/components/schemas/CustomerContact'
 
   /customers/{id}/contacts/{contactId}:
     put:
@@ -342,14 +356,14 @@ paths:
         content:
           application/json:
             schema:
-              $ref: "#/components/schemas/UpdateCustomerContactRequest"
+              $ref: '#/components/schemas/UpdateCustomerContactRequest'
       responses:
-        "200":
+        '200':
           description: Updated customer contact
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/CustomerContact"
+                $ref: '#/components/schemas/CustomerContact'
     delete:
       operationId: deleteCustomerContact
       tags: [customers]
@@ -366,12 +380,12 @@ paths:
           schema:
             type: string
       responses:
-        "200":
+        '200':
           description: Deleted
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/SuccessResponse"
+                $ref: '#/components/schemas/SuccessResponse'
 
   /sites:
     get:
@@ -400,14 +414,14 @@ paths:
           schema:
             type: boolean
       responses:
-        "200":
+        '200':
           description: List of sites
           content:
             application/json:
               schema:
                 type: array
                 items:
-                  $ref: "#/components/schemas/SiteWithCustomer"
+                  $ref: '#/components/schemas/SiteWithCustomer'
     post:
       operationId: createSite
       tags: [sites]
@@ -423,14 +437,14 @@ paths:
         content:
           application/json:
             schema:
-              $ref: "#/components/schemas/CreateSiteRequest"
+              $ref: '#/components/schemas/CreateSiteRequest'
       responses:
-        "201":
+        '201':
           description: Created site
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/Site"
+                $ref: '#/components/schemas/Site'
 
   /sites/{id}:
     get:
@@ -444,18 +458,18 @@ paths:
           schema:
             type: string
       responses:
-        "200":
+        '200':
           description: Site
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/SiteWithRelations"
-        "404":
+                $ref: '#/components/schemas/SiteWithRelations'
+        '404':
           description: Not found
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/ErrorResponse"
+                $ref: '#/components/schemas/ErrorResponse'
     put:
       operationId: updateSite
       tags: [sites]
@@ -471,14 +485,14 @@ paths:
         content:
           application/json:
             schema:
-              $ref: "#/components/schemas/UpdateSiteRequest"
+              $ref: '#/components/schemas/UpdateSiteRequest'
       responses:
-        "200":
+        '200':
           description: Updated site
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/Site"
+                $ref: '#/components/schemas/Site'
     delete:
       operationId: deleteSite
       tags: [sites]
@@ -490,12 +504,12 @@ paths:
           schema:
             type: string
       responses:
-        "200":
+        '200':
           description: Deleted
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/SuccessResponse"
+                $ref: '#/components/schemas/SuccessResponse'
 
   /services:
     get:
@@ -536,14 +550,14 @@ paths:
           schema:
             type: boolean
       responses:
-        "200":
+        '200':
           description: List of services
           content:
             application/json:
               schema:
                 type: array
                 items:
-                  $ref: "#/components/schemas/ServiceWithRelations"
+                  $ref: '#/components/schemas/ServiceWithRelations'
     post:
       operationId: createService
       tags: [services]
@@ -559,14 +573,14 @@ paths:
         content:
           application/json:
             schema:
-              $ref: "#/components/schemas/CreateServiceRequest"
+              $ref: '#/components/schemas/CreateServiceRequest'
       responses:
-        "201":
+        '201':
           description: Created service
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/Service"
+                $ref: '#/components/schemas/Service'
 
   /services/{id}:
     get:
@@ -580,18 +594,18 @@ paths:
           schema:
             type: string
       responses:
-        "200":
+        '200':
           description: Service
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/ServiceWithRelations"
-        "404":
+                $ref: '#/components/schemas/ServiceWithRelations'
+        '404':
           description: Not found
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/ErrorResponse"
+                $ref: '#/components/schemas/ErrorResponse'
     put:
       operationId: updateService
       tags: [services]
@@ -607,14 +621,14 @@ paths:
         content:
           application/json:
             schema:
-              $ref: "#/components/schemas/UpdateServiceRequest"
+              $ref: '#/components/schemas/UpdateServiceRequest'
       responses:
-        "200":
+        '200':
           description: Updated service
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/Service"
+                $ref: '#/components/schemas/Service'
     delete:
       operationId: deleteService
       tags: [services]
@@ -626,12 +640,12 @@ paths:
           schema:
             type: string
       responses:
-        "200":
+        '200':
           description: Deleted
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/SuccessResponse"
+                $ref: '#/components/schemas/SuccessResponse'
 
   /tickets:
     get:
@@ -684,14 +698,14 @@ paths:
           schema:
             type: boolean
       responses:
-        "200":
+        '200':
           description: List of tickets
           content:
             application/json:
               schema:
                 type: array
                 items:
-                  $ref: "#/components/schemas/TicketWithRelations"
+                  $ref: '#/components/schemas/TicketWithRelations'
     post:
       operationId: createTicket
       tags: [tickets]
@@ -707,14 +721,14 @@ paths:
         content:
           application/json:
             schema:
-              $ref: "#/components/schemas/CreateTicketRequest"
+              $ref: '#/components/schemas/CreateTicketRequest'
       responses:
-        "201":
+        '201':
           description: Created ticket
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/Ticket"
+                $ref: '#/components/schemas/Ticket'
 
   /tickets/{id}:
     get:
@@ -728,18 +742,18 @@ paths:
           schema:
             type: string
       responses:
-        "200":
+        '200':
           description: Ticket with full details
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/TicketDetail"
-        "404":
+                $ref: '#/components/schemas/TicketDetail'
+        '404':
           description: Not found
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/ErrorResponse"
+                $ref: '#/components/schemas/ErrorResponse'
     put:
       operationId: updateTicket
       tags: [tickets]
@@ -755,14 +769,14 @@ paths:
         content:
           application/json:
             schema:
-              $ref: "#/components/schemas/UpdateTicketRequest"
+              $ref: '#/components/schemas/UpdateTicketRequest'
       responses:
-        "200":
+        '200':
           description: Updated ticket
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/Ticket"
+                $ref: '#/components/schemas/Ticket'
 
   /tickets/{id}/updates:
     get:
@@ -776,14 +790,14 @@ paths:
           schema:
             type: string
       responses:
-        "200":
+        '200':
           description: Ticket updates
           content:
             application/json:
               schema:
                 type: array
                 items:
-                  $ref: "#/components/schemas/TicketUpdate"
+                  $ref: '#/components/schemas/TicketUpdate'
     post:
       operationId: createTicketUpdate
       tags: [ticket-updates]
@@ -799,14 +813,14 @@ paths:
         content:
           application/json:
             schema:
-              $ref: "#/components/schemas/CreateTicketUpdateRequest"
+              $ref: '#/components/schemas/CreateTicketUpdateRequest'
       responses:
-        "201":
+        '201':
           description: Created ticket update
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/TicketUpdate"
+                $ref: '#/components/schemas/TicketUpdate'
 
   /tickets/{id}/notifications:
     get:
@@ -820,14 +834,14 @@ paths:
           schema:
             type: string
       responses:
-        "200":
+        '200':
           description: Escalation notifications
           content:
             application/json:
               schema:
                 type: array
                 items:
-                  $ref: "#/components/schemas/EscalationNotification"
+                  $ref: '#/components/schemas/EscalationNotification'
 
   /tickets/{id}/evaluate-escalation:
     post:
@@ -841,12 +855,12 @@ paths:
           schema:
             type: string
       responses:
-        "200":
+        '200':
           description: Escalation evaluation result
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/EvaluateEscalationResponse"
+                $ref: '#/components/schemas/EscalationEvaluationResult'
 
   /escalation-matrix:
     get:
@@ -858,18 +872,18 @@ paths:
           in: query
           required: true
           schema:
-            $ref: "#/components/schemas/MatrixScopeType"
+            $ref: '#/components/schemas/MatrixScopeType'
         - name: scopeId
           in: query
           schema:
             type: string
       responses:
-        "200":
+        '200':
           description: Escalation matrix for scope
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/EscalationMatrixResponse"
+                $ref: '#/components/schemas/EscalationMatrixResponse'
     put:
       operationId: upsertEscalationMatrix
       tags: [dashboard]
@@ -879,14 +893,14 @@ paths:
         content:
           application/json:
             schema:
-              $ref: "#/components/schemas/UpsertEscalationMatrixRequest"
+              $ref: '#/components/schemas/UpsertEscalationMatrixRequest'
       responses:
-        "200":
+        '200':
           description: Updated escalation matrix
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/EscalationMatrixResponse"
+                $ref: '#/components/schemas/EscalationMatrixResponse'
 
   /escalation-matrix/override/{id}:
     delete:
@@ -900,12 +914,12 @@ paths:
           schema:
             type: string
       responses:
-        "200":
+        '200':
           description: Deleted
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/SuccessResponse"
+                $ref: '#/components/schemas/SuccessResponse'
 
   /tickets/{id}/ai/summarize:
     post:
@@ -919,12 +933,12 @@ paths:
           schema:
             type: string
       responses:
-        "200":
+        '200':
           description: AI summary result
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/AiSummarizeResponse"
+                $ref: '#/components/schemas/AiSummarizeResponse'
 
   /tickets/{id}/ai/normalize-latest-update:
     post:
@@ -938,12 +952,12 @@ paths:
           schema:
             type: string
       responses:
-        "200":
+        '200':
           description: AI normalized status
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/AiNormalizeResponse"
+                $ref: '#/components/schemas/AiNormalizeResponse'
 
   /tickets/{id}/ai/generate-customer-update:
     post:
@@ -957,12 +971,12 @@ paths:
           schema:
             type: string
       responses:
-        "200":
+        '200':
           description: AI customer update
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/AiCustomerUpdateResponse"
+                $ref: '#/components/schemas/AiCustomerUpdateResponse'
 
   /integrations/invoxai/customers/upsert:
     post:
@@ -980,20 +994,20 @@ paths:
         content:
           application/json:
             schema:
-              $ref: "#/components/schemas/CreateCustomerRequest"
+              $ref: '#/components/schemas/CreateCustomerRequest'
       responses:
-        "200":
+        '200':
           description: Updated customer
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/Customer"
-        "201":
+                $ref: '#/components/schemas/Customer'
+        '201':
           description: Created customer
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/Customer"
+                $ref: '#/components/schemas/Customer'
 
   /integrations/invoxai/sites/upsert:
     post:
@@ -1011,20 +1025,20 @@ paths:
         content:
           application/json:
             schema:
-              $ref: "#/components/schemas/CreateSiteRequest"
+              $ref: '#/components/schemas/CreateSiteRequest'
       responses:
-        "200":
+        '200':
           description: Updated site
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/Site"
-        "201":
+                $ref: '#/components/schemas/Site'
+        '201':
           description: Created site
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/Site"
+                $ref: '#/components/schemas/Site'
 
   /integrations/invoxai/services/upsert:
     post:
@@ -1042,20 +1056,20 @@ paths:
         content:
           application/json:
             schema:
-              $ref: "#/components/schemas/CreateServiceRequest"
+              $ref: '#/components/schemas/CreateServiceRequest'
       responses:
-        "200":
+        '200':
           description: Updated service
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/Service"
-        "201":
+                $ref: '#/components/schemas/Service'
+        '201':
           description: Created service
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/Service"
+                $ref: '#/components/schemas/Service'
 
   /integrations/invoxai/tickets/upsert:
     post:
@@ -1073,20 +1087,570 @@ paths:
         content:
           application/json:
             schema:
-              $ref: "#/components/schemas/CreateTicketRequest"
+              $ref: '#/components/schemas/CreateTicketRequest'
       responses:
-        "200":
+        '200':
           description: Updated ticket
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/Ticket"
-        "201":
+                $ref: '#/components/schemas/Ticket'
+        '201':
           description: Created ticket
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/Ticket"
+                $ref: '#/components/schemas/Ticket'
+
+  /public/network-map:
+    get:
+      operationId: getPublicNetworkMap
+      tags: [public-network-map]
+      summary: List public-safe monitored assets
+      security: []
+      responses:
+        '200':
+          description: Public network map points
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/PublicNetworkMapPoint'
+
+  /public/network-map/summary:
+    get:
+      operationId: getPublicNetworkMapSummary
+      tags: [public-network-map]
+      summary: Get public network status totals
+      security: []
+      responses:
+        '200':
+          description: Public network map summary
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PublicNetworkMapSummary'
+
+  /monitoring/targets:
+    get:
+      operationId: getMonitoringTargets
+      tags: [monitoring]
+      summary: List monitoring targets
+      security: [{ bearerAuth: [] }]
+      parameters:
+        - { name: search, in: query, schema: { type: string } }
+        - { name: status, in: query, schema: { $ref: '#/components/schemas/MonitoringStatus' } }
+        - { name: isPublic, in: query, schema: { type: boolean } }
+      responses:
+        '200':
+          description: Monitoring targets
+          content:
+            application/json:
+              schema:
+                type: array
+                items: { $ref: '#/components/schemas/MonitoredTarget' }
+    post:
+      operationId: createMonitoringTarget
+      tags: [monitoring]
+      summary: Create a monitoring target
+      security: [{ bearerAuth: [] }]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/CreateMonitoringTargetRequest' }
+      responses:
+        '201':
+          description: Created monitoring target
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/MonitoredTarget' }
+
+  /monitoring/targets/{id}:
+    parameters:
+      - { $ref: '#/components/parameters/ResourceId' }
+    get:
+      operationId: getMonitoringTarget
+      tags: [monitoring]
+      summary: Get a monitoring target
+      security: [{ bearerAuth: [] }]
+      responses:
+        '200':
+          description: Monitoring target
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/MonitoredTarget' }
+    put:
+      operationId: updateMonitoringTarget
+      tags: [monitoring]
+      summary: Update a monitoring target
+      security: [{ bearerAuth: [] }]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/UpdateMonitoringTargetRequest' }
+      responses:
+        '200':
+          description: Updated monitoring target
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/MonitoredTarget' }
+    delete:
+      operationId: deleteMonitoringTarget
+      tags: [monitoring]
+      summary: Delete a monitoring target
+      security: [{ bearerAuth: [] }]
+      responses:
+        '200':
+          description: Deleted
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/SuccessResponse' }
+
+  /monitoring/checks:
+    get:
+      operationId: getMonitoringChecks
+      tags: [monitoring]
+      summary: List recent monitoring checks
+      security: [{ bearerAuth: [] }]
+      parameters:
+        - { name: targetId, in: query, schema: { type: string, format: uuid } }
+        - {
+            name: limit,
+            in: query,
+            schema: { type: integer, minimum: 1, maximum: 500, default: 50 },
+          }
+      responses:
+        '200':
+          description: Monitoring checks
+          content:
+            application/json:
+              schema:
+                type: array
+                items: { $ref: '#/components/schemas/MonitoringCheck' }
+
+  /monitoring/checks/run:
+    post:
+      operationId: runMonitoringChecks
+      tags: [monitoring]
+      summary: Run synthetic monitoring checks
+      security: [{ bearerAuth: [] }]
+      requestBody:
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/RunMonitoringRequest' }
+      responses:
+        '200':
+          description: Monitoring execution result
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/MonitoringExecutionResponse' }
+
+  /monitoring/checks/nagios-sync:
+    post:
+      operationId: syncNagiosMonitoringChecks
+      tags: [monitoring]
+      summary: Synchronize checks from Nagios
+      security: [{ bearerAuth: [] }]
+      requestBody:
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/RunMonitoringRequest' }
+      responses:
+        '200':
+          description: Nagios synchronization result
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/MonitoringExecutionResponse' }
+
+  /monitoring/enrichment/lookup:
+    post:
+      operationId: lookupMonitoringEnrichment
+      tags: [monitoring]
+      summary: Resolve provider and geographic enrichment
+      security: [{ bearerAuth: [] }]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/MonitoringEnrichmentRequest' }
+      responses:
+        '200':
+          description: Target enrichment
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/MonitoringEnrichmentResponse' }
+
+  /monitoring/external-outage-signal/preview:
+    get:
+      operationId: previewExternalOutageSignal
+      tags: [monitoring]
+      summary: Preview an external outage correlation signal
+      security: [{ bearerAuth: [] }]
+      parameters:
+        - { name: region, in: query, schema: { type: string } }
+        - { name: provider, in: query, schema: { type: string } }
+      responses:
+        '200':
+          description: External outage signal preview
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/ExternalOutagePreview' }
+
+  /controllers:
+    get:
+      operationId: getControllers
+      tags: [controllers]
+      summary: List controller integrations
+      security: [{ bearerAuth: [] }]
+      responses:
+        '200':
+          description: Controllers
+          content:
+            application/json:
+              schema:
+                type: array
+                items: { $ref: '#/components/schemas/ControllerSummary' }
+    post:
+      operationId: createController
+      tags: [controllers]
+      summary: Create a controller integration
+      security: [{ bearerAuth: [] }]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/CreateControllerRequest' }
+      responses:
+        '201':
+          description: Created controller
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Controller' }
+
+  /controllers/sync/all:
+    post:
+      operationId: syncAllControllers
+      tags: [controllers]
+      summary: Start synchronization for all enabled controllers
+      security: [{ bearerAuth: [] }]
+      responses:
+        '200':
+          description: Synchronization start result
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/ControllerSyncStartResponse' }
+
+  /controllers/{id}:
+    parameters:
+      - { $ref: '#/components/parameters/ResourceId' }
+    get:
+      operationId: getController
+      tags: [controllers]
+      summary: Get controller details
+      security: [{ bearerAuth: [] }]
+      responses:
+        '200':
+          description: Controller details
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/ControllerDetail' }
+    put:
+      operationId: updateController
+      tags: [controllers]
+      summary: Update a controller integration
+      security: [{ bearerAuth: [] }]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/UpdateControllerRequest' }
+      responses:
+        '200':
+          description: Updated controller
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Controller' }
+    delete:
+      operationId: deleteController
+      tags: [controllers]
+      summary: Delete a controller integration
+      security: [{ bearerAuth: [] }]
+      responses:
+        '200':
+          description: Deleted
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/SuccessResponse' }
+
+  /controllers/{id}/test:
+    post:
+      operationId: testControllerConnection
+      tags: [controllers]
+      summary: Test a controller connection
+      security: [{ bearerAuth: [] }]
+      parameters:
+        - { $ref: '#/components/parameters/ResourceId' }
+      responses:
+        '200':
+          description: Connection test result
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/ConnectionTestResponse' }
+
+  /controllers/{id}/sync:
+    post:
+      operationId: syncController
+      tags: [controllers]
+      summary: Start controller synchronization
+      security: [{ bearerAuth: [] }]
+      parameters:
+        - { $ref: '#/components/parameters/ResourceId' }
+      responses:
+        '200':
+          description: Synchronization started
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/ControllerSyncStartResponse' }
+
+  /devices:
+    get:
+      operationId: getManagedDevices
+      tags: [devices]
+      summary: List managed devices
+      security: [{ bearerAuth: [] }]
+      parameters:
+        - { name: customerId, in: query, schema: { type: string, format: uuid } }
+        - { name: siteId, in: query, schema: { type: string, format: uuid } }
+        - { name: controllerId, in: query, schema: { type: string, format: uuid } }
+        - { name: status, in: query, schema: { $ref: '#/components/schemas/DeviceStatus' } }
+        - { name: search, in: query, schema: { type: string } }
+      responses:
+        '200':
+          description: Managed devices
+          content:
+            application/json:
+              schema:
+                type: array
+                items: { $ref: '#/components/schemas/ManagedDeviceSummary' }
+
+  /devices/{id}:
+    parameters:
+      - { $ref: '#/components/parameters/ResourceId' }
+    get:
+      operationId: getManagedDevice
+      tags: [devices]
+      summary: Get managed device details
+      security: [{ bearerAuth: [] }]
+      responses:
+        '200':
+          description: Managed device details
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/ManagedDeviceDetail' }
+    put:
+      operationId: updateManagedDevice
+      tags: [devices]
+      summary: Update managed device assignment and public visibility
+      security: [{ bearerAuth: [] }]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/UpdateManagedDeviceRequest' }
+      responses:
+        '200':
+          description: Updated managed device
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/ManagedDevice' }
+
+  /network-links:
+    get:
+      operationId: getNetworkLinks
+      tags: [network-links]
+      summary: List network links
+      security: [{ bearerAuth: [] }]
+      parameters:
+        - { name: customerId, in: query, schema: { type: string, format: uuid } }
+        - { name: siteId, in: query, schema: { type: string, format: uuid } }
+        - { name: status, in: query, schema: { $ref: '#/components/schemas/LinkStatus' } }
+        - { name: role, in: query, schema: { type: string, enum: [primary, backup, unknown] } }
+        - { name: search, in: query, schema: { type: string } }
+      responses:
+        '200':
+          description: Network links
+          content:
+            application/json:
+              schema:
+                type: array
+                items: { $ref: '#/components/schemas/NetworkLinkDetail' }
+
+  /network-links/{id}:
+    get:
+      operationId: getNetworkLink
+      tags: [network-links]
+      summary: Get a network link
+      security: [{ bearerAuth: [] }]
+      parameters:
+        - { $ref: '#/components/parameters/ResourceId' }
+      responses:
+        '200':
+          description: Network link
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/NetworkLinkDetail' }
+
+  /device-events:
+    get:
+      operationId: getDeviceEvents
+      tags: [device-events]
+      summary: List device events
+      security: [{ bearerAuth: [] }]
+      parameters:
+        - { name: controllerId, in: query, schema: { type: string, format: uuid } }
+        - { name: customerId, in: query, schema: { type: string, format: uuid } }
+        - { name: siteId, in: query, schema: { type: string, format: uuid } }
+        - {
+            name: severity,
+            in: query,
+            schema: { $ref: '#/components/schemas/DeviceEventSeverity' },
+          }
+        - { name: search, in: query, schema: { type: string } }
+      responses:
+        '200':
+          description: Device events
+          content:
+            application/json:
+              schema:
+                type: array
+                items: { $ref: '#/components/schemas/DeviceEventSummary' }
+
+  /device-events/{id}:
+    get:
+      operationId: getDeviceEvent
+      tags: [device-events]
+      summary: Get device event details
+      security: [{ bearerAuth: [] }]
+      parameters:
+        - { $ref: '#/components/parameters/ResourceId' }
+      responses:
+        '200':
+          description: Device event details
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/DeviceEventDetail' }
+
+  /device-events/{id}/ai-analyze:
+    post:
+      operationId: analyzeDeviceEvent
+      tags: [device-events]
+      summary: Generate AI analysis for a device event
+      security: [{ bearerAuth: [] }]
+      parameters:
+        - { $ref: '#/components/parameters/ResourceId' }
+      responses:
+        '200':
+          description: Updated event with AI analysis
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/DeviceEvent' }
+
+  /salesforce/config:
+    get:
+      operationId: getSalesforceConfig
+      tags: [salesforce]
+      summary: Get masked Salesforce configuration
+      security: [{ bearerAuth: [] }]
+      responses:
+        '200':
+          description: Masked Salesforce configuration
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/SalesforceConfig' }
+    put:
+      operationId: updateSalesforceConfig
+      tags: [salesforce]
+      summary: Save Salesforce configuration
+      security: [{ bearerAuth: [] }]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/UpdateSalesforceConfigRequest' }
+      responses:
+        '200':
+          description: Saved
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/SuccessResponse' }
+
+  /salesforce/test:
+    post:
+      operationId: testSalesforceConnection
+      tags: [salesforce]
+      summary: Test Salesforce connectivity
+      security: [{ bearerAuth: [] }]
+      responses:
+        '200':
+          description: Connection test result
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/ConnectionTestResponse' }
+
+  /salesforce/sync/accounts:
+    post:
+      operationId: syncSalesforceAccounts
+      tags: [salesforce]
+      summary: Synchronize Salesforce accounts
+      security: [{ bearerAuth: [] }]
+      responses:
+        '200':
+          description: Account synchronization result
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/SalesforceSyncResponse' }
+
+  /salesforce/sync/contacts:
+    post:
+      operationId: syncSalesforceContacts
+      tags: [salesforce]
+      summary: Synchronize Salesforce contacts
+      security: [{ bearerAuth: [] }]
+      responses:
+        '200':
+          description: Contact synchronization result
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/SalesforceSyncResponse' }
+
+  /salesforce/sync/full:
+    post:
+      operationId: syncSalesforce
+      tags: [salesforce]
+      summary: Synchronize Salesforce accounts and contacts
+      security: [{ bearerAuth: [] }]
+      responses:
+        '200':
+          description: Full synchronization result
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/SalesforceSyncResponse' }
+
+  /salesforce/status:
+    get:
+      operationId: getSalesforceStatus
+      tags: [salesforce]
+      summary: Get Salesforce synchronization status
+      security: [{ bearerAuth: [] }]
+      responses:
+        '200':
+          description: Salesforce status
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/SalesforceStatus' }
 
   /invoice-complaints:
     get:
@@ -1115,14 +1679,14 @@ paths:
           schema:
             type: string
       responses:
-        "200":
+        '200':
           description: Invoice complaints
           content:
             application/json:
               schema:
                 type: array
                 items:
-                  $ref: "#/components/schemas/InvoiceComplaintWithCustomer"
+                  $ref: '#/components/schemas/InvoiceComplaintWithCustomer'
     post:
       operationId: createInvoiceComplaint
       tags: [invoice-complaints]
@@ -1132,14 +1696,14 @@ paths:
         content:
           application/json:
             schema:
-              $ref: "#/components/schemas/CreateInvoiceComplaintRequest"
+              $ref: '#/components/schemas/CreateInvoiceComplaintRequest'
       responses:
-        "201":
+        '201':
           description: Created invoice complaint
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/InvoiceComplaint"
+                $ref: '#/components/schemas/InvoiceComplaint'
 
   /invoice-complaints/{id}:
     get:
@@ -1153,12 +1717,12 @@ paths:
           schema:
             type: string
       responses:
-        "200":
+        '200':
           description: Invoice complaint detail
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/InvoiceComplaintDetail"
+                $ref: '#/components/schemas/InvoiceComplaintDetail'
     patch:
       operationId: patchInvoiceComplaint
       tags: [invoice-complaints]
@@ -1174,14 +1738,14 @@ paths:
         content:
           application/json:
             schema:
-              $ref: "#/components/schemas/UpdateInvoiceComplaintRequest"
+              $ref: '#/components/schemas/UpdateInvoiceComplaintRequest'
       responses:
-        "200":
+        '200':
           description: Updated invoice complaint
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/InvoiceComplaint"
+                $ref: '#/components/schemas/InvoiceComplaint'
 
   /invoice-complaints/{id}/events:
     post:
@@ -1199,14 +1763,14 @@ paths:
         content:
           application/json:
             schema:
-              $ref: "#/components/schemas/CreateInvoiceComplaintEventRequest"
+              $ref: '#/components/schemas/CreateInvoiceComplaintEventRequest'
       responses:
-        "201":
+        '201':
           description: Created complaint event
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/InvoiceComplaintEvent"
+                $ref: '#/components/schemas/InvoiceComplaintEvent'
 
   /invoice-complaints/{id}/validate:
     post:
@@ -1220,12 +1784,12 @@ paths:
           schema:
             type: string
       responses:
-        "200":
+        '200':
           description: Validation succeeded
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/ValidateInvoiceComplaintResponse"
+                $ref: '#/components/schemas/ValidateInvoiceComplaintResponse'
 
   /avalara/config:
     get:
@@ -1233,12 +1797,12 @@ paths:
       tags: [integrations]
       summary: Get Avalara integration config (masked)
       responses:
-        "200":
+        '200':
           description: Avalara config
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/AvalaraConfigResponse"
+                $ref: '#/components/schemas/AvalaraConfigResponse'
     put:
       operationId: updateAvalaraConfig
       tags: [integrations]
@@ -1248,14 +1812,14 @@ paths:
         content:
           application/json:
             schema:
-              $ref: "#/components/schemas/UpdateAvalaraConfigRequest"
+              $ref: '#/components/schemas/UpdateAvalaraConfigRequest'
       responses:
-        "200":
+        '200':
           description: Saved config
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/SuccessResponse"
+                $ref: '#/components/schemas/SuccessResponse'
 
   /avalara/test:
     post:
@@ -1263,12 +1827,12 @@ paths:
       tags: [integrations]
       summary: Test Avalara connectivity
       responses:
-        "200":
+        '200':
           description: Avalara test result
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/AvalaraTestResponse"
+                $ref: '#/components/schemas/AvalaraTestResponse'
 
   /avalara/status:
     get:
@@ -1276,12 +1840,12 @@ paths:
       tags: [integrations]
       summary: Get Avalara integration status
       responses:
-        "200":
+        '200':
           description: Avalara status and recent validations
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/AvalaraStatus"
+                $ref: '#/components/schemas/AvalaraStatus'
 
   /sla-policies:
     get:
@@ -1289,14 +1853,14 @@ paths:
       tags: [sla-policies]
       summary: List SLA policies
       responses:
-        "200":
+        '200':
           description: SLA policies
           content:
             application/json:
               schema:
                 type: array
                 items:
-                  $ref: "#/components/schemas/SlaPolicy"
+                  $ref: '#/components/schemas/SlaPolicy'
     post:
       operationId: createSlaPolicy
       tags: [sla-policies]
@@ -1306,14 +1870,14 @@ paths:
         content:
           application/json:
             schema:
-              $ref: "#/components/schemas/CreateSlaPolicyRequest"
+              $ref: '#/components/schemas/CreateSlaPolicyRequest'
       responses:
-        "201":
+        '201':
           description: Created SLA policy
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/SlaPolicy"
+                $ref: '#/components/schemas/SlaPolicy'
 
   /sla-policies/{id}:
     put:
@@ -1331,14 +1895,14 @@ paths:
         content:
           application/json:
             schema:
-              $ref: "#/components/schemas/UpdateSlaPolicyRequest"
+              $ref: '#/components/schemas/UpdateSlaPolicyRequest'
       responses:
-        "200":
+        '200':
           description: Updated SLA policy
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/SlaPolicy"
+                $ref: '#/components/schemas/SlaPolicy'
     delete:
       operationId: deleteSlaPolicy
       tags: [sla-policies]
@@ -1350,12 +1914,12 @@ paths:
           schema:
             type: string
       responses:
-        "200":
+        '200':
           description: Deleted
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/SuccessResponse"
+                $ref: '#/components/schemas/SuccessResponse'
 
   /users:
     get:
@@ -1363,14 +1927,14 @@ paths:
       tags: [users]
       summary: List users (admin only)
       responses:
-        "200":
+        '200':
           description: Users
           content:
             application/json:
               schema:
                 type: array
                 items:
-                  $ref: "#/components/schemas/User"
+                  $ref: '#/components/schemas/User'
     post:
       operationId: createUser
       tags: [users]
@@ -1380,14 +1944,14 @@ paths:
         content:
           application/json:
             schema:
-              $ref: "#/components/schemas/CreateUserRequest"
+              $ref: '#/components/schemas/CreateUserRequest'
       responses:
-        "201":
+        '201':
           description: Created user
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/User"
+                $ref: '#/components/schemas/User'
 
   /users/{id}:
     put:
@@ -1405,14 +1969,14 @@ paths:
         content:
           application/json:
             schema:
-              $ref: "#/components/schemas/UpdateUserRequest"
+              $ref: '#/components/schemas/UpdateUserRequest'
       responses:
-        "200":
+        '200':
           description: Updated user
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/User"
+                $ref: '#/components/schemas/User'
     delete:
       operationId: deleteUser
       tags: [users]
@@ -1424,12 +1988,12 @@ paths:
           schema:
             type: string
       responses:
-        "200":
+        '200':
           description: Deleted
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/SuccessResponse"
+                $ref: '#/components/schemas/SuccessResponse'
 
   /admin/ai-test:
     post:
@@ -1441,14 +2005,14 @@ paths:
         content:
           application/json:
             schema:
-              $ref: "#/components/schemas/AiTestRequest"
+              $ref: '#/components/schemas/AiTestRequest'
       responses:
-        "200":
+        '200':
           description: AI test result
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/AiNormalizeResponse"
+                $ref: '#/components/schemas/AiNormalizeResponse'
 
   /admin/config-health:
     get:
@@ -1456,14 +2020,27 @@ paths:
       tags: [dashboard]
       summary: Get environment/config health
       responses:
-        "200":
+        '200':
           description: Config health
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/ConfigHealth"
+                $ref: '#/components/schemas/ConfigHealth'
 
 components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: opaque
+  parameters:
+    ResourceId:
+      name: id
+      in: path
+      required: true
+      schema:
+        type: string
+        format: uuid
   schemas:
     HealthStatus:
       type: object
@@ -1521,7 +2098,7 @@ components:
       type: object
       properties:
         user:
-          $ref: "#/components/schemas/User"
+          $ref: '#/components/schemas/User'
         token:
           type: string
       required:
@@ -1647,21 +2224,21 @@ components:
 
     CustomerWithRelations:
       allOf:
-        - $ref: "#/components/schemas/Customer"
+        - $ref: '#/components/schemas/Customer'
         - type: object
           properties:
             sites:
               type: array
               items:
-                $ref: "#/components/schemas/Site"
+                $ref: '#/components/schemas/Site'
             services:
               type: array
               items:
-                $ref: "#/components/schemas/Service"
+                $ref: '#/components/schemas/Service'
             tickets:
               type: array
               items:
-                $ref: "#/components/schemas/Ticket"
+                $ref: '#/components/schemas/Ticket'
 
     CreateCustomerRequest:
       type: object
@@ -1812,27 +2389,27 @@ components:
 
     SiteWithCustomer:
       allOf:
-        - $ref: "#/components/schemas/Site"
+        - $ref: '#/components/schemas/Site'
         - type: object
           properties:
             customer:
-              $ref: "#/components/schemas/Customer"
+              $ref: '#/components/schemas/Customer'
 
     SiteWithRelations:
       allOf:
-        - $ref: "#/components/schemas/Site"
+        - $ref: '#/components/schemas/Site'
         - type: object
           properties:
             customer:
-              $ref: "#/components/schemas/Customer"
+              $ref: '#/components/schemas/Customer'
             services:
               type: array
               items:
-                $ref: "#/components/schemas/Service"
+                $ref: '#/components/schemas/Service'
             tickets:
               type: array
               items:
-                $ref: "#/components/schemas/Ticket"
+                $ref: '#/components/schemas/Ticket'
 
     CreateSiteRequest:
       type: object
@@ -2039,13 +2616,13 @@ components:
 
     ServiceWithRelations:
       allOf:
-        - $ref: "#/components/schemas/Service"
+        - $ref: '#/components/schemas/Service'
         - type: object
           properties:
             customer:
-              $ref: "#/components/schemas/Customer"
+              $ref: '#/components/schemas/Customer'
             site:
-              $ref: "#/components/schemas/Site"
+              $ref: '#/components/schemas/Site'
 
     CreateServiceRequest:
       type: object
@@ -2145,7 +2722,8 @@ components:
           enum: [low, medium, high, critical]
         status:
           type: string
-          enum: [new, investigating, vendor_engaged, dispatch_scheduled, monitoring, resolved, closed]
+          enum:
+            [new, investigating, vendor_engaged, dispatch_scheduled, monitoring, resolved, closed]
         outageType:
           type: string
           enum: [outage, impairment, informational, unknown]
@@ -2228,27 +2806,27 @@ components:
 
     TicketWithRelations:
       allOf:
-        - $ref: "#/components/schemas/Ticket"
+        - $ref: '#/components/schemas/Ticket'
         - type: object
           properties:
             customer:
-              $ref: "#/components/schemas/Customer"
+              $ref: '#/components/schemas/Customer'
             site:
-              $ref: "#/components/schemas/Site"
+              $ref: '#/components/schemas/Site'
             service:
-              $ref: "#/components/schemas/Service"
+              $ref: '#/components/schemas/Service'
             assignedTo:
-              $ref: "#/components/schemas/User"
+              $ref: '#/components/schemas/User'
 
     TicketDetail:
       allOf:
-        - $ref: "#/components/schemas/TicketWithRelations"
+        - $ref: '#/components/schemas/TicketWithRelations'
         - type: object
           properties:
             updates:
               type: array
               items:
-                $ref: "#/components/schemas/TicketUpdate"
+                $ref: '#/components/schemas/TicketUpdate'
 
     CreateTicketRequest:
       type: object
@@ -2274,7 +2852,8 @@ components:
           enum: [low, medium, high, critical]
         status:
           type: string
-          enum: [new, investigating, vendor_engaged, dispatch_scheduled, monitoring, resolved, closed]
+          enum:
+            [new, investigating, vendor_engaged, dispatch_scheduled, monitoring, resolved, closed]
         outageType:
           type: string
           enum: [outage, impairment, informational, unknown]
@@ -2329,7 +2908,8 @@ components:
           enum: [low, medium, high, critical]
         status:
           type: string
-          enum: [new, investigating, vendor_engaged, dispatch_scheduled, monitoring, resolved, closed]
+          enum:
+            [new, investigating, vendor_engaged, dispatch_scheduled, monitoring, resolved, closed]
         outageType:
           type: string
           enum: [outage, impairment, informational, unknown]
@@ -2389,7 +2969,7 @@ components:
           type: string
           format: date-time
         createdBy:
-          $ref: "#/components/schemas/User"
+          $ref: '#/components/schemas/User'
           nullable: true
       required:
         - id
@@ -2418,7 +2998,7 @@ components:
           type: string
           nullable: true
         role:
-          $ref: "#/components/schemas/CustomerContactRole"
+          $ref: '#/components/schemas/CustomerContactRole'
         notifyOnSeverity:
           type: string
           enum: [low, medium, high, critical]
@@ -2455,7 +3035,7 @@ components:
           type: string
           nullable: true
         role:
-          $ref: "#/components/schemas/CustomerContactRole"
+          $ref: '#/components/schemas/CustomerContactRole'
         notifyOnSeverity:
           type: string
           enum: [low, medium, high, critical]
@@ -2481,7 +3061,7 @@ components:
           type: string
           nullable: true
         role:
-          $ref: "#/components/schemas/CustomerContactRole"
+          $ref: '#/components/schemas/CustomerContactRole'
         notifyOnSeverity:
           type: string
           enum: [low, medium, high, critical]
@@ -2513,9 +3093,9 @@ components:
         contactEmail:
           type: string
         contactRole:
-          $ref: "#/components/schemas/CustomerContactRole"
+          $ref: '#/components/schemas/CustomerContactRole'
         reason:
-          $ref: "#/components/schemas/EscalationReason"
+          $ref: '#/components/schemas/EscalationReason'
         severity:
           type: string
           enum: [low, medium, high, critical]
@@ -2528,7 +3108,7 @@ components:
         message:
           type: string
         status:
-          $ref: "#/components/schemas/EscalationStatus"
+          $ref: '#/components/schemas/EscalationStatus'
         notifiedAt:
           type: string
           format: date-time
@@ -2540,7 +3120,7 @@ components:
         - status
         - notifiedAt
 
-    EvaluateEscalationResponse:
+    EscalationEvaluationResult:
       type: object
       properties:
         notified:
@@ -2582,11 +3162,11 @@ components:
       type: object
       properties:
         impactLevel:
-          $ref: "#/components/schemas/MatrixImpactLevel"
+          $ref: '#/components/schemas/MatrixImpactLevel'
         urgencyLevel:
-          $ref: "#/components/schemas/MatrixUrgencyLevel"
+          $ref: '#/components/schemas/MatrixUrgencyLevel'
         derivedSeverity:
-          $ref: "#/components/schemas/MatrixSeverityLevel"
+          $ref: '#/components/schemas/MatrixSeverityLevel'
         isOverride:
           type: boolean
         overrideId:
@@ -2605,14 +3185,14 @@ components:
       type: object
       properties:
         scopeType:
-          $ref: "#/components/schemas/MatrixScopeType"
+          $ref: '#/components/schemas/MatrixScopeType'
         scopeId:
           type: string
           nullable: true
         cells:
           type: array
           items:
-            $ref: "#/components/schemas/MatrixCell"
+            $ref: '#/components/schemas/MatrixCell'
       required:
         - scopeType
         - cells
@@ -2621,7 +3201,7 @@ components:
       type: object
       properties:
         scopeType:
-          $ref: "#/components/schemas/MatrixScopeType"
+          $ref: '#/components/schemas/MatrixScopeType'
         scopeId:
           type: string
           nullable: true
@@ -2631,11 +3211,11 @@ components:
             type: object
             properties:
               impactLevel:
-                $ref: "#/components/schemas/MatrixImpactLevel"
+                $ref: '#/components/schemas/MatrixImpactLevel'
               urgencyLevel:
-                $ref: "#/components/schemas/MatrixUrgencyLevel"
+                $ref: '#/components/schemas/MatrixUrgencyLevel'
               derivedSeverity:
-                $ref: "#/components/schemas/MatrixSeverityLevel"
+                $ref: '#/components/schemas/MatrixSeverityLevel'
             required:
               - impactLevel
               - urgencyLevel
@@ -2775,7 +3355,7 @@ components:
         summary:
           type: string
         ticket:
-          $ref: "#/components/schemas/Ticket"
+          $ref: '#/components/schemas/Ticket'
       required:
         - summary
         - ticket
@@ -2786,7 +3366,7 @@ components:
         normalizedStatus:
           type: string
         ticket:
-          $ref: "#/components/schemas/Ticket"
+          $ref: '#/components/schemas/Ticket'
       required:
         - normalizedStatus
         - ticket
@@ -2797,7 +3377,7 @@ components:
         customerUpdate:
           type: string
         ticket:
-          $ref: "#/components/schemas/Ticket"
+          $ref: '#/components/schemas/Ticket'
       required:
         - customerUpdate
         - ticket
@@ -2924,11 +3504,11 @@ components:
 
     InvoiceComplaintWithCustomer:
       allOf:
-        - $ref: "#/components/schemas/InvoiceComplaint"
+        - $ref: '#/components/schemas/InvoiceComplaint'
         - type: object
           properties:
             customer:
-              $ref: "#/components/schemas/Customer"
+              $ref: '#/components/schemas/Customer'
               nullable: true
 
     InvoiceComplaintEvent:
@@ -2941,7 +3521,15 @@ components:
         eventType:
           type: string
           enum:
-            [created, status_changed, assignment_changed, note, validation_requested, validation_succeeded, validation_failed]
+            [
+              created,
+              status_changed,
+              assignment_changed,
+              note,
+              validation_requested,
+              validation_succeeded,
+              validation_failed,
+            ]
         message:
           type: string
         metadata:
@@ -2963,25 +3551,25 @@ components:
 
     InvoiceComplaintDetail:
       allOf:
-        - $ref: "#/components/schemas/InvoiceComplaint"
+        - $ref: '#/components/schemas/InvoiceComplaint'
         - type: object
           properties:
             customer:
-              $ref: "#/components/schemas/Customer"
+              $ref: '#/components/schemas/Customer'
               nullable: true
             site:
-              $ref: "#/components/schemas/Site"
+              $ref: '#/components/schemas/Site'
               nullable: true
             service:
-              $ref: "#/components/schemas/Service"
+              $ref: '#/components/schemas/Service'
               nullable: true
             assignedTo:
-              $ref: "#/components/schemas/User"
+              $ref: '#/components/schemas/User'
               nullable: true
             events:
               type: array
               items:
-                $ref: "#/components/schemas/InvoiceComplaintEvent"
+                $ref: '#/components/schemas/InvoiceComplaintEvent'
 
     CreateInvoiceComplaintRequest:
       type: object
@@ -3080,7 +3668,7 @@ components:
       type: object
       properties:
         complaint:
-          $ref: "#/components/schemas/InvoiceComplaint"
+          $ref: '#/components/schemas/InvoiceComplaint'
         validation:
           type: object
           additionalProperties: true
@@ -3163,9 +3751,584 @@ components:
         recent:
           type: array
           items:
-            $ref: "#/components/schemas/AvalaraStatusItem"
+            $ref: '#/components/schemas/AvalaraStatusItem'
       required:
         - configured
         - validatedCount
         - failedCount
         - recent
+
+    MonitoringStatus:
+      type: string
+      enum: [up, down, degraded, unknown]
+
+    PublicNetworkMapPoint:
+      type: object
+      properties:
+        id: { type: string }
+        label: { type: string }
+        status: { $ref: '#/components/schemas/MonitoringStatus' }
+        latitude: { type: number, format: double }
+        longitude: { type: number, format: double }
+        provider: { type: string, nullable: true }
+        region: { type: string, nullable: true }
+        lastSeenAt: { type: string, format: date-time, nullable: true }
+        source: { type: string, enum: [manual, nagios, controller, synthetic] }
+      required: [id, label, status, latitude, longitude, source]
+
+    PublicNetworkMapSummary:
+      type: object
+      properties:
+        totalAssets: { type: integer }
+        activeOutages: { type: integer }
+        degradedServices: { type: integer }
+        unknownServices: { type: integer }
+        lastUpdatedAt: { type: string, format: date-time, nullable: true }
+      required: [totalAssets, activeOutages, degradedServices, unknownServices]
+
+    MonitoredTarget:
+      type: object
+      properties:
+        id: { type: string, format: uuid }
+        name: { type: string }
+        publicLabel: { type: string, nullable: true }
+        hostOrIp: { type: string }
+        customerId: { type: string, format: uuid, nullable: true }
+        siteId: { type: string, format: uuid, nullable: true }
+        serviceId: { type: string, format: uuid, nullable: true }
+        targetType: { type: string, enum: [ip, hostname, service, controller] }
+        provider: { type: string, nullable: true }
+        region: { type: string, nullable: true }
+        latitude: { type: number, format: double, nullable: true }
+        longitude: { type: number, format: double, nullable: true }
+        status: { $ref: '#/components/schemas/MonitoringStatus' }
+        statusSource: { type: string, enum: [manual, nagios, controller, synthetic] }
+        isPublic: { type: boolean }
+        lastCheckedAt: { type: string, format: date-time, nullable: true }
+        lastSuccessAt: { type: string, format: date-time, nullable: true }
+        lastFailureAt: { type: string, format: date-time, nullable: true }
+        createdAt: { type: string, format: date-time }
+        updatedAt: { type: string, format: date-time }
+      required:
+        [id, name, hostOrIp, targetType, status, statusSource, isPublic, createdAt, updatedAt]
+
+    CreateMonitoringTargetRequest:
+      type: object
+      properties:
+        name: { type: string }
+        publicLabel: { type: string, nullable: true }
+        hostOrIp: { type: string }
+        customerId: { type: string, format: uuid, nullable: true }
+        siteId: { type: string, format: uuid, nullable: true }
+        serviceId: { type: string, format: uuid, nullable: true }
+        targetType: { type: string, enum: [ip, hostname, service, controller], default: ip }
+        provider: { type: string, nullable: true }
+        region: { type: string, nullable: true }
+        latitude: { type: number, format: double, nullable: true }
+        longitude: { type: number, format: double, nullable: true }
+        status: { $ref: '#/components/schemas/MonitoringStatus' }
+        statusSource: { type: string, enum: [manual, nagios, controller, synthetic] }
+        isPublic: { type: boolean, default: false }
+      required: [name, hostOrIp]
+
+    UpdateMonitoringTargetRequest:
+      type: object
+      properties:
+        name: { type: string }
+        publicLabel: { type: string, nullable: true }
+        hostOrIp: { type: string }
+        customerId: { type: string, format: uuid, nullable: true }
+        siteId: { type: string, format: uuid, nullable: true }
+        serviceId: { type: string, format: uuid, nullable: true }
+        targetType: { type: string, enum: [ip, hostname, service, controller] }
+        provider: { type: string, nullable: true }
+        region: { type: string, nullable: true }
+        latitude: { type: number, format: double, nullable: true }
+        longitude: { type: number, format: double, nullable: true }
+        status: { $ref: '#/components/schemas/MonitoringStatus' }
+        statusSource: { type: string, enum: [manual, nagios, controller, synthetic] }
+        isPublic: { type: boolean }
+
+    MonitoringCheck:
+      type: object
+      properties:
+        id: { type: string, format: uuid }
+        targetId: { type: string, format: uuid }
+        source: { type: string, enum: [manual, synthetic, nagios, controller] }
+        checkType: { type: string, enum: [http, tcp] }
+        status: { $ref: '#/components/schemas/MonitoringStatus' }
+        responseTimeMs: { type: integer, nullable: true }
+        payloadJson: { type: object, additionalProperties: true, nullable: true }
+        checkedAt: { type: string, format: date-time }
+        createdAt: { type: string, format: date-time }
+      required: [id, targetId, source, checkType, status, checkedAt, createdAt]
+
+    RunMonitoringRequest:
+      type: object
+      properties:
+        targetId: { type: string, format: uuid }
+        targetIds:
+          type: array
+          items: { type: string, format: uuid }
+
+    MonitoringExecutionItem:
+      type: object
+      properties:
+        targetId: { type: string, format: uuid }
+        checkId: { type: string, format: uuid }
+        status: { $ref: '#/components/schemas/MonitoringStatus' }
+        checkType: { type: string, enum: [http, tcp] }
+        responseTimeMs: { type: integer, nullable: true }
+        ticketAction: { type: string, enum: [skipped, created, updated] }
+        ticketId: { type: string, format: uuid, nullable: true }
+        outageClassification: { type: string, nullable: true }
+        enrichment: { $ref: '#/components/schemas/TargetEnrichment' }
+      required: [targetId, checkId, status, checkType, ticketAction, enrichment]
+
+    MonitoringExecutionResponse:
+      type: object
+      properties:
+        startedAt: { type: string, format: date-time }
+        syncedAt: { type: string, format: date-time }
+        processed: { type: integer }
+        createdTickets: { type: integer }
+        updatedTickets: { type: integer }
+        results:
+          type: array
+          items: { $ref: '#/components/schemas/MonitoringExecutionItem' }
+      required: [processed, createdTickets, updatedTickets, results]
+
+    MonitoringEnrichmentRequest:
+      type: object
+      properties:
+        targetId: { type: string, format: uuid }
+        hostOrIp: { type: string }
+      anyOf:
+        - required: [targetId]
+        - required: [hostOrIp]
+
+    TargetEnrichment:
+      type: object
+      properties:
+        normalizedHostOrIp: { type: string }
+        ipType: { type: string, enum: [ipv4, ipv6, hostname] }
+        provider: { type: string, nullable: true }
+        region: { type: string, nullable: true }
+        confidence: { type: string, enum: [high, medium, low] }
+        asn: { type: string, nullable: true }
+        country: { type: string, nullable: true }
+        city: { type: string, nullable: true }
+        source: { type: string, enum: [heuristic, ipinfo] }
+      required: [normalizedHostOrIp, ipType, confidence]
+
+    MonitoringEnrichmentResponse:
+      type: object
+      properties:
+        targetId: { type: string, format: uuid }
+        hostOrIp: { type: string }
+        enrichment: { $ref: '#/components/schemas/TargetEnrichment' }
+      required: [enrichment]
+
+    ExternalOutagePreview:
+      type: object
+      properties:
+        configured: { type: boolean }
+        query:
+          type: object
+          properties:
+            region: { type: string, nullable: true }
+            provider: { type: string, nullable: true }
+        signal:
+          type: object
+          additionalProperties: true
+          nullable: true
+      required: [configured, query]
+
+    Controller:
+      type: object
+      properties:
+        id: { type: string, format: uuid }
+        name: { type: string }
+        vendor: { type: string, enum: [meraki, fortinet, palo_alto, sdwan] }
+        type: { type: string, enum: [sdwan, firewall_manager, network_manager] }
+        baseUrl: { type: string }
+        authType: { type: string, enum: [api_key, oauth, basic] }
+        apiKeyEncryptedOrPlaceholder: { type: string, nullable: true }
+        organizationIdOrTenant: { type: string, nullable: true }
+        pollingEnabled: { type: boolean }
+        pollingIntervalSeconds: { type: integer }
+        lastPolledAt: { type: string, format: date-time, nullable: true }
+        lastPollStatus: { type: string, enum: [success, failed, running], nullable: true }
+        lastPollMessage: { type: string, nullable: true }
+        createdAt: { type: string, format: date-time }
+        updatedAt: { type: string, format: date-time }
+      required:
+        [
+          id,
+          name,
+          vendor,
+          type,
+          baseUrl,
+          authType,
+          pollingEnabled,
+          pollingIntervalSeconds,
+          createdAt,
+          updatedAt,
+        ]
+
+    ControllerSummary:
+      allOf:
+        - $ref: '#/components/schemas/Controller'
+        - type: object
+          properties:
+            deviceCount: { type: integer }
+            eventCount: { type: integer }
+          required: [deviceCount, eventCount]
+
+    CreateControllerRequest:
+      type: object
+      properties:
+        name: { type: string }
+        vendor: { type: string, enum: [meraki, fortinet, palo_alto, sdwan] }
+        type: { type: string, enum: [sdwan, firewall_manager, network_manager] }
+        baseUrl: { type: string }
+        authType: { type: string, enum: [api_key, oauth, basic], default: api_key }
+        apiKeyEncryptedOrPlaceholder: { type: string, nullable: true }
+        organizationIdOrTenant: { type: string, nullable: true }
+        pollingEnabled: { type: boolean, default: false }
+        pollingIntervalSeconds: { type: integer, default: 300 }
+      required: [name, vendor, type, baseUrl]
+
+    UpdateControllerRequest:
+      type: object
+      properties:
+        name: { type: string }
+        vendor: { type: string, enum: [meraki, fortinet, palo_alto, sdwan] }
+        type: { type: string, enum: [sdwan, firewall_manager, network_manager] }
+        baseUrl: { type: string }
+        authType: { type: string, enum: [api_key, oauth, basic] }
+        apiKeyEncryptedOrPlaceholder: { type: string, nullable: true }
+        organizationIdOrTenant: { type: string, nullable: true }
+        pollingEnabled: { type: boolean }
+        pollingIntervalSeconds: { type: integer }
+
+    ControllerSyncLog:
+      type: object
+      properties:
+        id: { type: string, format: uuid }
+        controllerId: { type: string, format: uuid }
+        syncType: { type: string }
+        startedAt: { type: string, format: date-time }
+        completedAt: { type: string, format: date-time, nullable: true }
+        status: { type: string, enum: [running, success, failed] }
+        message: { type: string, nullable: true }
+        recordsProcessed: { type: integer, nullable: true }
+      required: [id, controllerId, syncType, startedAt, status]
+
+    ControllerDetail:
+      allOf:
+        - $ref: '#/components/schemas/Controller'
+        - type: object
+          properties:
+            recentSyncLogs:
+              type: array
+              items: { $ref: '#/components/schemas/ControllerSyncLog' }
+            deviceCount: { type: integer }
+            linkCount: { type: integer }
+            eventCount: { type: integer }
+            recentEvents:
+              type: array
+              items: { $ref: '#/components/schemas/DeviceEvent' }
+          required: [recentSyncLogs, deviceCount, linkCount, eventCount, recentEvents]
+
+    ConnectionTestResponse:
+      type: object
+      properties:
+        ok: { type: boolean }
+        message: { type: string }
+      required: [ok]
+
+    ControllerSyncStartResponse:
+      type: object
+      properties:
+        syncLogId: { type: string, format: uuid }
+        message: { type: string }
+        started: { type: integer }
+        logs:
+          type: array
+          items:
+            type: object
+            properties:
+              controllerId: { type: string, format: uuid }
+              syncLogId: { type: string, format: uuid }
+            required: [controllerId, syncLogId]
+      required: [message]
+
+    DeviceStatus:
+      type: string
+      enum: [online, offline, degraded, unknown]
+
+    ManagedDevice:
+      type: object
+      properties:
+        id: { type: string, format: uuid }
+        controllerId: { type: string, format: uuid }
+        customerId: { type: string, format: uuid, nullable: true }
+        siteId: { type: string, format: uuid, nullable: true }
+        hostname: { type: string }
+        deviceType: { type: string, enum: [firewall, sdwan_edge, appliance, switch, gateway] }
+        vendor: { type: string }
+        serialNumber: { type: string, nullable: true }
+        controllerDeviceId: { type: string }
+        model: { type: string, nullable: true }
+        mgmtIp: { type: string, nullable: true }
+        status: { $ref: '#/components/schemas/DeviceStatus' }
+        haState: { type: string, enum: [active, standby, standalone, unknown], nullable: true }
+        networkName: { type: string, nullable: true }
+        latitude: { type: number, format: double, nullable: true }
+        longitude: { type: number, format: double, nullable: true }
+        geoSource: { type: string, enum: [manual, inherited_from_site, imported], nullable: true }
+        publicLabel: { type: string, nullable: true }
+        isPublic: { type: boolean }
+        lastSeenAt: { type: string, format: date-time, nullable: true }
+        metadataJson: { type: object, additionalProperties: true, nullable: true }
+        createdAt: { type: string, format: date-time }
+        updatedAt: { type: string, format: date-time }
+      required:
+        [
+          id,
+          controllerId,
+          hostname,
+          deviceType,
+          vendor,
+          controllerDeviceId,
+          status,
+          isPublic,
+          createdAt,
+          updatedAt,
+        ]
+
+    ManagedDeviceSummary:
+      allOf:
+        - $ref: '#/components/schemas/ManagedDevice'
+        - type: object
+          properties:
+            controller: { $ref: '#/components/schemas/Controller', nullable: true }
+            customer: { $ref: '#/components/schemas/Customer', nullable: true }
+            site: { $ref: '#/components/schemas/Site', nullable: true }
+
+    ManagedDeviceDetail:
+      allOf:
+        - $ref: '#/components/schemas/ManagedDeviceSummary'
+        - type: object
+          properties:
+            links:
+              type: array
+              items: { $ref: '#/components/schemas/NetworkLink' }
+            recentEvents:
+              type: array
+              items: { $ref: '#/components/schemas/DeviceEvent' }
+            linkedTickets:
+              type: array
+              items: { $ref: '#/components/schemas/Ticket' }
+          required: [links, recentEvents, linkedTickets]
+
+    UpdateManagedDeviceRequest:
+      type: object
+      properties:
+        customerId: { type: string, format: uuid, nullable: true }
+        siteId: { type: string, format: uuid, nullable: true }
+        hostname: { type: string }
+        status: { $ref: '#/components/schemas/DeviceStatus' }
+        publicLabel: { type: string, nullable: true }
+        isPublic: { type: boolean }
+
+    LinkStatus:
+      type: string
+      enum: [up, down, degraded, unknown]
+
+    NetworkLink:
+      type: object
+      properties:
+        id: { type: string, format: uuid }
+        managedDeviceId: { type: string, format: uuid }
+        serviceId: { type: string, format: uuid, nullable: true }
+        customerId: { type: string, format: uuid, nullable: true }
+        siteId: { type: string, format: uuid, nullable: true }
+        linkName: { type: string }
+        linkType:
+          {
+            type: string,
+            enum: [internet, mpls, lte, broadband, wan_uplink, vpn_tunnel, sdwan_transport],
+          }
+        providerName: { type: string, nullable: true }
+        circuitId: { type: string, nullable: true }
+        role: { type: string, enum: [primary, backup, unknown] }
+        status: { $ref: '#/components/schemas/LinkStatus' }
+        latencyMs: { type: number, nullable: true }
+        jitterMs: { type: number, nullable: true }
+        packetLossPct: { type: number, nullable: true }
+        failoverActive: { type: boolean }
+        networkName: { type: string, nullable: true }
+        lastPolledAt: { type: string, format: date-time, nullable: true }
+        metadataJson: { type: object, additionalProperties: true, nullable: true }
+        createdAt: { type: string, format: date-time }
+        updatedAt: { type: string, format: date-time }
+      required:
+        [
+          id,
+          managedDeviceId,
+          linkName,
+          linkType,
+          role,
+          status,
+          failoverActive,
+          createdAt,
+          updatedAt,
+        ]
+
+    NetworkLinkDetail:
+      allOf:
+        - $ref: '#/components/schemas/NetworkLink'
+        - type: object
+          properties:
+            device: { $ref: '#/components/schemas/ManagedDevice', nullable: true }
+            customer: { $ref: '#/components/schemas/Customer', nullable: true }
+            site: { $ref: '#/components/schemas/Site', nullable: true }
+            service: { $ref: '#/components/schemas/Service', nullable: true }
+
+    DeviceEventSeverity:
+      type: string
+      enum: [informational, low, medium, high, critical]
+
+    DeviceEvent:
+      type: object
+      properties:
+        id: { type: string, format: uuid }
+        controllerId: { type: string, format: uuid }
+        managedDeviceId: { type: string, format: uuid, nullable: true }
+        customerId: { type: string, format: uuid, nullable: true }
+        siteId: { type: string, format: uuid, nullable: true }
+        serviceId: { type: string, format: uuid, nullable: true }
+        rawEventId: { type: string }
+        eventSource: { type: string }
+        severity: { $ref: '#/components/schemas/DeviceEventSeverity' }
+        eventType: { type: string }
+        title: { type: string }
+        description: { type: string, nullable: true }
+        normalizedStatus: { type: string, nullable: true }
+        aiSummary: { type: string, nullable: true }
+        aiProbableImpact: { type: string, nullable: true }
+        aiCustomerUpdate: { type: string, nullable: true }
+        confidenceScore: { type: number, nullable: true }
+        category: { type: string, nullable: true }
+        rawPayloadJson: { type: object, additionalProperties: true, nullable: true }
+        occurredAt: { type: string, format: date-time }
+        createdAt: { type: string, format: date-time }
+      required:
+        [
+          id,
+          controllerId,
+          rawEventId,
+          eventSource,
+          severity,
+          eventType,
+          title,
+          occurredAt,
+          createdAt,
+        ]
+
+    DeviceEventSummary:
+      allOf:
+        - $ref: '#/components/schemas/DeviceEvent'
+        - type: object
+          properties:
+            controller: { $ref: '#/components/schemas/Controller', nullable: true }
+            customer: { $ref: '#/components/schemas/Customer', nullable: true }
+
+    DeviceEventDetail:
+      allOf:
+        - $ref: '#/components/schemas/DeviceEventSummary'
+        - type: object
+          properties:
+            device: { $ref: '#/components/schemas/ManagedDevice', nullable: true }
+            site: { $ref: '#/components/schemas/Site', nullable: true }
+            linkedTickets:
+              type: array
+              items: { $ref: '#/components/schemas/Ticket' }
+            correlations:
+              type: array
+              items:
+                type: object
+                additionalProperties: true
+
+    SalesforceConfig:
+      type: object
+      properties:
+        clientId: { type: string }
+        clientSecret: { type: string }
+        loginUrl: { type: string }
+        instanceUrl: { type: string }
+        username: { type: string }
+        password: { type: string }
+        hasClientSecret: { type: boolean }
+        hasPassword: { type: boolean }
+      required:
+        [
+          clientId,
+          clientSecret,
+          loginUrl,
+          instanceUrl,
+          username,
+          password,
+          hasClientSecret,
+          hasPassword,
+        ]
+
+    UpdateSalesforceConfigRequest:
+      type: object
+      properties:
+        clientId: { type: string }
+        clientSecret: { type: string }
+        loginUrl: { type: string }
+        instanceUrl: { type: string }
+        username: { type: string }
+        password: { type: string }
+
+    SalesforceSyncResponse:
+      type: object
+      properties:
+        success: { type: boolean }
+        synced: { type: integer }
+        created: { type: integer }
+        updated: { type: integer }
+        skipped: { type: integer }
+        message: { type: string }
+        accounts: { type: object, additionalProperties: true }
+        contacts: { type: object, additionalProperties: true }
+      required: [success]
+
+    CrmSyncLog:
+      type: object
+      properties:
+        id: { type: string, format: uuid }
+        connector: { type: string }
+        syncType: { type: string }
+        startedAt: { type: string, format: date-time }
+        completedAt: { type: string, format: date-time, nullable: true }
+        status: { type: string, enum: [running, success, failed] }
+        message: { type: string, nullable: true }
+        recordsProcessed: { type: integer, nullable: true }
+      required: [id, connector, syncType, startedAt, status]
+
+    SalesforceStatus:
+      type: object
+      properties:
+        configured: { type: boolean }
+        accountsSynced: { type: integer }
+        contactsSynced: { type: integer }
+        lastSyncAt: { type: string, format: date-time, nullable: true }
+        recentLogs:
+          type: array
+          items: { $ref: '#/components/schemas/CrmSyncLog' }
+      required: [configured, accountsSynced, contactsSynced, recentLogs]

@@ -3,6 +3,7 @@ import { AppLayout } from '@/components/layout/app-layout';
 import { useGetSites, useGetCustomers, useGetTickets } from '@workspace/api-client-react';
 import { useGetDevices } from '@/lib/controller-hooks';
 import { MapContainer, TileLayer, Marker, Popup, useMap } from 'react-leaflet';
+import 'leaflet/dist/leaflet.css';
 import MarkerClusterGroup from 'react-leaflet-cluster';
 import L from 'leaflet';
 import { Link } from 'wouter';
