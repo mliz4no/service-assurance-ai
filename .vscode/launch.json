@@ -13,7 +13,7 @@
       "preLaunchTask": "db:up",
       "env": {
         "DATABASE_URL": "postgresql://service_assurance:service_assurance@localhost:5432/service_assurance",
-        "PORT": "8080"
+        "PORT": "8081"
       }
     },
     {
@@ -27,7 +27,7 @@
       "internalConsoleOptions": "neverOpen",
       "env": {
         "DATABASE_URL": "postgresql://service_assurance:service_assurance@localhost:5432/service_assurance",
-        "PORT": "8080"
+        "PORT": "8081"
       }
     },
     {
@@ -38,7 +38,10 @@
       "runtimeArgs": ["--filter", "service-assurance", "run", "dev"],
       "cwd": "${workspaceFolder}",
       "console": "integratedTerminal",
-      "internalConsoleOptions": "neverOpen"
+      "internalConsoleOptions": "neverOpen",
+      "env": {
+        "API_PROXY_TARGET": "http://localhost:8081"
+      }
     }
   ],
   "compounds": [
