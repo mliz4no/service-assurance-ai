@@ -12,7 +12,13 @@ This plan covers the next major capabilities requested by the product direction:
 
 The implementation should be delivered in phases so the team can start with a public map and monitoring surface first, then expand into richer integrations and alerting.
 
-### 1.1 Current implementation status (updated 2026-08-15)
+6. Field dispatch integration
+7. ITSM, CRM, and MSP integrations
+8. Advanced public-network intelligence
+9. Additional controller ecosystems
+10. Billing and production observability
+
+### 1.1 Current implementation status (updated 2026-08-20)
 
 Status legend: **Implemented** means the end-to-end path exists; **Partial** means useful functionality exists but one or more acceptance criteria remain; **Planned** means implementation has not started.
 
@@ -20,13 +26,18 @@ Status legend: **Implemented** means the end-to-end path exists; **Partial** mea
 | ------------------------------------ | ----------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | Phase 0 — Foundation                 | Implemented | Environment template, structured logging, correlation IDs, security headers, restricted production CORS, login throttling, request limits, persistent database sessions, liveness/readiness endpoints, and centralized error handling are present. |
 | Phase 1 — Public outage map          | Implemented | The public map is the landing page and includes filters, summary metrics, approved targets/devices, affected-region classification, and geographic outage-area overlays.                                                                           |
-| Phase 2 — Monitoring targets         | Implemented | Target CRUD, internal monitoring UI, customer/site/service assignment, coordinates, HTTP/TCP checks, scheduler, persistence, and manual execution are present. ICMP remains optional future work.                                                  |
+| Phase 2 — Monitoring targets         | Partial     | Target CRUD, HTTP/TCP checks, scheduler, persistence, and ticket creation are present. Meeting-required ICMP echo checks for registered non-controller equipment remain.                                                                           |
 | Phase 3 — Nagios and ticketing       | Implemented | Nagios synchronization creates or updates deduplicated tickets. Ticket numbering is database-atomic and monitoring runs use a cross-instance advisory lock.                                                                                        |
-| Phase 4 — Outage correlation         | Implemented | Sibling target health and external outage signals classify isolated, shared, and regional outages and write context into ticket updates.                                                                                                           |
-| Phase 5 — IP/provider enrichment     | Implemented | Heuristic and IPinfo enrichment are available with an optional persistent `provider_lookups` cache and configurable TTL.                                                                                                                           |
+| Phase 4 — Outage correlation         | Partial     | Sibling-target and generic external-signal correlation are implemented. Licensed PowerOutage.us REST API access, GeoJSON mapping, or an approved equivalent provider remains.                                                                      |
+| Phase 5 — IP/provider enrichment     | Partial     | IPinfo-based ASN/provider/region enrichment and caching exist. Reverse DNS, RDAP/RIR ownership, BGP prefix intelligence, provider block inventory, and automated geolocation coordinates remain.                                                   |
 | Phase 6 — Controller integrations    | Implemented | Meraki, Fortinet/FortiManager, Palo Alto, and generic SD-WAN have live device, link, and event polling paths with normalized partial-result handling.                                                                                              |
 | Phase 7 — Dashboard, reports, alerts | Partial     | Operational dashboards, incident views, escalation evaluation, email/webhook delivery, and ticket workflows exist. Durable delivery queues, complete historical reporting, and alert operations remain.                                            |
 | Phase 8 — Performance and delivery   | Partial     | Monorepo typecheck/builds, CI, API container, route splitting, bundle budgets, migration baselining, and generated OpenAPI clients are complete. Metrics and production deployment validation remain.                                              |
+| Phase 9 — Field dispatch             | Planned     | Dispatch is currently only a ticket status. Core Elevated delivery, dispatch job descriptions, idempotency, acknowledgement, and audit history are missing.                                                                                        |
+| Phase 10 — ITSM/CRM/MSP integrations | Partial     | Salesforce account/contact import exists. ServiceNow and ConnectWise MSP/PSA integrations are not implemented.                                                                                                                                     |
+| Phase 11 — Controller expansion      | Planned     | UniFi and MikroTik discovery, polling, normalized inventory, links, and event ingestion are not implemented.                                                                                                                                       |
+| Phase 12 — Network intelligence      | Planned     | Reverse DNS/RDAP/BGP enrichment, authorized public-service probes, and ISP address-block intelligence are not implemented.                                                                                                                         |
+| Phase 13 — Billing and observability | Partial     | Invoice complaints and Avalara validation exist. Billing scope needs confirmation; production metrics, tracing, alerting, and operational dashboards remain.                                                                                       |
 
 ### 1.2 Verified production-foundation work
 
@@ -43,9 +54,13 @@ Status legend: **Implemented** means the end-to-end path exists; **Partial** mea
 
 ### 1.3 Remaining production priorities
 
-1. Add metrics, tracing, and durable alert delivery.
-2. Add backup/restore, load, soak, and replica failover exercises.
-3. Publish versioned containers and production rollout documentation.
+1. Implement production observability: metrics, tracing, SLOs, dashboards, paging rules, and runbooks.
+2. Add ICMP checks, reverse DNS, and licensed PowerOutage.us Enterprise REST API correlation.
+3. Define and implement the approved billing surface: invoice history, recurring charges, usage/rating, payments, and external billing synchronization.
+4. Add ServiceNow and ConnectWise integrations, then UniFi and MikroTik controllers.
+5. Complete RDAP/RIR, BGP prefix, and ISP block intelligence.
+6. Add backup/restore, load, soak, replica failover, and public deployment validation.
+7. Implement Core Elevated dispatch after its external API contract is available.
 
 ---
 
@@ -263,7 +278,7 @@ Ship a public-facing outage map without login, using a basic status source.
 
 Allow the platform to register monitored IPs/hosts and evaluate their state.
 
-**Status: Implemented for HTTP and TCP checks.** ICMP is not currently implemented.
+**Status: Partial.** HTTP and TCP checks are implemented. ICMP echo checks required by the August 20 meeting are not implemented.
 
 ### Scope
 
@@ -361,7 +376,7 @@ A ticket should be created when:
 
 Improve incident quality by correlating local failures with sibling devices and external outage signals.
 
-**Status: Implemented for monitored targets.** Classification results are added to ticket context.
+**Status: Partial.** Classification results are added to ticket context. The external provider interface exists, but production PowerOutage.us or equivalent data access is not configured or contractually validated.
 
 ### Scope
 
@@ -409,7 +424,7 @@ When a target fails:
 
 Enrich monitored targets and outages with provider/ASN/geographic metadata.
 
-**Status: Implemented.** IPinfo is the current live provider and database caching is configurable.
+**Status: Partial.** IPinfo is the current provider and database caching is configurable. Reverse DNS, RDAP/RIR ownership, BGP prefixes, provider block inventory, and provider-sourced coordinates are outstanding.
 
 ### Scope
 
@@ -816,3 +831,278 @@ Reduce startup cost, enforce release quality, and make deployments repeatable an
 - Expand `/api/readyz` as new mandatory dependencies are introduced.
 - Add request, database, scheduler, integration, and alert-delivery metrics.
 - Add backup/restore, load, soak, and replica failover exercises before general availability.
+
+---
+
+## 14. August 20 meeting requirements — English translation and audit
+
+### 14.1 Translated requirements
+
+1. **Outage map**
+
+- Provide a publicly deployable network status map at `/network-map` and use it as the landing page.
+- Show approved assets, outage areas, classifications, providers, and affected regions without exposing private network details.
+- Provide a login path from the public map into the privileged application.
+
+2. **Controllers and monitoring**
+
+- Support FortiManager/Fortinet, Cisco Meraki, Palo Alto/Panorama, and SD1-style API controllers.
+- Research comparable controller vendors and data sources.
+- Integrate Nagios.
+- Send ICMP echo checks to registered IP addresses, especially equipment not managed through SD1/controller APIs.
+- Create or update a deduplicated ticket when monitored equipment stops responding.
+- Before ticket creation, check approved power-outage data and the health of sibling equipment at the same physical location.
+- Distinguish isolated equipment failures, shared-site failures, and regional utility/provider outages.
+
+3. **Power-outage intelligence**
+
+- Integrate PowerOutage.us enterprise data or an approved competitor.
+- Use external outage evidence in incident classification and ticket context.
+- The supplied PowerOutage.us product page advertises a commercial Live Outage REST API with 10-minute refresh and utility GeoJSON. Production use requires enterprise access; scraping is not an accepted integration method.
+
+4. **Tickets and field dispatch**
+
+- Add a real **Create Dispatch** action rather than only a `dispatch_scheduled` status.
+- Send the complete allowlisted operational ticket record to a Core Elevated endpoint.
+- Generate a technician-facing job description from ticket, customer, service, site, monitoring, controller, SLA, and contact context.
+- Record delivery acknowledgement, external dispatch ID, status, retries, and audit history.
+
+5. **Plugins and business integrations**
+
+- Retain Salesforce integration.
+- Add ServiceNow integration.
+- Add ConnectWise MSP/PSA integration to import and synchronize customer data.
+
+6. **Public IP and provider intelligence**
+
+- Resolve public-IP geographic location.
+- Perform reverse DNS/PTR lookup (the meeting-requested “RN lookup”) to resolve an IP address to a hostname, similar to `nslookup`.
+- Parse carrier hostnames for provider and location hints while retaining the original PTR response and a confidence/source field.
+- Resolve ASN, BGP prefix, RIR/RDAP ownership, ISP/provider, and assigned address blocks.
+- Build provider block intelligence for major ISPs.
+- Run only authorized public-service availability checks; do not crawl arbitrary third-party systems.
+
+7. **August 20 product surface**
+
+- Use the Network Status Map as the public landing page.
+- Provide login access to the privileged application.
+- Define the requested billing capability beyond the existing invoice-complaint/Avalara workflow.
+- Add production observability.
+
+8. **Controller expansion**
+
+- Add UniFi as a controller ecosystem.
+- Evaluate and add MikroTik through RouterOS REST/API where supported.
+
+### 14.2 Gap matrix
+
+| Requirement                                            | Status               | Remaining gap                                                                                                              |
+| ------------------------------------------------------ | -------------------- | -------------------------------------------------------------------------------------------------------------------------- |
+| Public landing map, login link, affected regions       | Implemented          | Production domain/CDN and deployment verification remain.                                                                  |
+| FortiManager, Meraki, Palo Alto, SD1-style controllers | Implemented baseline | Vendor certification and real-environment acceptance tests remain.                                                         |
+| Nagios ingestion and ticket creation                   | Implemented          | Production Nagios configuration and operational acceptance remain.                                                         |
+| ICMP ping for non-controller equipment                 | Missing              | Add ICMP check type, permissions/runtime support, scheduler integration, and tests.                                        |
+| Same-location sibling validation                       | Implemented          | Improve address normalization and define stale-status tolerance.                                                           |
+| PowerOutage.us or competitor                           | Partial              | Acquire enterprise API access or select an approved provider; map its regional identifiers/GeoJSON and validate licensing. |
+| Core Elevated dispatch                                 | Missing              | Endpoint, authentication, payload, acknowledgement, and lifecycle contract are undefined.                                  |
+| Dispatch job description                               | Missing              | Define required fields and add generation/review workflow.                                                                 |
+| Salesforce                                             | Implemented          | Current direction is read-only Accounts/Contacts import; broader bidirectional scope is undecided.                         |
+| ServiceNow                                             | Missing              | Define modules, direction, entities, authentication, and conflict ownership.                                               |
+| ConnectWise MSP/PSA                                    | Missing              | Select product/API and define customer/site/contact/agreement sync ownership.                                              |
+| Public-IP geolocation                                  | Partial              | Provider/region exists; reliable latitude/longitude ingestion and confidence/source policy remain.                         |
+| Reverse DNS / “RN lookup”                              | Missing              | Add PTR lookup, cache, carrier hostname parsing, source/confidence metadata, and tests.                                    |
+| ASN lookup                                             | Implemented baseline | Add independent source validation and freshness policy.                                                                    |
+| BGP prefix/RIR/provider block intelligence             | Missing              | Add RDAP/RIR and BGP provider adapters, persistent prefix model, and refresh jobs.                                         |
+| Authorized public-service checks                       | Missing              | Define allowed protocols, targets, ownership verification, cadence, and abuse controls.                                    |
+| Public outage-map deployment                           | Partial              | Route is public-safe; production hosting, DNS, CDN/cache, rate limits, and synthetic uptime checks remain.                 |
+| Billing                                                | Defined/partial      | Build invoice history, recurring charges, usage/rating, payments, and external billing synchronization.                    |
+| Observability                                          | Missing/partial      | Structured logs exist; metrics, tracing, SLOs, dashboards, and paging rules remain.                                        |
+| UniFi controller                                       | Missing              | Add official API adapter, site/device/uplink/event normalization, and tests.                                               |
+| MikroTik controller                                    | Missing              | Add RouterOS adapter, capability matrix, secure credentials, polling, and tests.                                           |
+
+---
+
+## 15. Phase 9 — Core Elevated field dispatch
+
+### Goal
+
+Create a reliable, auditable field-dispatch workflow from an incident ticket.
+
+### Scope
+
+- Add a dedicated `POST /api/tickets/:id/dispatch` command restricted to authorized internal roles.
+- Resolve the complete operational context:
+  - ticket and timeline
+  - customer and escalation contacts
+  - site address, access instructions, and local contact
+  - service/circuit and provider identifiers
+  - impacted devices/links and latest checks
+  - correlation classification and external outage evidence
+  - SLA/severity and requested response window
+- Generate a dispatch-specific job description that includes symptoms, work requested, location, safety/access notes, known evidence, and completion criteria.
+- Require an operator review/edit step before external submission unless product explicitly approves automatic dispatch.
+- Deliver an allowlisted payload to Core Elevated using timeout, retry, idempotency, and correlation-ID conventions.
+- Persist dispatch request, payload version, external ID, acknowledgement, status, attempts, errors, and timestamps.
+- Change the ticket to `dispatch_scheduled` only after Core Elevated acknowledges the dispatch.
+
+### Acceptance criteria
+
+- Repeated requests with the same idempotency key do not create duplicate dispatches.
+- Secrets, password hashes, internal credentials, and unrelated private data never leave the application.
+- A successful response links the external dispatch ID to the ticket and writes an internal timeline event.
+- Failed delivery remains retryable and does not falsely mark the ticket as dispatched.
+- Operators can see pending, accepted, scheduled, completed, cancelled, and failed dispatch states.
+
+---
+
+## 16. Phase 10 — ServiceNow and ConnectWise integrations
+
+### Goal
+
+Synchronize service-management and MSP customer context through vendor-isolated, idempotent connectors.
+
+### ServiceNow scope
+
+- Confirm whether the target is Incident Management, Customer Service Management, Field Service Management, CMDB, or a combination.
+- Support OAuth/client credentials where available.
+- Define ticket/incident direction: import, export, or bidirectional.
+- Map customers/accounts, contacts, locations, configuration items, incidents, work notes, status, severity, and external identities.
+- Persist sync cursors, logs, conflicts, and source-of-truth ownership.
+
+### ConnectWise scope
+
+- Confirm the target product: ConnectWise PSA/Manage, RMM/Automate, or another API.
+- Import companies/customers, contacts, sites, agreements, configurations, and service tickets as approved.
+- Use external identity, incremental synchronization, idempotency, pagination, and rate-limit handling.
+- Define field ownership so local operational updates are not overwritten unexpectedly.
+
+### Acceptance criteria
+
+- Repeated syncs update existing records without duplicates.
+- A failed page or entity is retryable without replaying successful writes.
+- Credentials are masked and encrypted using the repository integration pattern.
+- Sync status, counts, errors, and last-success timestamps are visible to administrators.
+
+---
+
+## 17. Phase 11 — UniFi and MikroTik controller expansion
+
+### Goal
+
+Extend the normalized controller framework to UniFi and MikroTik without introducing vendor logic into ticketing or map services.
+
+### UniFi scope
+
+- Evaluate the official UniFi Site Manager/Network APIs and supported self-hosted controller APIs.
+- Normalize sites, gateways, switches, access points, clients where public-safe, WAN uplinks, health, alarms, and events.
+- Define cloud and on-premises authentication/certificate requirements.
+
+### MikroTik scope
+
+- Build a capability matrix for RouterOS REST API versus the RouterOS API protocol by supported version.
+- Normalize routers, interfaces, routes, BGP peers where approved, link health, logs, and events.
+- Require least-privilege service accounts, TLS, and explicit handling for self-signed certificates.
+
+### Competitive controller assessment
+
+- Compare API coverage, authentication, rate limits, webhooks, polling requirements, licensing, device inventory, WAN health, and event fidelity across supported and candidate vendors.
+- Rank future candidates using customer demand and implementation risk rather than adding unbounded vendor-specific code.
+
+### Acceptance criteria
+
+- Both connectors satisfy `BaseConnector` and produce normalized devices, links, and events.
+- Live-response fixture tests cover pagination, authentication failure, rate limits, malformed payloads, and partial sync.
+- Controller data can feed internal dashboards and explicitly approved public-map records.
+
+---
+
+## 18. Phase 12 — Advanced network intelligence and authorized probes
+
+### Goal
+
+Improve provider attribution and outage diagnosis for registered, authorized public infrastructure.
+
+### Scope
+
+- Add ICMP echo as a monitoring check type using a proven cross-platform implementation and bounded execution.
+- Add reverse DNS (`PTR`) lookup with timeout, cache, and confidence metadata.
+- Implement the requested “RN lookup” as reverse DNS/PTR resolution, similar to `nslookup`.
+- Parse provider/location hints from carrier-controlled PTR hostnames without treating naming conventions as authoritative geographic evidence.
+- Add RDAP/RIR ownership and registration data.
+- Add BGP prefix/origin-AS lookup through an approved provider such as Team Cymru or a commercial routing-data service.
+- Persist normalized prefixes, ASN, organization, RIR, country, source, fetched time, and expiry.
+- Build a refreshable inventory of address blocks associated with approved major providers/ISPs.
+- Add authorized HTTP(S), TCP, DNS, and TLS-certificate checks for registered services.
+- Require target ownership/authorization; do not implement unrestricted internet crawling or scanning.
+
+### Acceptance criteria
+
+- A public IP returns coordinates where licensed, PTR names, ASN, origin prefix, RIR owner, provider, and source timestamps when available.
+- Cached data honors provider TTLs and degrades gracefully when external services fail.
+- Probe concurrency, destination policy, timeouts, redirects, DNS rebinding, and private-address access are bounded to prevent SSRF or abusive scanning.
+- Enrichment evidence is available to monitoring correlation but does not expose private fields publicly.
+
+---
+
+## 19. Phase 13 — Billing, observability, and public launch
+
+### Goal
+
+Define the remaining business surface and operate the application safely in production.
+
+### Billing scope
+
+- Add customer invoice history and line-item visibility.
+- Add recurring service charges and contract/MRC tracking.
+- Add usage ingestion, rating, pricing, and adjustment workflows.
+- Add payment collection/status and reconciliation workflows.
+- Add external billing-platform synchronization with explicit source-of-truth and conflict rules.
+- Retain the implemented invoice-complaint and Avalara capabilities as part of the broader billing product.
+- Define financial-data retention, access control, audit, reconciliation, and source-of-truth requirements.
+
+### Observability scope
+
+- Add request rate, latency, error, saturation, database-pool, scheduler, monitoring-check, connector-sync, ticket-creation, dispatch, and notification-delivery metrics.
+- Add distributed traces across HTTP, database, external integrations, and background jobs.
+- Define service-level indicators/objectives for public-map freshness, API availability, monitoring delay, ticket-creation delay, and dispatch delivery.
+- Add dashboards and paging rules with runbook links.
+- Redact secrets, credentials, tokens, customer-private fields, and sensitive ticket content from telemetry.
+
+### Public launch scope
+
+- Publish versioned container images and document migration-before-rollout and rollback procedures.
+- Configure production DNS, TLS, CDN/cache policy, public API rate limits, and synthetic map checks.
+- Validate responsive public-map behavior, accessibility, cache freshness, and failure states.
+- Run backup/restore, load, soak, dependency outage, and multi-replica failover exercises.
+
+### Acceptance criteria
+
+- Invoice history, recurring charges, usage/rating, payments, and external billing synchronization have approved data models and ownership rules.
+- Public-map and API SLOs are measured and alertable.
+- A release can be deployed and rolled back through a documented, tested procedure.
+- Backup restoration and dependency-failure drills produce recorded evidence.
+
+---
+
+## 20. Product decisions and remaining questions
+
+### Decisions recorded August 20, 2026
+
+- **Core Elevated:** Defer implementation until the external endpoint contract is available; keep the gap documented.
+- **RN lookup:** Implement as reverse DNS/PTR resolution similar to `nslookup`. Carrier hostnames may provide provider and location hints.
+- **Power outage provider:** Target the licensed PowerOutage.us Enterprise Live Outage REST API.
+- **Billing:** Include invoice history, recurring charges, usage/rating, payments, and external billing synchronization.
+- **Next implementation priority:** Observability.
+
+### Remaining questions
+
+1. **Core Elevated:** When available, provide the base URL, authentication method, API documentation, required payload, response schema, idempotency behavior, and dispatch status lifecycle.
+2. **Dispatch job description:** Which fields are mandatory? Should AI draft it for operator approval or submit automatically? Are parts, estimated duration, required skills, safety, and access instructions required?
+3. **Public-service checks:** Which domains/IPs and protocols are authorized, who proves ownership, and what cadence/concurrency is acceptable?
+4. **PowerOutage.us:** Which countries/regions are required, and who owns procurement of Enterprise API access?
+5. **ServiceNow:** Which modules and sync direction are required, and which system owns incident status and work notes?
+6. **ConnectWise:** Which product is in scope, which entities should be imported, and is synchronization one-way or bidirectional?
+7. **External billing:** Which billing platform is the initial integration target, and which system owns invoices, ratings, payments, and adjustments?
+8. **UniFi:** Cloud Site Manager, self-hosted UniFi Network, or both? Which controller versions must be supported?
+9. **MikroTik:** Minimum RouterOS version, REST versus API protocol preference, and required data such as interfaces, routes, BGP peers, logs, or configuration backups?
+10. **Public launch:** What production domain, cloud/runtime, geographic coverage, data-retention policy, and target launch date should the plan use?
