@@ -18,7 +18,7 @@ The implementation should be delivered in phases so the team can start with a pu
 9. Additional controller ecosystems
 10. Billing and production observability
 
-### 1.1 Current implementation status (updated 2026-08-20)
+### 1.1 Current implementation status (updated 2026-09-01)
 
 Status legend: **Implemented** means the end-to-end path exists; **Partial** means useful functionality exists but one or more acceptance criteria remain; **Planned** means implementation has not started.
 
@@ -36,7 +36,7 @@ Status legend: **Implemented** means the end-to-end path exists; **Partial** mea
 | Phase 9 — Field dispatch             | Planned     | Dispatch is currently only a ticket status. Core Elevated delivery, dispatch job descriptions, idempotency, acknowledgement, and audit history are missing.                                                                                        |
 | Phase 10 — ITSM/CRM/MSP integrations | Partial     | Salesforce account/contact import exists. ServiceNow and ConnectWise MSP/PSA integrations are not implemented.                                                                                                                                     |
 | Phase 11 — Controller expansion      | Planned     | UniFi and MikroTik discovery, polling, normalized inventory, links, and event ingestion are not implemented.                                                                                                                                       |
-| Phase 12 — Network intelligence      | Planned     | Reverse DNS/RDAP/BGP enrichment, authorized public-service probes, and ISP address-block intelligence are not implemented.                                                                                                                         |
+| Phase 12 — Network intelligence      | Partial     | Authorized HTTP(S), TCP, ICMP fallback, DNS, and TLS probes now enforce ownership/allowlisting by default, block private/reserved destinations, and honor per-target cadence. Reverse DNS/RDAP/BGP and ISP address-block intelligence remain.       |
 | Phase 13 — Billing and observability | Partial     | Invoice complaints and Avalara validation exist. Billing scope needs confirmation; production metrics, tracing, alerting, and operational dashboards remain.                                                                                       |
 
 ### 1.2 Verified production-foundation work
@@ -54,13 +54,21 @@ Status legend: **Implemented** means the end-to-end path exists; **Partial** mea
 
 ### 1.3 Remaining production priorities
 
-1. Implement production observability: metrics, tracing, SLOs, dashboards, paging rules, and runbooks.
-2. Add ICMP checks, reverse DNS, and licensed PowerOutage.us Enterprise REST API correlation.
-3. Define and implement the approved billing surface: invoice history, recurring charges, usage/rating, payments, and external billing synchronization.
-4. Add ServiceNow and ConnectWise integrations, then UniFi and MikroTik controllers.
-5. Complete RDAP/RIR, BGP prefix, and ISP block intelligence.
-6. Add backup/restore, load, soak, replica failover, and public deployment validation.
-7. Implement Core Elevated dispatch after its external API contract is available.
+The August 24, 2026 delivery priorities supersede the previous observability-first ordering:
+
+1. **Authorized crawlers/public-service probes:** implement ownership-verified HTTP(S), TCP, DNS, and TLS checks with strict destination, concurrency, cadence, SSRF, and abuse controls. This does not authorize unrestricted internet crawling or scanning.
+2. **Syslog, Splunk, and application-log ingestion:** receive, normalize, search, and correlate Syslog, customer-connected Splunk data, and approved application logs with source authentication, tenant isolation, redaction, rate limits, and retention controls. Confirm whether “login applications” specifically means authentication/login audit events.
+3. **Event Monitor 24-hour purge (implemented baseline):** a locked, observable job runs every 24 hours with bounded batches, dry-run preview, admin controls, and auditable deletion metrics. Default events retain 24 hours; incident evidence, audit, legal, and held records follow longer protected policies.
+
+The following work remains planned after or alongside those priorities according to team capacity:
+
+- Implement production observability: metrics, tracing, SLOs, dashboards, paging rules, runbooks, and PagerDuty delivery.
+- Add ICMP checks, reverse DNS, and licensed PowerOutage.us Enterprise REST API correlation.
+- Define and implement the approved billing surface: invoice history, recurring charges, usage/rating, payments, and external billing synchronization.
+- Add ServiceNow and ConnectWise integrations, then UniFi and MikroTik controllers.
+- Complete RDAP/RIR, BGP prefix, and ISP block intelligence.
+- Add backup/restore, load, soak, replica failover, and public deployment validation.
+- Implement Core Elevated dispatch after its external API contract is available.
 
 ---
 
@@ -222,6 +230,7 @@ Ship a public-facing outage map without login, using a basic status source.
 - Add route /network-map
 - Make it accessible without authentication
 - Show a map with device/site markers and outage state
+- Nice to have: add a weather layer that can be toggled independently from outage data.
 - Support limited filtering for:
   - region
   - provider
@@ -269,6 +278,7 @@ Ship a public-facing outage map without login, using a basic status source.
 - The map can display live status from known targets.
 - Limited filters work without login.
 - Affected regions are ranked by impact and can filter the visible map points.
+- If the weather layer is delivered, it uses a licensed provider, displays source/freshness attribution, remains visually distinct from outage evidence, and fails without blocking the outage map.
 
 ---
 
@@ -535,6 +545,7 @@ Turn the ingestion and correlation data into useful reporting and operational wo
 - Add internal dashboards for summary and recent outages
 - Add report views for outages by region/provider/device
 - Add alerting hooks for high-severity incidents
+- Add PagerDuty Events API integration for policy-selected incidents and operational failures.
 - Optionally push incidents into existing ticketing flows
 
 ### Frontend implementation
@@ -555,11 +566,13 @@ Turn the ingestion and correlation data into useful reporting and operational wo
 - Dashboard widgets
 - Incident reports
 - Alerting hooks
+- PagerDuty incident trigger, acknowledgement, and resolution lifecycle with stable deduplication keys
 
 ### Acceptance criteria
 
 - Internal users can view outage summaries and recent incidents.
 - High-severity incidents can be surfaced to alerts or ticketing workflows.
+- PagerDuty notifications are severity/policy gated, retry safely without duplicate incidents, resolve when the source incident closes, and expose delivery status and audit history.
 
 ---
 
@@ -894,31 +907,47 @@ Reduce startup cost, enforce release quality, and make deployments repeatable an
 - Add UniFi as a controller ecosystem.
 - Evaluate and add MikroTik through RouterOS REST/API where supported.
 
+9. **August 24 roadmap additions**
+
+- Add PagerDuty integration for policy-selected incidents and operational alerts.
+- Nice to have: add a licensed, independently toggleable weather layer to the public outage map without presenting weather as confirmed outage causation.
+- On Services, make the complete **Circuit Business Impact** summary row expand or collapse its details, not only its name. Preserve nested control behavior and support keyboard activation, focus indication, and the correct `aria-expanded` state.
+- Prioritize authorized crawlers/public-service probes first, Syslog/Splunk and application-log ingestion second, and the Event Monitor 24-hour purge third.
+- Add a customer-configurable Splunk integration so each tenant can connect an approved Splunk instance for service-assurance events, log search, and incident correlation.
+- Confirm whether “login applications” means general application logs or specifically authentication/login audit events.
+- Define Event Monitor retention and legal/compliance exceptions before enabling deletion; purge eligible records in bounded batches under a cross-instance scheduler lock and publish run metrics.
+
 ### 14.2 Gap matrix
 
-| Requirement                                            | Status               | Remaining gap                                                                                                              |
-| ------------------------------------------------------ | -------------------- | -------------------------------------------------------------------------------------------------------------------------- |
-| Public landing map, login link, affected regions       | Implemented          | Production domain/CDN and deployment verification remain.                                                                  |
-| FortiManager, Meraki, Palo Alto, SD1-style controllers | Implemented baseline | Vendor certification and real-environment acceptance tests remain.                                                         |
-| Nagios ingestion and ticket creation                   | Implemented          | Production Nagios configuration and operational acceptance remain.                                                         |
-| ICMP ping for non-controller equipment                 | Missing              | Add ICMP check type, permissions/runtime support, scheduler integration, and tests.                                        |
-| Same-location sibling validation                       | Implemented          | Improve address normalization and define stale-status tolerance.                                                           |
-| PowerOutage.us or competitor                           | Partial              | Acquire enterprise API access or select an approved provider; map its regional identifiers/GeoJSON and validate licensing. |
-| Core Elevated dispatch                                 | Missing              | Endpoint, authentication, payload, acknowledgement, and lifecycle contract are undefined.                                  |
-| Dispatch job description                               | Missing              | Define required fields and add generation/review workflow.                                                                 |
-| Salesforce                                             | Implemented          | Current direction is read-only Accounts/Contacts import; broader bidirectional scope is undecided.                         |
-| ServiceNow                                             | Missing              | Define modules, direction, entities, authentication, and conflict ownership.                                               |
-| ConnectWise MSP/PSA                                    | Missing              | Select product/API and define customer/site/contact/agreement sync ownership.                                              |
-| Public-IP geolocation                                  | Partial              | Provider/region exists; reliable latitude/longitude ingestion and confidence/source policy remain.                         |
-| Reverse DNS / “RN lookup”                              | Missing              | Add PTR lookup, cache, carrier hostname parsing, source/confidence metadata, and tests.                                    |
-| ASN lookup                                             | Implemented baseline | Add independent source validation and freshness policy.                                                                    |
-| BGP prefix/RIR/provider block intelligence             | Missing              | Add RDAP/RIR and BGP provider adapters, persistent prefix model, and refresh jobs.                                         |
-| Authorized public-service checks                       | Missing              | Define allowed protocols, targets, ownership verification, cadence, and abuse controls.                                    |
-| Public outage-map deployment                           | Partial              | Route is public-safe; production hosting, DNS, CDN/cache, rate limits, and synthetic uptime checks remain.                 |
-| Billing                                                | Defined/partial      | Build invoice history, recurring charges, usage/rating, payments, and external billing synchronization.                    |
-| Observability                                          | Missing/partial      | Structured logs exist; metrics, tracing, SLOs, dashboards, and paging rules remain.                                        |
-| UniFi controller                                       | Missing              | Add official API adapter, site/device/uplink/event normalization, and tests.                                               |
-| MikroTik controller                                    | Missing              | Add RouterOS adapter, capability matrix, secure credentials, polling, and tests.                                           |
+| Requirement                                            | Status               | Remaining gap                                                                                                                           |
+| ------------------------------------------------------ | -------------------- | --------------------------------------------------------------------------------------------------------------------------------------- |
+| Public landing map, login link, affected regions       | Implemented          | Production domain/CDN and deployment verification remain.                                                                               |
+| FortiManager, Meraki, Palo Alto, SD1-style controllers | Implemented baseline | Vendor certification and real-environment acceptance tests remain.                                                                      |
+| Nagios ingestion and ticket creation                   | Implemented          | Production Nagios configuration and operational acceptance remain.                                                                      |
+| ICMP ping for non-controller equipment                 | Missing              | Add ICMP check type, permissions/runtime support, scheduler integration, and tests.                                                     |
+| Same-location sibling validation                       | Implemented          | Improve address normalization and define stale-status tolerance.                                                                        |
+| PowerOutage.us or competitor                           | Partial              | Acquire enterprise API access or select an approved provider; map its regional identifiers/GeoJSON and validate licensing.              |
+| Core Elevated dispatch                                 | Missing              | Endpoint, authentication, payload, acknowledgement, and lifecycle contract are undefined.                                               |
+| Dispatch job description                               | Missing              | Define required fields and add generation/review workflow.                                                                              |
+| Salesforce                                             | Implemented          | Current direction is read-only Accounts/Contacts import; broader bidirectional scope is undecided.                                      |
+| ServiceNow                                             | Missing              | Define modules, direction, entities, authentication, and conflict ownership.                                                            |
+| ConnectWise MSP/PSA                                    | Missing              | Select product/API and define customer/site/contact/agreement sync ownership.                                                           |
+| Public-IP geolocation                                  | Partial              | Provider/region exists; reliable latitude/longitude ingestion and confidence/source policy remain.                                      |
+| Reverse DNS / “RN lookup”                              | Missing              | Add PTR lookup, cache, carrier hostname parsing, source/confidence metadata, and tests.                                                 |
+| ASN lookup                                             | Implemented baseline | Add independent source validation and freshness policy.                                                                                 |
+| BGP prefix/RIR/provider block intelligence             | Missing              | Add RDAP/RIR and BGP provider adapters, persistent prefix model, and refresh jobs.                                                      |
+| Authorized public-service checks                       | Implemented baseline | HTTP(S), TCP, ICMP fallback, DNS, and TLS checks enforce ownership/allowlisting, SSRF guards, timeouts, request throttling, serial execution, per-run budgets, cadence, and structured telemetry. Formal metrics export remains in Phase 13. |
+| Public outage-map deployment                           | Partial              | Route is public-safe; production hosting, DNS, CDN/cache, rate limits, and synthetic uptime checks remain.                              |
+| Billing                                                | Defined/partial      | Build invoice history, recurring charges, usage/rating, payments, and external billing synchronization.                                 |
+| Observability                                          | Missing/partial      | Structured logs exist; metrics, tracing, SLOs, dashboards, and paging rules remain.                                                     |
+| UniFi controller                                       | Missing              | Add official API adapter, site/device/uplink/event normalization, and tests.                                                            |
+| MikroTik controller                                    | Missing              | Add RouterOS adapter, capability matrix, secure credentials, polling, and tests.                                                        |
+| PagerDuty                                              | Implemented baseline | Events API delivery, severity gating, stable deduplication, retries, trigger/acknowledge/resolve lifecycle wiring, audit history, and focused tests exist. Production account configuration, delivery metrics, and full lifecycle integration tests remain. |
+| Weather layer on public outage map (nice to have)      | Missing              | Select and license a provider; add toggle, attribution, freshness, accessible legend, caching, and graceful degradation.                |
+| Circuit Business Impact row expansion                  | Implemented          | The full summary row supports pointer, Enter, and Space activation with focus indication, nested-control isolation, and synchronized `aria-expanded` state. |
+| Authorized crawlers/public-service probes              | Implemented baseline | Priority 1: core probes, fail-closed safety controls, rate and batch limits, cadence, structured telemetry, and focused unit/API integration coverage are implemented. |
+| Syslog, Splunk, and application-log ingestion           | Planned              | Priority 2: add tenant-scoped Syslog/application-log ingestion and a customer-configurable Splunk connector, initially targeting Splunk HEC and approved search APIs. |
+| Event Monitor 24-hour purge                            | Implemented baseline | Priority 3: locked daily scheduling, category retention, legal/compliance holds, bounded deletion, dry runs, structured results, admin UI, OpenAPI clients, and unit/integration coverage are implemented. |
 
 ---
 
@@ -982,6 +1011,33 @@ Synchronize service-management and MSP customer context through vendor-isolated,
 - A failed page or entity is retryable without replaying successful writes.
 - Credentials are masked and encrypted using the repository integration pattern.
 - Sync status, counts, errors, and last-success timestamps are visible to administrators.
+
+---
+
+## 16A. Customer-configurable Splunk integration
+
+### Goal
+
+Allow each customer tenant to connect an approved Splunk instance and use its data in service-assurance workflows without mixing credentials, events, or search results across tenants.
+
+### Scope
+
+- Provide tenant-scoped Splunk connection settings for Splunk Cloud and approved self-hosted deployments.
+- Prefer Splunk HTTP Event Collector (HEC) for outbound event delivery and support the Splunk search API for approved inbound correlation queries.
+- Encrypt routing URLs, tokens, and credentials at rest; never expose secrets in logs, exports, frontend responses, or AI prompts.
+- Validate destination ownership, TLS, tenant authorization, index/source-type mapping, and least-privilege credentials before enabling a connection.
+- Support explicit event mappings for monitoring failures, ticket lifecycle changes, controller events, and PagerDuty delivery outcomes.
+- Enforce per-tenant rate limits, payload-size limits, retention boundaries, retries, idempotency, and redaction of customer-private fields.
+- Show connection health, last successful delivery/search, rejected events, and retryable failures to authorized tenant administrators.
+- Keep Splunk optional: core ticketing, monitoring, and PagerDuty workflows must continue when a tenant has no Splunk connection or Splunk is unavailable.
+
+### Acceptance criteria
+
+- A tenant administrator can create, test, rotate, disable, and delete a Splunk connection without accessing another tenant's configuration.
+- Events sent to Splunk are tenant-scoped, redacted, retryable, and protected against duplicate delivery.
+- Approved Splunk search results can be correlated to the tenant's sites, services, monitored targets, and tickets without cross-tenant data exposure.
+- Connection status, delivery/search errors, and audit history are visible to authorized administrators.
+- Mocked HEC and search API tests cover authentication failures, rate limits, timeouts, malformed responses, retries, and tenant isolation.
 
 ---
 
@@ -1066,6 +1122,7 @@ Define the remaining business surface and operate the application safely in prod
 - Add distributed traces across HTTP, database, external integrations, and background jobs.
 - Define service-level indicators/objectives for public-map freshness, API availability, monitoring delay, ticket-creation delay, and dispatch delivery.
 - Add dashboards and paging rules with runbook links.
+- Integrate PagerDuty for policy-selected incident and operational paging, with deduplicated trigger, acknowledgement, and resolution events.
 - Redact secrets, credentials, tokens, customer-private fields, and sensitive ticket content from telemetry.
 
 ### Public launch scope
@@ -1086,13 +1143,17 @@ Define the remaining business surface and operate the application safely in prod
 
 ## 20. Product decisions and remaining questions
 
-### Decisions recorded August 20, 2026
+### Decisions recorded through August 24, 2026
 
 - **Core Elevated:** Defer implementation until the external endpoint contract is available; keep the gap documented.
 - **RN lookup:** Implement as reverse DNS/PTR resolution similar to `nslookup`. Carrier hostnames may provide provider and location hints.
 - **Power outage provider:** Target the licensed PowerOutage.us Enterprise Live Outage REST API.
 - **Billing:** Include invoice history, recurring charges, usage/rating, payments, and external billing synchronization.
-- **Next implementation priority:** Observability.
+- **Delivery priority:** (1) authorized crawlers/public-service probes, (2) Syslog/Splunk and application-log ingestion, and (3) Event Monitor purge every 24 hours.
+- **PagerDuty:** Dedicated integration is implemented for policy-selected incident and operational paging; production account configuration, delivery metrics, and full lifecycle acceptance remain.
+- **Splunk:** Support customer-configurable, tenant-isolated Splunk connections, initially using HEC for event delivery and approved search APIs for correlation.
+- **Weather map:** Treat a licensed weather overlay on the public outage map as a nice-to-have, not authoritative outage-causation evidence.
+- **Circuit Business Impact:** Expand/collapse from the complete summary row with pointer and keyboard interaction, not only from the title.
 
 ### Remaining questions
 
@@ -1106,3 +1167,7 @@ Define the remaining business surface and operate the application safely in prod
 8. **UniFi:** Cloud Site Manager, self-hosted UniFi Network, or both? Which controller versions must be supported?
 9. **MikroTik:** Minimum RouterOS version, REST versus API protocol preference, and required data such as interfaces, routes, BGP peers, logs, or configuration backups?
 10. **Public launch:** What production domain, cloud/runtime, geographic coverage, data-retention policy, and target launch date should the plan use?
+11. **Log ingestion and Splunk:** Does “login applications” mean general application logs, authentication/login audit events, or both? Which Syslog versions/transports and initial applications are in scope? Should Splunk support outbound HEC delivery only, inbound search/correlation, or both? Which Splunk Cloud/self-hosted versions, indexes, source types, retention rules, and customer-owned credentials are approved?
+12. **Event Monitor retention (resolved baseline):** Run cleanup daily. Retain default events for 24 hours, incident evidence for 90 days, audit events for one year, and legal records for seven years; legal and compliance holds are exempt from deletion.
+13. **PagerDuty:** Which account/service, routing key ownership, escalation policies, severities, acknowledgement direction, and sandbox environment should be used?
+14. **Weather provider:** Which regions and weather layers are required, and which provider/license and attribution terms are approved?

@@ -7,6 +7,7 @@ import {
   servicesTable,
   usersTable,
   ticketUpdatesTable,
+  escalationNotificationsTable,
   slaPoliciesTable,
 } from '@workspace/db';
 import { eq, and, ilike, or, desc, asc, lt, inArray } from 'drizzle-orm';
@@ -14,6 +15,11 @@ import { requireAuth, requireScope } from '../middlewares/auth';
 import { summarizeTicket, normalizeStatus, generateCustomerUpdate } from '../lib/ai';
 import { calculateSeverity, type ImpactLevel, type UrgencyLevel } from '../lib/severity';
 import { evaluateEscalation } from '../lib/notificationEngine';
+import {
+  deliverPagerDutyEvent,
+  isPagerDutyConfigured,
+  pagerDutyActionForStatusChange,
+} from '../lib/pagerduty-delivery';
 import { resolveMatrixCellForTicket } from '../lib/matrixResolver';
 import { sendBadRequest, sendForbidden } from '../lib/http';
 import {
@@ -540,6 +546,12 @@ router.put('/tickets/:id', requireAuth, async (req, res): Promise<void> => {
     severity = calculateSeverity(impactLevel as ImpactLevel, urgencyLevel as UrgencyLevel);
   }
 
+  const [previousTicket] = await db.select().from(ticketsTable).where(eq(ticketsTable.id, id));
+  if (!previousTicket) {
+    res.status(404).json({ error: 'Not Found' });
+    return;
+  }
+
   const resolvedAt = status === 'resolved' || status === 'closed' ? new Date() : undefined;
 
   const [ticket] = await db
@@ -569,6 +581,60 @@ router.put('/tickets/:id', requireAuth, async (req, res): Promise<void> => {
   if (!ticket) {
     res.status(404).json({ error: 'Not Found' });
     return;
+  }
+
+  const pagerDutyAction = status
+    ? pagerDutyActionForStatusChange(previousTicket.status, status)
+    : null;
+  const [pagerDutyTrigger] = await db
+    .select({ status: escalationNotificationsTable.status })
+    .from(escalationNotificationsTable)
+    .where(
+      and(
+        eq(escalationNotificationsTable.ticketId, id),
+        eq(escalationNotificationsTable.channel, 'pagerduty'),
+        eq(escalationNotificationsTable.status, 'sent'),
+      ),
+    );
+  const hasSentPagerDutyTrigger = Boolean(pagerDutyTrigger);
+
+  if (
+    pagerDutyAction &&
+    isPagerDutyConfigured() &&
+    hasSentPagerDutyTrigger
+  ) {
+    const delivery = await deliverPagerDutyEvent({
+      action: pagerDutyAction,
+      ticketId: ticket.id,
+      ticketNumber: ticket.ticketNumber,
+      title: ticket.title,
+      severity: ticket.severity,
+      status: ticket.status,
+    });
+    const message = delivery.error
+      ? `PagerDuty ${pagerDutyAction} failed: ${delivery.error}`
+      : `PagerDuty incident ${pagerDutyAction}d for ${ticket.ticketNumber}`;
+
+    await db.insert(escalationNotificationsTable).values({
+      ticketId: ticket.id,
+      contactId: null,
+      contactName: 'PagerDuty',
+      contactEmail: 'events@pagerduty.com',
+      contactRole: 'on_call',
+      severity: ticket.severity,
+      channel: 'pagerduty',
+      reason: 'manual',
+      durationMinutes: Math.floor((Date.now() - new Date(ticket.openedAt).getTime()) / 60000),
+      message,
+      status: delivery.status,
+      ruleDescription: null,
+    });
+    await db.insert(ticketUpdatesTable).values({
+      ticketId: ticket.id,
+      updateType: 'system_event',
+      rawText: message,
+      visibility: 'internal',
+    });
   }
   res.json(ticket);
 });
