@@ -1,4 +1,4 @@
-import { pgTable, text, timestamp, uuid, integer, jsonb } from 'drizzle-orm/pg-core';
+import { pgTable, text, timestamp, uuid, integer, jsonb, boolean } from 'drizzle-orm/pg-core';
 import { createInsertSchema } from 'drizzle-zod';
 import { z } from 'zod/v4';
 import { controllersTable } from './controllers';
@@ -31,9 +31,13 @@ export const deviceEventsTable = pgTable('device_events', {
   aiProbableImpact: text('ai_probable_impact'),
   aiCustomerUpdate: text('ai_customer_update'),
   confidenceScore: integer('confidence_score'),
-  /** Vendor event category (e.g. Meraki: "appliance_connectivity", "vpn", "security", "device") */
   category: text('category'),
   rawPayloadJson: jsonb('raw_payload_json'),
+  legalHold: boolean('legal_hold').notNull().default(false),
+  complianceHold: boolean('compliance_hold').notNull().default(false),
+  retentionCategory: text('retention_category', {
+    enum: ['default', 'incident_evidence', 'audit', 'legal'],
+  }).notNull().default('default'),
   occurredAt: timestamp('occurred_at', { withTimezone: true }).notNull().defaultNow(),
   createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
 });

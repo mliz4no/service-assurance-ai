@@ -13,6 +13,11 @@ import {
 } from './matrixResolver';
 import type { ImpactLevel, UrgencyLevel } from './severity';
 import { deliverAlert } from './notification-delivery';
+import {
+  deliverPagerDutyEvent,
+  isPagerDutyConfigured,
+  shouldTriggerPagerDuty,
+} from './pagerduty-delivery';
 
 interface NotificationTicket {
   id: string;
@@ -79,12 +84,12 @@ export async function evaluateEscalation(
     .from(customerContactsTable)
     .where(eq(customerContactsTable.customerId, ticket.customerId));
 
-  if (!contacts.length) return { notified: 0, contacts: [] };
-
   const existing = await db
     .select({
       contactId: escalationNotificationsTable.contactId,
       reason: escalationNotificationsTable.reason,
+      channel: escalationNotificationsTable.channel,
+      status: escalationNotificationsTable.status,
     })
     .from(escalationNotificationsTable)
     .where(eq(escalationNotificationsTable.ticketId, ticket.id));
@@ -211,6 +216,48 @@ export async function evaluateEscalation(
       ticketId: ticket.id,
       updateType: 'system_event',
       rawText: logText,
+      visibility: 'internal',
+    });
+  }
+
+  const pagerDutySent = existing.some(
+    (notification: typeof escalationNotificationsTable.$inferSelect) =>
+      notification.channel === 'pagerduty' && notification.status === 'sent',
+  );
+  if (
+    isPagerDutyConfigured() &&
+    shouldTriggerPagerDuty(ticket.severity as SeverityLevel) &&
+    !pagerDutySent
+  ) {
+    const delivery = await deliverPagerDutyEvent({
+      action: 'trigger',
+      ticketId: ticket.id,
+      ticketNumber: ticket.ticketNumber,
+      title: ticket.title,
+      severity: ticket.severity as SeverityLevel,
+      status: ticket.status,
+    });
+    const message = delivery.error
+      ? `PagerDuty trigger failed: ${delivery.error}`
+      : `PagerDuty incident triggered with deduplication key ${delivery.dedupKey}`;
+    await db.insert(escalationNotificationsTable).values({
+      ticketId: ticket.id,
+      contactId: null,
+      contactName: 'PagerDuty',
+      contactEmail: 'events@pagerduty.com',
+      contactRole: 'on_call',
+      severity: ticket.severity,
+      channel: 'pagerduty',
+      reason: 'severity_threshold',
+      durationMinutes,
+      message,
+      status: delivery.status,
+      ruleDescription: ruleDescription ?? null,
+    });
+    await db.insert(ticketUpdatesTable).values({
+      ticketId: ticket.id,
+      updateType: 'system_event',
+      rawText: message,
       visibility: 'internal',
     });
   }

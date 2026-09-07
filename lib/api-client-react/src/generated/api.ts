@@ -49,6 +49,8 @@ import type {
   DashboardSummary,
   DeviceEvent,
   DeviceEventDetail,
+  DeviceEventPurgePreview,
+  DeviceEventPurgeRunResult,
   DeviceEventSummary,
   ErrorResponse,
   EscalationEvaluationResult,
@@ -86,6 +88,7 @@ import type {
   PublicNetworkMapPoint,
   PublicNetworkMapSummary,
   PublicOutageRegion,
+  RunDeviceEventPurgeRequest,
   RunMonitoringRequest,
   SalesforceConfig,
   SalesforceStatus,
@@ -105,6 +108,8 @@ import type {
   UpdateControllerRequest,
   UpdateCustomerContactRequest,
   UpdateCustomerRequest,
+  UpdateDeviceEventHolds200,
+  UpdateDeviceEventHoldsRequest,
   UpdateInvoiceComplaintRequest,
   UpdateManagedDeviceRequest,
   UpdateMonitoringTargetRequest,
@@ -5687,6 +5692,240 @@ export const useAnalyzeDeviceEvent = <TError = ErrorType<unknown>, TContext = un
   TContext
 > => {
   return useMutation(getAnalyzeDeviceEventMutationOptions(options));
+};
+
+/**
+ * @summary Update retention holds for a device event
+ */
+export const getUpdateDeviceEventHoldsUrl = (id: string) => {
+  return `/api/device-events/${id}/holds`;
+};
+
+export const updateDeviceEventHolds = async (
+  id: string,
+  updateDeviceEventHoldsRequest: UpdateDeviceEventHoldsRequest,
+  options?: RequestInit,
+): Promise<UpdateDeviceEventHolds200> => {
+  return customFetch<UpdateDeviceEventHolds200>(getUpdateDeviceEventHoldsUrl(id), {
+    ...options,
+    method: 'PUT',
+    headers: { 'Content-Type': 'application/json', ...options?.headers },
+    body: JSON.stringify(updateDeviceEventHoldsRequest),
+  });
+};
+
+export const getUpdateDeviceEventHoldsMutationOptions = <
+  TError = ErrorType<unknown>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof updateDeviceEventHolds>>,
+    TError,
+    { id: string; data: BodyType<UpdateDeviceEventHoldsRequest> },
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationOptions<
+  Awaited<ReturnType<typeof updateDeviceEventHolds>>,
+  TError,
+  { id: string; data: BodyType<UpdateDeviceEventHoldsRequest> },
+  TContext
+> => {
+  const mutationKey = ['updateDeviceEventHolds'];
+  const { mutation: mutationOptions, request: requestOptions } = options
+    ? options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey
+      ? options
+      : { ...options, mutation: { ...options.mutation, mutationKey } }
+    : { mutation: { mutationKey }, request: undefined };
+
+  const mutationFn: MutationFunction<
+    Awaited<ReturnType<typeof updateDeviceEventHolds>>,
+    { id: string; data: BodyType<UpdateDeviceEventHoldsRequest> }
+  > = (props) => {
+    const { id, data } = props ?? {};
+
+    return updateDeviceEventHolds(id, data, requestOptions);
+  };
+
+  return { mutationFn, ...mutationOptions };
+};
+
+export type UpdateDeviceEventHoldsMutationResult = NonNullable<
+  Awaited<ReturnType<typeof updateDeviceEventHolds>>
+>;
+export type UpdateDeviceEventHoldsMutationBody = BodyType<UpdateDeviceEventHoldsRequest>;
+export type UpdateDeviceEventHoldsMutationError = ErrorType<unknown>;
+
+/**
+ * @summary Update retention holds for a device event
+ */
+export const useUpdateDeviceEventHolds = <
+  TError = ErrorType<unknown>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof updateDeviceEventHolds>>,
+    TError,
+    { id: string; data: BodyType<UpdateDeviceEventHoldsRequest> },
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationResult<
+  Awaited<ReturnType<typeof updateDeviceEventHolds>>,
+  TError,
+  { id: string; data: BodyType<UpdateDeviceEventHoldsRequest> },
+  TContext
+> => {
+  return useMutation(getUpdateDeviceEventHoldsMutationOptions(options));
+};
+
+/**
+ * @summary Preview device-event retention purge
+ */
+export const getPreviewDeviceEventPurgeUrl = () => {
+  return `/api/device-events/purge/preview`;
+};
+
+export const previewDeviceEventPurge = async (
+  options?: RequestInit,
+): Promise<DeviceEventPurgePreview> => {
+  return customFetch<DeviceEventPurgePreview>(getPreviewDeviceEventPurgeUrl(), {
+    ...options,
+    method: 'GET',
+  });
+};
+
+export const getPreviewDeviceEventPurgeQueryKey = () => {
+  return [`/api/device-events/purge/preview`] as const;
+};
+
+export const getPreviewDeviceEventPurgeQueryOptions = <
+  TData = Awaited<ReturnType<typeof previewDeviceEventPurge>>,
+  TError = ErrorType<unknown>,
+>(options?: {
+  query?: UseQueryOptions<Awaited<ReturnType<typeof previewDeviceEventPurge>>, TError, TData>;
+  request?: SecondParameter<typeof customFetch>;
+}) => {
+  const { query: queryOptions, request: requestOptions } = options ?? {};
+
+  const queryKey = queryOptions?.queryKey ?? getPreviewDeviceEventPurgeQueryKey();
+
+  const queryFn: QueryFunction<Awaited<ReturnType<typeof previewDeviceEventPurge>>> = ({
+    signal,
+  }) => previewDeviceEventPurge({ signal, ...requestOptions });
+
+  return { queryKey, queryFn, ...queryOptions } as UseQueryOptions<
+    Awaited<ReturnType<typeof previewDeviceEventPurge>>,
+    TError,
+    TData
+  > & { queryKey: QueryKey };
+};
+
+export type PreviewDeviceEventPurgeQueryResult = NonNullable<
+  Awaited<ReturnType<typeof previewDeviceEventPurge>>
+>;
+export type PreviewDeviceEventPurgeQueryError = ErrorType<unknown>;
+
+/**
+ * @summary Preview device-event retention purge
+ */
+
+export function usePreviewDeviceEventPurge<
+  TData = Awaited<ReturnType<typeof previewDeviceEventPurge>>,
+  TError = ErrorType<unknown>,
+>(options?: {
+  query?: UseQueryOptions<Awaited<ReturnType<typeof previewDeviceEventPurge>>, TError, TData>;
+  request?: SecondParameter<typeof customFetch>;
+}): UseQueryResult<TData, TError> & { queryKey: QueryKey } {
+  const queryOptions = getPreviewDeviceEventPurgeQueryOptions(options);
+
+  const query = useQuery(queryOptions) as UseQueryResult<TData, TError> & { queryKey: QueryKey };
+
+  return { ...query, queryKey: queryOptions.queryKey };
+}
+
+/**
+ * @summary Run or dry-run device-event retention purge
+ */
+export const getRunDeviceEventPurgeUrl = () => {
+  return `/api/device-events/purge/run`;
+};
+
+export const runDeviceEventPurge = async (
+  runDeviceEventPurgeRequest: RunDeviceEventPurgeRequest,
+  options?: RequestInit,
+): Promise<DeviceEventPurgeRunResult> => {
+  return customFetch<DeviceEventPurgeRunResult>(getRunDeviceEventPurgeUrl(), {
+    ...options,
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', ...options?.headers },
+    body: JSON.stringify(runDeviceEventPurgeRequest),
+  });
+};
+
+export const getRunDeviceEventPurgeMutationOptions = <
+  TError = ErrorType<DeviceEventPurgeRunResult>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof runDeviceEventPurge>>,
+    TError,
+    { data: BodyType<RunDeviceEventPurgeRequest> },
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationOptions<
+  Awaited<ReturnType<typeof runDeviceEventPurge>>,
+  TError,
+  { data: BodyType<RunDeviceEventPurgeRequest> },
+  TContext
+> => {
+  const mutationKey = ['runDeviceEventPurge'];
+  const { mutation: mutationOptions, request: requestOptions } = options
+    ? options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey
+      ? options
+      : { ...options, mutation: { ...options.mutation, mutationKey } }
+    : { mutation: { mutationKey }, request: undefined };
+
+  const mutationFn: MutationFunction<
+    Awaited<ReturnType<typeof runDeviceEventPurge>>,
+    { data: BodyType<RunDeviceEventPurgeRequest> }
+  > = (props) => {
+    const { data } = props ?? {};
+
+    return runDeviceEventPurge(data, requestOptions);
+  };
+
+  return { mutationFn, ...mutationOptions };
+};
+
+export type RunDeviceEventPurgeMutationResult = NonNullable<
+  Awaited<ReturnType<typeof runDeviceEventPurge>>
+>;
+export type RunDeviceEventPurgeMutationBody = BodyType<RunDeviceEventPurgeRequest>;
+export type RunDeviceEventPurgeMutationError = ErrorType<DeviceEventPurgeRunResult>;
+
+/**
+ * @summary Run or dry-run device-event retention purge
+ */
+export const useRunDeviceEventPurge = <
+  TError = ErrorType<DeviceEventPurgeRunResult>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof runDeviceEventPurge>>,
+    TError,
+    { data: BodyType<RunDeviceEventPurgeRequest> },
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationResult<
+  Awaited<ReturnType<typeof runDeviceEventPurge>>,
+  TError,
+  { data: BodyType<RunDeviceEventPurgeRequest> },
+  TContext
+> => {
+  return useMutation(getRunDeviceEventPurgeMutationOptions(options));
 };
 
 /**

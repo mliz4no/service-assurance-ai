@@ -6,6 +6,7 @@
  * OpenAPI spec version: 0.1.0
  */
 import type { DeviceEventRawPayloadJson } from './deviceEventRawPayloadJson';
+import type { DeviceEventRetentionCategory } from './deviceEventRetentionCategory';
 import type { DeviceEventSeverity } from './deviceEventSeverity';
 
 export interface DeviceEvent {
@@ -28,6 +29,9 @@ export interface DeviceEvent {
   confidenceScore?: number | null;
   category?: string | null;
   rawPayloadJson?: DeviceEventRawPayloadJson;
+  legalHold: boolean;
+  complianceHold: boolean;
+  retentionCategory: DeviceEventRetentionCategory;
   occurredAt: Date;
   createdAt: Date;
 }

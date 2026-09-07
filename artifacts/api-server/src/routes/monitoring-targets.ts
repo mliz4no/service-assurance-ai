@@ -4,14 +4,23 @@ import {
   monitoredTargetsTable,
   monitoringChecksTable,
   insertMonitoredTargetApiSchema,
+  MONITORING_CHECK_TYPES,
 } from '@workspace/db';
 import { and, desc, eq, ilike, inArray, or } from 'drizzle-orm';
 import { requireAuth } from '../middlewares/auth';
 import { sendBadRequest, sendForbidden } from '../lib/http';
 import { getStringParam } from '../lib/params';
-import { resolveTargetEnrichmentWithProvider } from '../lib/target-enrichment';
+import {
+  resolveTargetEnrichmentWithProvider,
+} from '../lib/target-enrichment';
 import { lookupExternalOutageSignal } from '../lib/external-outage-signal';
 import { runNagiosMonitoring, runSyntheticMonitoring } from '../lib/monitoring-execution';
+import {
+  evaluateProbeSafety,
+  runProbe,
+} from '../lib/monitoring-checks';
+import dns from 'node:dns';
+import crypto from 'node:crypto';
 
 const router: IRouter = Router();
 
@@ -255,6 +264,165 @@ router.get('/monitoring/external-outage-signal/preview', requireAuth, async (req
     },
     signal,
   });
+});
+
+router.post('/monitoring/targets/:id/probe-preview', requireAuth, async (req, res): Promise<void> => {
+  if (!requireInternalUser(req, res)) return;
+  const id = getStringParam(req.params.id, 'id');
+  const [target] = await db.select().from(monitoredTargetsTable).where(eq(monitoredTargetsTable.id, id));
+  if (!target) {
+    res.status(404).json({ error: 'Not Found' });
+    return;
+  }
+
+  const host = target.hostOrIp.replace(/^https?:\/\//i, '').split('/')[0].split(':')[0];
+  let resolvedIps: string[] = [];
+  try {
+    const [a, aaaa] = await Promise.all([
+      dns.promises.resolve4(host).catch(() => []),
+      dns.promises.resolve6(host).catch(() => []),
+    ]);
+    resolvedIps = [...a, ...aaaa];
+  } catch {
+    resolvedIps = [];
+  }
+  const safety = evaluateProbeSafety(target, { resolvedIps });
+  const probe = await runProbe(target);
+
+  res.json({
+    targetId: target.id,
+    preferredCheckType: target.preferredCheckType ?? null,
+    supportedCheckTypes: MONITORING_CHECK_TYPES,
+    host,
+    resolvedIps,
+    ownership: {
+      verifiedAt: target.ownershipVerifiedAt ?? null,
+      method: target.ownershipMethod ?? null,
+      allowlisted: target.probeAllowlisted,
+    },
+    safety,
+    probe,
+  });
+});
+
+router.post('/monitoring/targets/:id/ownership/dns-txt-challenge', requireAuth, async (req, res): Promise<void> => {
+  if (!requireInternalUser(req, res)) return;
+  const id = getStringParam(req.params.id, 'id');
+  const [target] = await db.select().from(monitoredTargetsTable).where(eq(monitoredTargetsTable.id, id));
+  if (!target) {
+    res.status(404).json({ error: 'Not Found' });
+    return;
+  }
+  const host = target.hostOrIp.replace(/^https?:\/\//i, '').split('/')[0].split(':')[0];
+  const token = `sa-verify-${crypto.randomBytes(16).toString('hex')}`;
+
+  const [updated] = await db
+    .update(monitoredTargetsTable)
+    .set({
+      ownershipMethod: 'dns_txt',
+      ownershipVerificationValue: token,
+    })
+    .where(eq(monitoredTargetsTable.id, id))
+    .returning();
+
+  res.json({
+    targetId: id,
+    challenge: {
+      type: 'dns_txt',
+      recordName: `_sa-verify.${host}`,
+      recordValue: token,
+      instructions: `Create a TXT DNS record at _sa-verify.${host} with value "${token}", then call POST /monitoring/targets/${id}/ownership/verify to confirm.`,
+    },
+    target: updated,
+  });
+});
+
+router.post('/monitoring/targets/:id/ownership/verify', requireAuth, async (req, res): Promise<void> => {
+  if (!requireInternalUser(req, res)) return;
+  const id = getStringParam(req.params.id, 'id');
+  const [target] = await db.select().from(monitoredTargetsTable).where(eq(monitoredTargetsTable.id, id));
+  if (!target) {
+    res.status(404).json({ error: 'Not Found' });
+    return;
+  }
+  if (!target.ownershipVerificationValue) {
+    sendBadRequest(res, 'No challenge generated', {
+      body: ['Call ownership/dns-txt-challenge or set an HTTP challenge first'],
+    });
+    return;
+  }
+  const host = target.hostOrIp.replace(/^https?:\/\//i, '').split('/')[0].split(':')[0];
+  const verifyHost = `_sa-verify.${host}`;
+  let records: string[][] = [];
+  try {
+    records = await dns.promises.resolveTxt(verifyHost);
+  } catch (error) {
+    res.status(200).json({
+      verified: false,
+      method: 'dns_txt',
+      queriedRecord: verifyHost,
+      error: error instanceof Error ? error.message : 'DNS lookup failed',
+      expectedValue: target.ownershipVerificationValue,
+    });
+    return;
+  }
+  const flat = records.flat();
+  const matched = flat.includes(target.ownershipVerificationValue);
+  if (!matched) {
+    res.status(200).json({
+      verified: false,
+      method: 'dns_txt',
+      queriedRecord: verifyHost,
+      foundRecords: flat,
+      expectedValue: target.ownershipVerificationValue,
+    });
+    return;
+  }
+
+  const [updated] = await db
+    .update(monitoredTargetsTable)
+    .set({
+      ownershipVerifiedAt: new Date(),
+      probeAllowlisted: true,
+    })
+    .where(eq(monitoredTargetsTable.id, id))
+    .returning();
+
+  res.json({
+    verified: true,
+    method: 'dns_txt',
+    queriedRecord: verifyHost,
+    foundRecords: flat,
+    target: updated,
+  });
+});
+
+router.post('/monitoring/targets/:id/allowlist', requireAuth, async (req, res): Promise<void> => {
+  if (req.user?.role !== 'admin') {
+    sendForbidden(res, 'Only admin users can toggle probe allowlisting');
+    return;
+  }
+  const id = getStringParam(req.params.id, 'id');
+  const body = (req.body ?? {}) as { allowlisted?: boolean; method?: 'explicit_approval' };
+  const allowlisted = body.allowlisted ?? true;
+
+  const [existing] = await db.select().from(monitoredTargetsTable).where(eq(monitoredTargetsTable.id, id));
+  if (!existing) {
+    res.status(404).json({ error: 'Not Found' });
+    return;
+  }
+
+  const [updated] = await db
+    .update(monitoredTargetsTable)
+    .set({
+      probeAllowlisted: allowlisted,
+      ownershipMethod: allowlisted ? (body.method ?? 'explicit_approval') : existing.ownershipMethod,
+      ownershipVerifiedAt: allowlisted ? new Date() : existing.ownershipVerifiedAt,
+    })
+    .where(eq(monitoredTargetsTable.id, id))
+    .returning();
+
+  res.json({ target: updated });
 });
 
 export default router;

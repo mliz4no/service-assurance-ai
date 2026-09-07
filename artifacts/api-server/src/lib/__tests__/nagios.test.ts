@@ -17,6 +17,17 @@ describe('nagios adapter', () => {
     delete process.env.NAGIOS_PASSWORD;
   });
 
+  const baseTarget = {
+    preferredCheckType: null,
+    checkPort: null,
+    checkConfig: null,
+    ownershipVerifiedAt: null,
+    ownershipMethod: null,
+    ownershipVerificationValue: null,
+    probeAllowlisted: true,
+    probeCadenceSeconds: null,
+  } as const;
+
   it('normalizes host and service states for matched targets', async () => {
     const fetchMock = vi
       .fn()
@@ -80,6 +91,7 @@ describe('nagios adapter', () => {
         lastFailureAt: null,
         createdAt: new Date(),
         updatedAt: new Date(),
+        ...baseTarget,
       },
       {
         id: 'target-service',
@@ -102,6 +114,7 @@ describe('nagios adapter', () => {
         lastFailureAt: null,
         createdAt: new Date(),
         updatedAt: new Date(),
+        ...baseTarget,
       },
     ]);
 
@@ -151,6 +164,7 @@ describe('nagios adapter', () => {
         lastFailureAt: null,
         createdAt: new Date(),
         updatedAt: new Date(),
+        ...baseTarget,
       },
     ]);
 

@@ -30,10 +30,55 @@ describe('monitoring checks helpers', () => {
   beforeEach(() => {
     vi.resetModules();
     vi.unstubAllGlobals();
+    vi.unstubAllEnvs();
+  });
+
+  const baseTarget = {
+    preferredCheckType: null,
+    checkPort: null,
+    checkConfig: null,
+    ownershipVerifiedAt: null,
+    ownershipMethod: null,
+    ownershipVerificationValue: null,
+    probeAllowlisted: true,
+    probeCadenceSeconds: null,
+  } as const;
+
+  it('rejects probes without ownership verification by default', async () => {
+    const { evaluateProbeSafety } = await import('../monitoring-checks');
+
+    expect(
+      evaluateProbeSafety({
+        hostOrIp: 'example.test',
+        ownershipVerifiedAt: null,
+        ownershipMethod: null,
+        probeAllowlisted: false,
+      }),
+    ).toEqual({
+      allowed: false,
+      reason: 'Probe rejected: ownership verification or explicit allowlisting is required',
+    });
+  });
+
+  it('allows ownership-verified probes', async () => {
+    const { evaluateProbeSafety } = await import('../monitoring-checks');
+
+    expect(
+      evaluateProbeSafety({
+        hostOrIp: 'example.test',
+        ownershipVerifiedAt: new Date(),
+        ownershipMethod: 'dns_txt',
+        probeAllowlisted: false,
+      }),
+    ).toEqual({ allowed: true });
   });
 
   it('uses HTTP probing for service targets and defaults protocol to https', async () => {
-    const fetchMock = vi.fn().mockResolvedValue({ ok: true, status: 200 });
+    const fetchMock = vi.fn().mockResolvedValue({
+      ok: true,
+      status: 200,
+      headers: new Map<string, string>(),
+    });
     vi.stubGlobal('fetch', fetchMock);
 
     const { runProbe } = await import('../monitoring-checks');
@@ -59,12 +104,13 @@ describe('monitoring checks helpers', () => {
       lastFailureAt: null,
       createdAt: new Date(),
       updatedAt: new Date(),
+      ...baseTarget,
     });
 
-    expect(fetchMock).toHaveBeenCalledWith(
-      'https://example.test',
-      expect.objectContaining({ method: 'GET' }),
-    );
+    expect(fetchMock).toHaveBeenCalledTimes(1);
+    const [callUrl, callOpts] = fetchMock.mock.calls[0];
+    expect(callUrl).toContain('example.test');
+    expect(callOpts).toMatchObject({ method: 'GET' });
     expect(result.checkType).toBe('http');
     expect(result.status).toBe('up');
   });
@@ -93,6 +139,7 @@ describe('monitoring checks helpers', () => {
       lastFailureAt: null,
       createdAt: new Date(),
       updatedAt: new Date(),
+      ...baseTarget,
     });
 
     expect(result.checkType).toBe('tcp');

@@ -8,6 +8,10 @@ import crypto from 'crypto';
 import { createMonitoringScheduler, type MonitoringScheduler } from './lib/monitoring-scheduler';
 import { runNagiosMonitoring, runSyntheticMonitoring } from './lib/monitoring-execution';
 import { acquireDistributedLock } from './lib/distributed-lock';
+import {
+  isDeviceEventPurgeEnabled,
+  runDeviceEventPurge,
+} from './lib/device-event-purger';
 
 const rawPort = process.env['PORT'];
 
@@ -128,6 +132,27 @@ function startMonitoringScheduler(): MonitoringScheduler | null {
   });
 }
 
+function startEventPurgeScheduler(): MonitoringScheduler | null {
+  if (!isDeviceEventPurgeEnabled()) return null;
+  const rawInterval = Number(process.env.EVENT_PURGE_INTERVAL_MS ?? '86400000');
+  const intervalMs = Number.isFinite(rawInterval) && rawInterval > 60_000 ? rawInterval : 86_400_000;
+
+  return createMonitoringScheduler({
+    intervalMs,
+    runImmediately: process.env.EVENT_PURGE_RUN_IMMEDIATELY === 'true',
+    jobName: 'device-events-purge',
+    acquireLease: () => acquireDistributedLock('service-assurance:purge:device-events:daily'),
+    run: async () => {
+      const result = await runDeviceEventPurge({ dryRun: false });
+      return {
+        processed: result.deletedTotal,
+        createdTickets: 0,
+        updatedTickets: 0,
+      };
+    },
+  });
+}
+
 app.listen(port, async (err) => {
   if (err) {
     logger.error({ err }, 'Error listening on port');
@@ -143,5 +168,12 @@ app.listen(port, async (err) => {
     const stop = () => scheduler.stop();
     process.once('SIGINT', stop);
     process.once('SIGTERM', stop);
+  }
+  const purgeScheduler = startEventPurgeScheduler();
+  if (purgeScheduler) {
+    logger.info('Device event purge scheduler started');
+    const stopPurge = () => purgeScheduler.stop();
+    process.once('SIGINT', stopPurge);
+    process.once('SIGTERM', stopPurge);
   }
 });

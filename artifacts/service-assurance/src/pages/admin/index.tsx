@@ -41,6 +41,7 @@ import {
 import { usePartners, useDeletePartner } from '@/pages/admin/hooks/useAdminPartners';
 import { SalesforcePanel } from '@/pages/admin/components/SalesforcePanel';
 import { AvalaraPanel } from '@/pages/admin/components/AvalaraPanel';
+import { EventRetentionPanel } from '@/pages/admin/components/EventRetentionPanel';
 import { SlaPolicyDialog } from '@/pages/admin/components/dialogs/SlaPolicyDialog';
 import { PartnerDialog } from '@/pages/admin/components/dialogs/PartnerDialog';
 import { UserDialog } from '@/pages/admin/components/dialogs/UserDialog';
@@ -466,6 +467,7 @@ export default function AdminPanel() {
 
         <SalesforcePanel />
         <AvalaraPanel />
+        <EventRetentionPanel />
 
         <div>
           <div className="flex items-center gap-2 mb-3">

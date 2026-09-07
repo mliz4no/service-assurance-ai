@@ -1574,6 +1574,65 @@ paths:
             application/json:
               schema: { $ref: '#/components/schemas/DeviceEvent' }
 
+  /device-events/{id}/holds:
+    put:
+      operationId: updateDeviceEventHolds
+      tags: [device-events]
+      summary: Update retention holds for a device event
+      security: [{ bearerAuth: [] }]
+      parameters:
+        - { $ref: '#/components/parameters/ResourceId' }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/UpdateDeviceEventHoldsRequest' }
+      responses:
+        '200':
+          description: Updated device event
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  event: { $ref: '#/components/schemas/DeviceEvent' }
+                required: [event]
+
+  /device-events/purge/preview:
+    get:
+      operationId: previewDeviceEventPurge
+      tags: [device-events]
+      summary: Preview device-event retention purge
+      security: [{ bearerAuth: [] }]
+      responses:
+        '200':
+          description: Purge preview
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/DeviceEventPurgePreview' }
+
+  /device-events/purge/run:
+    post:
+      operationId: runDeviceEventPurge
+      tags: [device-events]
+      summary: Run or dry-run device-event retention purge
+      security: [{ bearerAuth: [] }]
+      requestBody:
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/RunDeviceEventPurgeRequest' }
+      responses:
+        '200':
+          description: Purge completed
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/DeviceEventPurgeRunResult' }
+        '409':
+          description: Another purge holds the distributed lock
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/DeviceEventPurgeRunResult' }
+
   /salesforce/config:
     get:
       operationId: getSalesforceConfig
@@ -4251,6 +4310,10 @@ components:
       type: string
       enum: [informational, low, medium, high, critical]
 
+    DeviceEventRetentionCategory:
+      type: string
+      enum: [default, incident_evidence, audit, legal]
+
     DeviceEvent:
       type: object
       properties:
@@ -4273,6 +4336,9 @@ components:
         confidenceScore: { type: number, nullable: true }
         category: { type: string, nullable: true }
         rawPayloadJson: { type: object, additionalProperties: true, nullable: true }
+        legalHold: { type: boolean }
+        complianceHold: { type: boolean }
+        retentionCategory: { $ref: '#/components/schemas/DeviceEventRetentionCategory' }
         occurredAt: { type: string, format: date-time }
         createdAt: { type: string, format: date-time }
       required:
@@ -4284,9 +4350,85 @@ components:
           severity,
           eventType,
           title,
+          legalHold,
+          complianceHold,
+          retentionCategory,
           occurredAt,
           createdAt,
         ]
+
+    UpdateDeviceEventHoldsRequest:
+      type: object
+      properties:
+        legalHold: { type: boolean }
+        complianceHold: { type: boolean }
+        retentionCategory: { $ref: '#/components/schemas/DeviceEventRetentionCategory' }
+
+    DeviceEventRetentionCounts:
+      type: object
+      properties:
+        default: { type: integer }
+        incident_evidence: { type: integer }
+        audit: { type: integer }
+        legal: { type: integer }
+      required: [default, incident_evidence, audit, legal]
+
+    DeviceEventRetentionCutoffs:
+      type: object
+      properties:
+        default: { type: string, format: date-time, nullable: true }
+        incident_evidence: { type: string, format: date-time, nullable: true }
+        audit: { type: string, format: date-time, nullable: true }
+        legal: { type: string, format: date-time, nullable: true }
+      required: [default, incident_evidence, audit, legal]
+
+    DeviceEventPurgePreview:
+      type: object
+      properties:
+        enabled: { type: boolean }
+        retentionHours: { $ref: '#/components/schemas/DeviceEventRetentionCounts' }
+        cutoffPerCategory: { $ref: '#/components/schemas/DeviceEventRetentionCutoffs' }
+        eligibleCountPerCategory: { $ref: '#/components/schemas/DeviceEventRetentionCounts' }
+        heldCount:
+          type: object
+          properties:
+            legalHold: { type: integer }
+            complianceHold: { type: integer }
+            totalHolds: { type: integer }
+          required: [legalHold, complianceHold, totalHolds]
+        totalEligible: { type: integer }
+        totalInScope: { type: integer }
+        categories:
+          type: array
+          items: { $ref: '#/components/schemas/DeviceEventRetentionCategory' }
+        dryRun: { type: boolean, enum: [true] }
+      required: [enabled, retentionHours, cutoffPerCategory, eligibleCountPerCategory, heldCount, totalEligible, totalInScope, categories, dryRun]
+
+    DeviceEventPurgeRunResult:
+      type: object
+      properties:
+        startedAt: { type: string, format: date-time }
+        finishedAt: { type: string, format: date-time }
+        durationMs: { type: integer }
+        acquiredLock: { type: boolean }
+        lockName: { type: string }
+        batches: { type: integer }
+        batchSize: { type: integer }
+        retentionHours: { $ref: '#/components/schemas/DeviceEventRetentionCounts' }
+        deletedPerCategory: { $ref: '#/components/schemas/DeviceEventRetentionCounts' }
+        skippedPerCategory: { $ref: '#/components/schemas/DeviceEventRetentionCounts' }
+        deletedTotal: { type: integer }
+        skippedHolds: { type: integer }
+        errors:
+          type: array
+          items: { type: string }
+        dryRun: { type: boolean }
+      required: [startedAt, finishedAt, durationMs, acquiredLock, lockName, batches, batchSize, retentionHours, deletedPerCategory, skippedPerCategory, deletedTotal, skippedHolds, errors, dryRun]
+
+    RunDeviceEventPurgeRequest:
+      type: object
+      properties:
+        dryRun: { type: boolean, default: true }
 
     DeviceEventSummary:
       allOf:

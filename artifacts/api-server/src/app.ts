@@ -77,6 +77,20 @@ app.use(
     message: { error: 'Too Many Requests', message: 'Too many login attempts. Try again later.' },
   }),
 );
+app.use(
+  '/api/monitoring/checks/run',
+  rateLimit({
+    windowMs: Number(process.env.PROBE_RATE_LIMIT_WINDOW_MS ?? 60_000),
+    limit: Number(process.env.PROBE_RATE_LIMIT_MAX ?? 10),
+    standardHeaders: 'draft-8',
+    legacyHeaders: false,
+    skip: () => process.env.NODE_ENV === 'test',
+    message: {
+      error: 'Too Many Requests',
+      message: 'Too many monitoring probe requests. Try again later.',
+    },
+  }),
+);
 app.use('/api', router);
 
 app.use((_req, res) => {

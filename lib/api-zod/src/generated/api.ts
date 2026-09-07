@@ -2599,6 +2599,9 @@ export const GetControllerResponse = zod
           confidenceScore: zod.number().nullish(),
           category: zod.string().nullish(),
           rawPayloadJson: zod.record(zod.string(), zod.unknown()).nullish(),
+          legalHold: zod.boolean(),
+          complianceHold: zod.boolean(),
+          retentionCategory: zod.enum(['default', 'incident_evidence', 'audit', 'legal']),
           occurredAt: zod.coerce.date(),
           createdAt: zod.coerce.date(),
         }),
@@ -2953,6 +2956,9 @@ export const GetManagedDeviceResponse = zod
           confidenceScore: zod.number().nullish(),
           category: zod.string().nullish(),
           rawPayloadJson: zod.record(zod.string(), zod.unknown()).nullish(),
+          legalHold: zod.boolean(),
+          complianceHold: zod.boolean(),
+          retentionCategory: zod.enum(['default', 'incident_evidence', 'audit', 'legal']),
           occurredAt: zod.coerce.date(),
           createdAt: zod.coerce.date(),
         }),
@@ -3357,6 +3363,9 @@ export const GetDeviceEventsResponseItem = zod
     confidenceScore: zod.number().nullish(),
     category: zod.string().nullish(),
     rawPayloadJson: zod.record(zod.string(), zod.unknown()).nullish(),
+    legalHold: zod.boolean(),
+    complianceHold: zod.boolean(),
+    retentionCategory: zod.enum(['default', 'incident_evidence', 'audit', 'legal']),
     occurredAt: zod.coerce.date(),
     createdAt: zod.coerce.date(),
   })
@@ -3431,6 +3440,9 @@ export const GetDeviceEventResponse = zod
     confidenceScore: zod.number().nullish(),
     category: zod.string().nullish(),
     rawPayloadJson: zod.record(zod.string(), zod.unknown()).nullish(),
+    legalHold: zod.boolean(),
+    complianceHold: zod.boolean(),
+    retentionCategory: zod.enum(['default', 'incident_evidence', 'audit', 'legal']),
     occurredAt: zod.coerce.date(),
     createdAt: zod.coerce.date(),
   })
@@ -3607,8 +3619,128 @@ export const AnalyzeDeviceEventResponse = zod.object({
   confidenceScore: zod.number().nullish(),
   category: zod.string().nullish(),
   rawPayloadJson: zod.record(zod.string(), zod.unknown()).nullish(),
+  legalHold: zod.boolean(),
+  complianceHold: zod.boolean(),
+  retentionCategory: zod.enum(['default', 'incident_evidence', 'audit', 'legal']),
   occurredAt: zod.coerce.date(),
   createdAt: zod.coerce.date(),
+});
+
+/**
+ * @summary Update retention holds for a device event
+ */
+export const UpdateDeviceEventHoldsParams = zod.object({
+  id: zod.coerce.string().uuid(),
+});
+
+export const UpdateDeviceEventHoldsBody = zod.object({
+  legalHold: zod.boolean().optional(),
+  complianceHold: zod.boolean().optional(),
+  retentionCategory: zod.enum(['default', 'incident_evidence', 'audit', 'legal']).optional(),
+});
+
+export const UpdateDeviceEventHoldsResponse = zod.object({
+  event: zod.object({
+    id: zod.string().uuid(),
+    controllerId: zod.string().uuid(),
+    managedDeviceId: zod.string().uuid().nullish(),
+    customerId: zod.string().uuid().nullish(),
+    siteId: zod.string().uuid().nullish(),
+    serviceId: zod.string().uuid().nullish(),
+    rawEventId: zod.string(),
+    eventSource: zod.string(),
+    severity: zod.enum(['informational', 'low', 'medium', 'high', 'critical']),
+    eventType: zod.string(),
+    title: zod.string(),
+    description: zod.string().nullish(),
+    normalizedStatus: zod.string().nullish(),
+    aiSummary: zod.string().nullish(),
+    aiProbableImpact: zod.string().nullish(),
+    aiCustomerUpdate: zod.string().nullish(),
+    confidenceScore: zod.number().nullish(),
+    category: zod.string().nullish(),
+    rawPayloadJson: zod.record(zod.string(), zod.unknown()).nullish(),
+    legalHold: zod.boolean(),
+    complianceHold: zod.boolean(),
+    retentionCategory: zod.enum(['default', 'incident_evidence', 'audit', 'legal']),
+    occurredAt: zod.coerce.date(),
+    createdAt: zod.coerce.date(),
+  }),
+});
+
+/**
+ * @summary Preview device-event retention purge
+ */
+export const PreviewDeviceEventPurgeResponse = zod.object({
+  enabled: zod.boolean(),
+  retentionHours: zod.object({
+    default: zod.number(),
+    incident_evidence: zod.number(),
+    audit: zod.number(),
+    legal: zod.number(),
+  }),
+  cutoffPerCategory: zod.object({
+    default: zod.coerce.date().nullable(),
+    incident_evidence: zod.coerce.date().nullable(),
+    audit: zod.coerce.date().nullable(),
+    legal: zod.coerce.date().nullable(),
+  }),
+  eligibleCountPerCategory: zod.object({
+    default: zod.number(),
+    incident_evidence: zod.number(),
+    audit: zod.number(),
+    legal: zod.number(),
+  }),
+  heldCount: zod.object({
+    legalHold: zod.number(),
+    complianceHold: zod.number(),
+    totalHolds: zod.number(),
+  }),
+  totalEligible: zod.number(),
+  totalInScope: zod.number(),
+  categories: zod.array(zod.enum(['default', 'incident_evidence', 'audit', 'legal'])),
+  dryRun: zod.literal(true),
+});
+
+/**
+ * @summary Run or dry-run device-event retention purge
+ */
+export const runDeviceEventPurgeBodyDryRunDefault = true;
+
+export const RunDeviceEventPurgeBody = zod.object({
+  dryRun: zod.boolean().default(runDeviceEventPurgeBodyDryRunDefault),
+});
+
+export const RunDeviceEventPurgeResponse = zod.object({
+  startedAt: zod.coerce.date(),
+  finishedAt: zod.coerce.date(),
+  durationMs: zod.number(),
+  acquiredLock: zod.boolean(),
+  lockName: zod.string(),
+  batches: zod.number(),
+  batchSize: zod.number(),
+  retentionHours: zod.object({
+    default: zod.number(),
+    incident_evidence: zod.number(),
+    audit: zod.number(),
+    legal: zod.number(),
+  }),
+  deletedPerCategory: zod.object({
+    default: zod.number(),
+    incident_evidence: zod.number(),
+    audit: zod.number(),
+    legal: zod.number(),
+  }),
+  skippedPerCategory: zod.object({
+    default: zod.number(),
+    incident_evidence: zod.number(),
+    audit: zod.number(),
+    legal: zod.number(),
+  }),
+  deletedTotal: zod.number(),
+  skippedHolds: zod.number(),
+  errors: zod.array(zod.string()),
+  dryRun: zod.boolean(),
 });
 
 /**

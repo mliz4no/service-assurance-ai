@@ -1741,6 +1741,16 @@ export const DeviceEventSeverity = {
   critical: 'critical',
 } as const;
 
+export type DeviceEventRetentionCategory =
+  (typeof DeviceEventRetentionCategory)[keyof typeof DeviceEventRetentionCategory];
+
+export const DeviceEventRetentionCategory = {
+  default: 'default',
+  incident_evidence: 'incident_evidence',
+  audit: 'audit',
+  legal: 'legal',
+} as const;
+
 export type DeviceEventRawPayloadJson = { [key: string]: unknown } | null;
 
 export interface DeviceEvent {
@@ -1763,6 +1773,9 @@ export interface DeviceEvent {
   confidenceScore?: number | null;
   category?: string | null;
   rawPayloadJson?: DeviceEventRawPayloadJson;
+  legalHold: boolean;
+  complianceHold: boolean;
+  retentionCategory: DeviceEventRetentionCategory;
   occurredAt: string;
   createdAt: string;
 }
@@ -1943,6 +1956,65 @@ export type NetworkLinkDetail = NetworkLink & {
   service?: Service | null;
 };
 
+export interface UpdateDeviceEventHoldsRequest {
+  legalHold?: boolean;
+  complianceHold?: boolean;
+  retentionCategory?: DeviceEventRetentionCategory;
+}
+
+export interface DeviceEventRetentionCounts {
+  default: number;
+  incident_evidence: number;
+  audit: number;
+  legal: number;
+}
+
+export interface DeviceEventRetentionCutoffs {
+  default: string | null;
+  incident_evidence: string | null;
+  audit: string | null;
+  legal: string | null;
+}
+
+export type DeviceEventPurgePreviewHeldCount = {
+  legalHold: number;
+  complianceHold: number;
+  totalHolds: number;
+};
+
+export interface DeviceEventPurgePreview {
+  enabled: boolean;
+  retentionHours: DeviceEventRetentionCounts;
+  cutoffPerCategory: DeviceEventRetentionCutoffs;
+  eligibleCountPerCategory: DeviceEventRetentionCounts;
+  heldCount: DeviceEventPurgePreviewHeldCount;
+  totalEligible: number;
+  totalInScope: number;
+  categories: DeviceEventRetentionCategory[];
+  dryRun: boolean;
+}
+
+export interface DeviceEventPurgeRunResult {
+  startedAt: string;
+  finishedAt: string;
+  durationMs: number;
+  acquiredLock: boolean;
+  lockName: string;
+  batches: number;
+  batchSize: number;
+  retentionHours: DeviceEventRetentionCounts;
+  deletedPerCategory: DeviceEventRetentionCounts;
+  skippedPerCategory: DeviceEventRetentionCounts;
+  deletedTotal: number;
+  skippedHolds: number;
+  errors: string[];
+  dryRun: boolean;
+}
+
+export interface RunDeviceEventPurgeRequest {
+  dryRun?: boolean;
+}
+
 export type DeviceEventSummary = DeviceEvent & {
   controller?: Controller | null;
   customer?: Customer | null;
@@ -2119,6 +2191,10 @@ export type GetDeviceEventsParams = {
   siteId?: string;
   severity?: DeviceEventSeverity;
   search?: string;
+};
+
+export type UpdateDeviceEventHolds200 = {
+  event: DeviceEvent;
 };
 
 export type GetInvoiceComplaintsParams = {

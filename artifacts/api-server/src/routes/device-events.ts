@@ -12,6 +12,12 @@ import {
 import { eq, desc, or } from 'drizzle-orm';
 import { requireAuth } from '../middlewares/auth';
 import { summarizeControllerEvent, inferProbableImpact } from '../lib/ai';
+import {
+  previewDeviceEventPurge,
+  runDeviceEventPurge,
+  isDeviceEventPurgeEnabled,
+} from '../lib/device-event-purger';
+import { sendForbidden } from '../lib/http';
 
 const router: IRouter = Router();
 
@@ -193,6 +199,55 @@ router.post('/device-events/:id/ai-analyze', requireAuth, async (req, res): Prom
   } catch (err: any) {
     res.status(500).json({ error: 'AI analysis failed', message: err.message });
   }
+});
+
+router.put('/device-events/:id/holds', requireAuth, async (req, res): Promise<void> => {
+  if (req.user?.role !== 'admin' && req.user?.role !== 'ops') {
+    sendForbidden(res, 'Only admin or ops users can toggle event holds');
+    return;
+  }
+  const id = Array.isArray(req.params.id) ? req.params.id[0] : req.params.id;
+  const [existing] = await db.select().from(deviceEventsTable).where(eq(deviceEventsTable.id, id));
+  if (!existing) {
+    res.status(404).json({ error: 'Event not found' });
+    return;
+  }
+  const body = (req.body ?? {}) as {
+    legalHold?: boolean;
+    complianceHold?: boolean;
+    retentionCategory?: 'default' | 'incident_evidence' | 'audit' | 'legal';
+  };
+
+  const [updated] = await db
+    .update(deviceEventsTable)
+    .set({
+      ...(typeof body.legalHold === 'boolean' ? { legalHold: body.legalHold } : null),
+      ...(typeof body.complianceHold === 'boolean' ? { complianceHold: body.complianceHold } : null),
+      ...(body.retentionCategory ? { retentionCategory: body.retentionCategory } : null),
+    })
+    .where(eq(deviceEventsTable.id, id))
+    .returning();
+
+  res.json({ event: updated });
+});
+
+router.get('/device-events/purge/preview', requireAuth, async (req, res): Promise<void> => {
+  if (req.user?.role !== 'admin' && req.user?.role !== 'ops') {
+    sendForbidden(res, 'Only admin or ops users can view purge previews');
+    return;
+  }
+  const preview = await previewDeviceEventPurge();
+  res.json({ enabled: isDeviceEventPurgeEnabled(), ...preview });
+});
+
+router.post('/device-events/purge/run', requireAuth, async (req, res): Promise<void> => {
+  if (req.user?.role !== 'admin') {
+    sendForbidden(res, 'Only admin users can initiate purge runs');
+    return;
+  }
+  const body = (req.body ?? {}) as { dryRun?: boolean };
+  const result = await runDeviceEventPurge({ dryRun: body.dryRun ?? true });
+  res.status(result.acquiredLock ? 200 : 409).json(result);
 });
 
 export default router;

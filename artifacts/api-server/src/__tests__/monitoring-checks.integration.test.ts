@@ -73,6 +73,7 @@ describe.sequential('monitoring checks endpoints', () => {
   });
 
   beforeEach(async () => {
+    vi.unstubAllEnvs();
     await cleanup();
   });
 
@@ -172,6 +173,36 @@ describe.sequential('monitoring checks endpoints', () => {
     expect(updatedTarget.lastCheckedAt).toBeTruthy();
     expect(updatedTarget.lastSuccessAt).toBeTruthy();
     expect(updatedTarget.provider).toBe('Documentation/Test Network');
+  });
+
+  it('limits and deduplicates targets in a manual probe batch', async () => {
+    vi.stubEnv('PROBE_MAX_TARGETS_PER_RUN', '1');
+    const token = await getOpsToken();
+    const targets = await db
+      .insert(monitoredTargetsTable)
+      .values([
+        {
+          name: 'vitest-check-target-budget-a',
+          hostOrIp: '198.51.100.71',
+          targetType: 'ip' as const,
+        },
+        {
+          name: 'vitest-check-target-budget-b',
+          hostOrIp: '198.51.100.72',
+          targetType: 'ip' as const,
+        },
+      ])
+      .returning();
+
+    const response = await request(app)
+      .post('/api/monitoring/checks/run')
+      .set('Authorization', `Bearer ${token}`)
+      .send({ targetIds: [targets[0].id, targets[0].id, targets[1].id] });
+
+    expect(response.status).toBe(200);
+    expect(response.body.processed).toBe(1);
+    expect(response.body.results).toHaveLength(1);
+    expect(response.body.results[0].targetId).toBe(targets[0].id);
   });
 
   it('supports enrichment lookup by raw host value', async () => {

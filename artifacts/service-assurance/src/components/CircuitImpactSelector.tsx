@@ -142,14 +142,25 @@ export function CircuitImpactSelector({
     }
   };
 
+  const toggleCollapse = () => setCollapsed((c) => !c);
+
   return (
     <Card className="border-border/50 shadow-sm">
-      <CardHeader className="pb-3 pt-4 px-5 border-b border-border/50">
+      <CardHeader
+        className="pb-3 pt-4 px-5 border-b border-border/50 cursor-pointer select-none hover:bg-muted/30 transition-colors rounded-t-lg focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+        role="button"
+        tabIndex={0}
+        aria-expanded={!collapsed}
+        onClick={toggleCollapse}
+        onKeyDown={(e) => {
+          if (e.key === 'Enter' || e.key === ' ') {
+            e.preventDefault();
+            toggleCollapse();
+          }
+        }}
+      >
         <div className="flex items-center justify-between">
-          <button
-            className="flex items-center gap-2 text-left"
-            onClick={() => setCollapsed((c) => !c)}
-          >
+          <div className="flex items-center gap-2 text-left">
             <Zap className="w-4 h-4 text-muted-foreground shrink-0" />
             <div>
               <CardTitle className="text-sm font-semibold">Circuit Business Impact</CardTitle>
@@ -159,8 +170,8 @@ export function CircuitImpactSelector({
                   : 'No impact classification set'}
               </p>
             </div>
-          </button>
-          <div className="flex items-center gap-2">
+          </div>
+          <div className="flex items-center gap-2 pointer-events-none">
             {currentImpact && (
               <Badge
                 variant="outline"

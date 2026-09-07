@@ -1,6 +1,8 @@
 import {
   boolean,
   doublePrecision,
+  integer,
+  jsonb,
   pgTable,
   text,
   timestamp,
@@ -12,6 +14,7 @@ import { z } from 'zod/v4';
 import { customersTable } from './customers';
 import { sitesTable } from './sites';
 import { servicesTable } from './services';
+import { MONITORING_CHECK_TYPES } from './monitoring_checks';
 
 export const monitoredTargetsTable = pgTable(
   'monitored_targets',
@@ -28,6 +31,18 @@ export const monitoredTargetsTable = pgTable(
     })
       .notNull()
       .default('ip'),
+    preferredCheckType: text('preferred_check_type', {
+      enum: MONITORING_CHECK_TYPES,
+    }),
+    checkPort: integer('check_port'),
+    checkConfig: jsonb('check_config'),
+    ownershipVerifiedAt: timestamp('ownership_verified_at', { withTimezone: true }),
+    ownershipMethod: text('ownership_method', {
+      enum: ['dns_txt', 'http_challenge', 'explicit_approval', 'controller_bound'],
+    }),
+    ownershipVerificationValue: text('ownership_verification_value'),
+    probeAllowlisted: boolean('probe_allowlisted').notNull().default(false),
+    probeCadenceSeconds: integer('probe_cadence_seconds'),
     provider: text('provider'),
     region: text('region'),
     latitude: doublePrecision('latitude'),
