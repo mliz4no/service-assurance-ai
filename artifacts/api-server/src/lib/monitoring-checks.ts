@@ -601,6 +601,7 @@ export async function runProbe(target: MonitoredTarget): Promise<ProbeResult> {
   const portOverride = target.checkPort ?? undefined;
   const dnsRecordType = (target.checkConfig as any)?.dnsRecordType as string | undefined;
   const dnsServers = (target.checkConfig as any)?.dnsServers as string[] | undefined;
+  const dnsQueryHost = (target.checkConfig as any)?.dnsQueryHost as string | undefined;
   switch (checkType) {
     case 'http':
       return probeHttp(target.hostOrIp, portOverride);
@@ -609,7 +610,7 @@ export async function runProbe(target: MonitoredTarget): Promise<ProbeResult> {
     case 'icmp':
       return probeIcmp(target.hostOrIp);
     case 'dns':
-      return probeDns(target.hostOrIp, dnsRecordType, dnsServers);
+      return probeDns(dnsQueryHost ?? target.hostOrIp, dnsRecordType, dnsServers);
     case 'tls':
       return probeTls(target.hostOrIp, portOverride);
     default:

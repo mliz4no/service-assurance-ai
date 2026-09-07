@@ -26,3 +26,4 @@ export * from './monitoring_checks';
 export * from './auth_sessions';
 export * from './ticket_number_counters';
 export * from './provider_lookups';
+export * from './dns_candidates';

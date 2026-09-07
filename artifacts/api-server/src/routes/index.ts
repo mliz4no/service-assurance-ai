@@ -22,6 +22,7 @@ import invoiceComplaintsRouter from './invoice-complaints';
 import avalaraRouter from './avalara';
 import publicNetworkMapRouter from './public-network-map';
 import monitoringTargetsRouter from './monitoring-targets';
+import dnsCandidatesRouter from './dns-candidates';
 
 const router: IRouter = Router();
 
@@ -48,5 +49,6 @@ router.use(invoiceComplaintsRouter);
 router.use(avalaraRouter);
 router.use(publicNetworkMapRouter);
 router.use(monitoringTargetsRouter);
+router.use(dnsCandidatesRouter);
 
 export default router;

@@ -41,6 +41,16 @@ type MonitoringCheck = {
   checkedAt: string;
 };
 
+type DnsCandidate = {
+  id: string;
+  providerName: string;
+  address: string;
+  transport: string;
+  status: 'pending' | 'validated' | 'rejected' | 'promoted';
+  validationMessage: string | null;
+  lastValidatedAt: string | null;
+};
+
 type TargetForm = {
   name: string;
   publicLabel: string;
@@ -117,6 +127,11 @@ export default function MonitoringPage() {
     refetchInterval: 30_000,
   });
 
+  const { data: dnsCandidates = [], isLoading: dnsCandidatesLoading } = useQuery({
+    queryKey: ['monitoring', 'dns-candidates'],
+    queryFn: () => apiFetch<DnsCandidate[]>('/monitoring/dns-candidates'),
+  });
+
   const refresh = async () => {
     await Promise.all([
       queryClient.invalidateQueries({ queryKey: ['monitoring', 'targets'] }),
@@ -168,6 +183,34 @@ export default function MonitoringPage() {
     onError: (error) => toast({ title: 'Monitoring run failed', description: error.message, variant: 'destructive' }),
   });
 
+  const importDnsCandidates = useMutation({
+    mutationFn: () => apiFetch('/monitoring/dns-candidates/import-curated', { method: 'POST' }),
+    onSuccess: async () => {
+      await queryClient.invalidateQueries({ queryKey: ['monitoring', 'dns-candidates'] });
+      toast({ title: 'Curated DNS candidates imported' });
+    },
+    onError: (error) => toast({ title: 'Unable to import DNS candidates', description: error.message, variant: 'destructive' }),
+  });
+
+  const validateDnsCandidate = useMutation({
+    mutationFn: (id: string) => apiFetch<DnsCandidate>(`/monitoring/dns-candidates/${id}/validate`, { method: 'POST' }),
+    onSuccess: async () => {
+      await queryClient.invalidateQueries({ queryKey: ['monitoring', 'dns-candidates'] });
+      toast({ title: 'DNS candidate validation complete' });
+    },
+    onError: (error) => toast({ title: 'DNS validation failed', description: error.message, variant: 'destructive' }),
+  });
+
+  const promoteDnsCandidate = useMutation({
+    mutationFn: (id: string) => apiFetch<{ targetId: string }>(`/monitoring/dns-candidates/${id}/promote`, { method: 'POST' }),
+    onSuccess: async () => {
+      await refresh();
+      await queryClient.invalidateQueries({ queryKey: ['monitoring', 'dns-candidates'] });
+      toast({ title: 'DNS candidate promoted to monitoring target' });
+    },
+    onError: (error) => toast({ title: 'Unable to promote DNS candidate', description: error.message, variant: 'destructive' }),
+  });
+
   const updateTarget = useMutation({
     mutationFn: ({ id, isPublic }: { id: string; isPublic: boolean }) =>
       apiFetch<MonitoredTarget>(`/monitoring/targets/${id}`, {
@@ -217,6 +260,9 @@ export default function MonitoringPage() {
             <Button variant="outline" onClick={() => runChecks.mutate({ mode: 'nagios' })} disabled={runChecks.isPending}>
               <RefreshCw className={cn('mr-2 h-4 w-4', runChecks.isPending && 'animate-spin')} /> Nagios sync
             </Button>
+            <Button variant="outline" onClick={() => importDnsCandidates.mutate()} disabled={importDnsCandidates.isPending}>
+              <Globe2 className="mr-2 h-4 w-4" /> Import DNS
+            </Button>
             <Button onClick={() => setCreateOpen(true)}>
               <Plus className="mr-2 h-4 w-4" /> Add target
             </Button>
@@ -263,6 +309,27 @@ export default function MonitoringPage() {
             </TableBody>
           </Table>
         </div>
+
+        <Card className="border-border/60 shadow-sm">
+          <CardHeader className="pb-3"><CardTitle className="text-sm">Curated public DNS candidates</CardTitle></CardHeader>
+          <CardContent>
+            {dnsCandidatesLoading ? <Activity className="mx-auto h-5 w-5 animate-spin" /> : dnsCandidates.length === 0 ? (
+              <p className="py-4 text-sm text-muted-foreground">Import curated provider endpoints to validate them before monitoring.</p>
+            ) : (
+              <div className="divide-y divide-border/60">
+                {dnsCandidates.map((candidate) => (
+                  <div key={candidate.id} className="flex flex-wrap items-center justify-between gap-3 py-2 text-sm">
+                    <div><span className="font-medium">{candidate.providerName}</span><span className="ml-3 font-mono text-xs text-muted-foreground">{candidate.address}</span><p className="text-xs text-muted-foreground">{candidate.status}{candidate.validationMessage ? ` · ${candidate.validationMessage}` : ''}</p></div>
+                    <div className="flex gap-2">
+                      <Button size="sm" variant="outline" onClick={() => validateDnsCandidate.mutate(candidate.id)} disabled={validateDnsCandidate.isPending || candidate.status === 'promoted'}>Validate</Button>
+                      <Button size="sm" onClick={() => promoteDnsCandidate.mutate(candidate.id)} disabled={promoteDnsCandidate.isPending || candidate.status !== 'validated'}>Promote</Button>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+          </CardContent>
+        </Card>
 
         <Card className="border-border/60 shadow-sm">
           <CardHeader className="pb-3">
