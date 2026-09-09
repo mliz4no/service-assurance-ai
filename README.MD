@@ -118,6 +118,15 @@ Main frontend only:
 pnpm --filter service-assurance run dev
 ```
 
+## Vercel deployment
+
+Vercel hosts the `artifacts/service-assurance` Vite frontend. The API requires a persistent Node.js host and PostgreSQL, so deploy `artifacts/api-server` to a service such as Render or Railway first.
+
+1. Import this repository into Vercel with the repository root as the project root. The included `vercel.json` builds the frontend and serves the SPA fallback.
+2. Set `VITE_API_BASE_URL` for Production (and Preview if applicable) to the public API origin, for example `https://api.example.com`. Do not include a trailing slash.
+3. On the API host, set `NODE_ENV=production`, `DATABASE_URL`, `SESSION_SECRET`, and `CORS_ALLOWED_ORIGINS` to the exact Vercel production URL, for example `https://service-assurance.vercel.app`.
+4. Deploy. Frontend API requests will be sent directly to `VITE_API_BASE_URL`; when the variable is absent, local development continues to use Vite's `/api` proxy.
+
 ## Database
 
 - Start DB:
