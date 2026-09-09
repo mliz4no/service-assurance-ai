@@ -127,6 +127,14 @@ Vercel hosts the `artifacts/service-assurance` Vite frontend. The API requires a
 3. On the API host, set `NODE_ENV=production`, `DATABASE_URL`, `SESSION_SECRET`, and `CORS_ALLOWED_ORIGINS` to the exact Vercel production URL, for example `https://service-assurance.vercel.app`.
 4. Deploy. Frontend API requests will be sent directly to `VITE_API_BASE_URL`; when the variable is absent, local development continues to use Vite's `/api` proxy.
 
+## Render API deployment
+
+Deploy the API and PostgreSQL using the repository's `render.yaml` blueprint. In Render, select **New +**, choose **Blueprint**, and select this repository. Render provisions the `service-assurance-db` database, installs dependencies, applies Drizzle migrations on every deploy, then starts the API.
+
+Before the first deploy, enter the Vercel production origin for `CORS_ALLOWED_ORIGINS`, for example `https://service-assurance.vercel.app`. Render generates `SESSION_SECRET` and connects `DATABASE_URL` automatically. The monitoring and event-purge schedulers are disabled by default; enable them only after configuring their related integrations and using a service plan that does not sleep.
+
+After deployment, set Vercel's `VITE_API_BASE_URL` to the Render web service URL and verify `https://<render-service>/api/readyz` returns a ready database check.
+
 ## Database
 
 - Start DB:
