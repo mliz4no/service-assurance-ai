@@ -14,6 +14,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { useToast } from '@/hooks/use-toast';
 import { apiFetch } from '@/lib/api';
 import { cn } from '@/lib/utils';
+import { useAuth } from '@/lib/auth';
 
 type TargetStatus = 'up' | 'down' | 'degraded' | 'unknown';
 
@@ -49,6 +50,12 @@ type DnsCandidate = {
   status: 'pending' | 'validated' | 'rejected' | 'promoted';
   validationMessage: string | null;
   lastValidatedAt: string | null;
+};
+
+type ArinCrawlResult = {
+  resultCount: number;
+  queriedAsnCount: number;
+  candidateCount: number;
 };
 
 type TargetForm = {
@@ -95,6 +102,8 @@ const STATUS_STYLES: Record<TargetStatus, string> = {
 export default function MonitoringPage() {
   const queryClient = useQueryClient();
   const { toast } = useToast();
+  const { user } = useAuth();
+  const canCrawlArin = user?.role === 'admin' || user?.role === 'ops';
   const [createOpen, setCreateOpen] = useState(false);
   const [form, setForm] = useState<TargetForm>(EMPTY_FORM);
   const [selectedTargetId, setSelectedTargetId] = useState<string | null>(null);
@@ -192,6 +201,17 @@ export default function MonitoringPage() {
     onError: (error) => toast({ title: 'Unable to import DNS candidates', description: error.message, variant: 'destructive' }),
   });
 
+  const crawlArinIsps = useMutation({
+    mutationFn: () => apiFetch<ArinCrawlResult>('/monitoring/arin/isps/crawl', { method: 'POST', body: JSON.stringify({}) }),
+    onSuccess: (result) => {
+      toast({
+        title: 'ARIN ISP crawl complete',
+        description: `${result.resultCount} ISP(s), ${result.queriedAsnCount} ASN(s), and ${result.candidateCount} candidate IP(s) found.`,
+      });
+    },
+    onError: (error) => toast({ title: 'ARIN ISP crawl failed', description: error.message, variant: 'destructive' }),
+  });
+
   const validateDnsCandidate = useMutation({
     mutationFn: (id: string) => apiFetch<DnsCandidate>(`/monitoring/dns-candidates/${id}/validate`, { method: 'POST' }),
     onSuccess: async () => {
@@ -263,6 +283,11 @@ export default function MonitoringPage() {
             <Button variant="outline" onClick={() => importDnsCandidates.mutate()} disabled={importDnsCandidates.isPending}>
               <Globe2 className="mr-2 h-4 w-4" /> Import DNS
             </Button>
+            {canCrawlArin && (
+              <Button variant="outline" onClick={() => crawlArinIsps.mutate()} disabled={crawlArinIsps.isPending}>
+                <Globe2 className={cn('mr-2 h-4 w-4', crawlArinIsps.isPending && 'animate-spin')} /> Crawl ARIN ISPs
+              </Button>
+            )}
             <Button onClick={() => setCreateOpen(true)}>
               <Plus className="mr-2 h-4 w-4" /> Add target
             </Button>
