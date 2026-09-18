@@ -4,15 +4,21 @@
   "private": true,
   "type": "module",
   "exports": {
-    ".": "./src/seed.ts"
+    ".": "./src/seed.ts",
+    "./isp-prefixes": "./src/isp-prefixes.ts"
   },
   "scripts": {
     "hello": "tsx ./src/hello.ts",
+    "isp:verify": "node --import tsx ./src/isp-prefixes-cli.ts verify",
+    "isp:prefixes": "node --import tsx ./src/isp-prefixes-cli.ts prefixes",
+    "isp:targets": "node --import tsx ./src/isp-prefixes-cli.ts targets",
     "seed": "node --env-file-if-exists=../.env --import tsx ./src/seed.ts",
     "typecheck": "tsc -p tsconfig.json --noEmit"
   },
   "dependencies": {
     "@workspace/db": "workspace:*",
+    "csv-parse": "^7.0.2",
+    "csv-stringify": "^6.8.3",
     "drizzle-orm": "catalog:"
   },
   "devDependencies": {

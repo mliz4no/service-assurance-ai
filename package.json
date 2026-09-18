@@ -13,6 +13,9 @@
     "db:baseline": "pnpm --filter @workspace/db run baseline",
     "db:migrate": "pnpm --filter @workspace/db run migrate",
     "db:seed": "pnpm --filter @workspace/scripts run seed",
+    "isp:verify": "pnpm --filter @workspace/scripts run isp:verify",
+    "isp:prefixes": "pnpm --filter @workspace/scripts run isp:prefixes",
+    "isp:targets": "pnpm --filter @workspace/scripts run isp:targets",
     "typecheck:libs": "tsc --build",
     "typecheck": "pnpm run typecheck:libs && pnpm -r --filter \"./artifacts/**\" --filter \"./scripts\" --if-present run typecheck"
   },

@@ -118,6 +118,25 @@ Main frontend only:
 pnpm --filter service-assurance run dev
 ```
 
+### ISP and BGP prefix discovery
+
+The ISP workflow combines two sources without treating either as permission to scan:
+
+- ARIN RDAP/Whois identifies organizations, ASNs, and registered network ranges.
+- RIPEstat RIS validates ASN holders and returns prefixes currently announced in BGP.
+
+The curated CLI seed is `scripts/data/isp_asns.csv`. Verify or replace its entries before using it for operational decisions:
+
+```bash
+pnpm isp:verify
+pnpm isp:prefixes
+pnpm isp:targets
+```
+
+Generated CSV files are written under `scripts/output/`. Candidate generation defaults to one IPv4 address per `/20` or larger block, is capped at two per prefix and 500 per run, and does not send probes. A mathematically selected address may be unused or filtered.
+
+The authenticated `POST /api/monitoring/arin/isps/crawl` endpoint performs the same ARIN-to-RIPEstat enrichment dynamically. It returns unprobed candidates only. Operators must review a candidate, create a monitored target, and explicitly verify ownership or allowlist it before ICMP monitoring. The monitor gives a nonresponsive target a 24-hour observation window and performs reverse DNS only after a successful response.
+
 ## Vercel deployment
 
 Vercel hosts the `artifacts/service-assurance` Vite frontend. The API requires a persistent Node.js host and PostgreSQL, so deploy `artifacts/api-server` to a service such as Render or Railway first.

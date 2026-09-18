@@ -1,8 +1,37 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
-vi.mock('node:net', () => ({
-  default: {
-    createConnection: vi.fn(({ host, port }: { host: string; port: number }) => {
+const execFileMock = vi.hoisted(() => vi.fn());
+const reverseMock = vi.hoisted(() => vi.fn());
+
+vi.mock('node:child_process', () => ({
+  execFile: execFileMock,
+}));
+
+vi.mock('node:util', () => ({
+  promisify: () => execFileMock,
+}));
+
+vi.mock('node:dns', async (importOriginal) => {
+  const actual = await importOriginal<typeof import('node:dns')>();
+  return {
+    ...actual,
+    default: {
+      ...actual,
+      promises: {
+        ...actual.promises,
+        reverse: reverseMock,
+      },
+    },
+  };
+});
+
+vi.mock('node:net', async (importOriginal) => {
+  const actual = await importOriginal<typeof import('node:net')>();
+  return {
+    ...actual,
+    default: {
+      ...actual,
+      createConnection: vi.fn(({ host, port }: { host: string; port: number }) => {
       const listeners = new Map<string, Array<(...args: unknown[]) => void>>();
       const socket = {
         setTimeout: vi.fn(),
@@ -19,18 +48,21 @@ vi.mock('node:net', () => ({
         },
         destroy: vi.fn(),
       };
-      expect(host).toBe('198.51.100.77');
+      expect(host).toBe('8.8.8.8');
       expect(port).toBe(443);
       return socket;
-    }),
-  },
-}));
+      }),
+    },
+  };
+});
 
 describe('monitoring checks helpers', () => {
   beforeEach(() => {
     vi.resetModules();
     vi.unstubAllGlobals();
     vi.unstubAllEnvs();
+    execFileMock.mockReset();
+    reverseMock.mockReset();
   });
 
   const baseTarget = {
@@ -122,7 +154,7 @@ describe('monitoring checks helpers', () => {
       id: 'target-2',
       name: 'tcp-target',
       publicLabel: null,
-      hostOrIp: '198.51.100.77',
+      hostOrIp: '8.8.8.8',
       customerId: null,
       siteId: null,
       serviceId: null,
@@ -144,6 +176,118 @@ describe('monitoring checks helpers', () => {
 
     expect(result.checkType).toBe('tcp');
     expect(result.status).toBe('up');
+  });
+
+  it('uses system ping and performs reverse DNS after an ICMP response', async () => {
+    execFileMock.mockResolvedValue({ stdout: 'reply', stderr: '' });
+    reverseMock.mockResolvedValue(['router.example.net']);
+    const { runProbe } = await import('../monitoring-checks');
+
+    const result = await runProbe({
+      id: 'target-icmp-up',
+      name: 'icmp-target',
+      publicLabel: null,
+      hostOrIp: '8.8.8.8',
+      customerId: null,
+      siteId: null,
+      serviceId: null,
+      targetType: 'ip',
+      provider: null,
+      region: null,
+      latitude: null,
+      longitude: null,
+      status: 'unknown',
+      statusSource: 'manual',
+      isPublic: false,
+      lastCheckedAt: null,
+      lastSuccessAt: null,
+      lastFailureAt: null,
+      createdAt: new Date(),
+      updatedAt: new Date(),
+      ...baseTarget,
+      preferredCheckType: 'icmp',
+    });
+
+    expect(result.status).toBe('up');
+    expect(result.payload).toMatchObject({
+      targetIp: '8.8.8.8',
+      reverseDns: ['router.example.net'],
+      probeMethod: 'system-ping',
+    });
+    expect(reverseMock).toHaveBeenCalledWith('8.8.8.8');
+  });
+
+  it('keeps a failed ping unknown for 24 hours from the first failure', async () => {
+    execFileMock.mockRejectedValue(new Error('timeout'));
+    const { runProbe } = await import('../monitoring-checks');
+
+    const result = await runProbe({
+      id: 'target-icmp-down',
+      name: 'icmp-target',
+      publicLabel: null,
+      hostOrIp: '8.8.4.4',
+      customerId: null,
+      siteId: null,
+      serviceId: null,
+      targetType: 'ip',
+      provider: null,
+      region: null,
+      latitude: null,
+      longitude: null,
+      status: 'down',
+      statusSource: 'synthetic',
+      isPublic: false,
+      lastCheckedAt: null,
+      lastSuccessAt: null,
+      lastFailureAt: null,
+      createdAt: new Date(),
+      updatedAt: new Date(),
+      ...baseTarget,
+      preferredCheckType: 'icmp',
+    });
+
+    expect(result.status).toBe('unknown');
+    expect(result.payload).toMatchObject({
+      retryEligible: true,
+      probeMethod: 'system-ping',
+    });
+    expect(Date.parse(String(result.payload.retryUntil)) - Date.parse(String(result.payload.retryStartedAt)))
+      .toBe(24 * 60 * 60 * 1_000);
+    expect(reverseMock).not.toHaveBeenCalled();
+  });
+
+  it('marks a failed ping down after its 24-hour grace period expires', async () => {
+    execFileMock.mockRejectedValue(new Error('timeout'));
+    const { runProbe } = await import('../monitoring-checks');
+
+    const result = await runProbe({
+      id: 'target-icmp-expired',
+      name: 'icmp-target',
+      publicLabel: null,
+      hostOrIp: '8.8.4.4',
+      customerId: null,
+      siteId: null,
+      serviceId: null,
+      targetType: 'ip',
+      provider: null,
+      region: null,
+      latitude: null,
+      longitude: null,
+      status: 'unknown',
+      statusSource: 'synthetic',
+      isPublic: false,
+      lastCheckedAt: null,
+      lastSuccessAt: null,
+      lastFailureAt: null,
+      createdAt: new Date(),
+      updatedAt: new Date(),
+      ...baseTarget,
+      preferredCheckType: 'icmp',
+      checkConfig: { icmpRetryStartedAt: '2020-01-01T00:00:00.000Z' },
+    });
+
+    expect(result.status).toBe('down');
+    expect(result.payload).toMatchObject({ retryEligible: false });
   });
 
   it('rolls status timestamps based on probe status and source', async () => {

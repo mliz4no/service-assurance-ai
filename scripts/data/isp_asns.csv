@@ -1,0 +1,9 @@
+isp,asn,category
+AT&T,AS7018,tier1
+Verizon,AS701,access
+Comcast,AS7922,access
+Charter,AS20115,access
+Lumen,AS3356,tier1
+Cox,AS22773,access
+Frontier,AS5650,access
+Zayo,AS6461,tier1

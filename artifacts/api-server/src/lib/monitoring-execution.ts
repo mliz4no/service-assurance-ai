@@ -82,6 +82,20 @@ function emptyExecution(): MonitoringExecutionResult {
   return { processed: 0, createdTickets: 0, updatedTickets: 0, results: [] };
 }
 
+function updateIcmpRetryConfig(target: MonitoredTarget, probe: ProbeResult): unknown {
+  if (probe.checkType !== 'icmp') return target.checkConfig;
+
+  const config = target.checkConfig && typeof target.checkConfig === 'object'
+    ? { ...(target.checkConfig as Record<string, unknown>) }
+    : {};
+  if (probe.status === 'up') {
+    delete config.icmpRetryStartedAt;
+  } else if (typeof probe.payload.retryStartedAt === 'string') {
+    config.icmpRetryStartedAt = probe.payload.retryStartedAt;
+  }
+  return config;
+}
+
 export async function runSyntheticMonitoring(targetIds: string[] = []): Promise<MonitoringExecutionResult> {
   const startedAt = Date.now();
   const targets = await loadTargets(targetIds);
@@ -109,6 +123,7 @@ export async function runSyntheticMonitoring(targetIds: string[] = []): Promise<
       .update(monitoredTargetsTable)
       .set({
         ...toTargetStatusUpdate(probe, 'synthetic'),
+        checkConfig: updateIcmpRetryConfig(target, probe),
         provider: target.provider ?? enrichment.provider,
         region: target.region ?? enrichment.region,
       })

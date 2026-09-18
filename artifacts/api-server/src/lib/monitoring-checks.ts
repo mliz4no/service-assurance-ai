@@ -1,6 +1,8 @@
 import net from 'node:net';
 import dns from 'node:dns';
 import tls from 'node:tls';
+import { execFile } from 'node:child_process';
+import { promisify } from 'node:util';
 import { isIP } from 'node:net';
 import type { MonitoredTarget } from '@workspace/db';
 
@@ -32,8 +34,10 @@ const DEFAULT_TCP_PORT = 443;
 const DEFAULT_DNS_RECORD_TYPE = 'A';
 const DEFAULT_DNS_SERVERS: string[] = [];
 const DEFAULT_ICMP_TIMEOUT_MS = 3_000;
+const DEFAULT_ICMP_RETRY_WINDOW_MS = 24 * 60 * 60 * 1_000;
 const DEFAULT_TLS_PORT = 443;
 const TLS_EXPIRE_WARN_DAYS = 14;
+const execFileAsync = promisify(execFile);
 
 const PROBE_OWNERSHIP_REQUIRED =
   process.env.PROBE_REQUIRE_OWNERSHIP_VERIFICATION?.toLowerCase() !== 'false';
@@ -319,15 +323,18 @@ async function probeTcp(hostOrIp: string, portOverride?: number): Promise<ProbeR
   });
 }
 
-async function probeIcmp(hostOrIp: string): Promise<ProbeResult> {
+async function probeIcmp(
+  target: Pick<MonitoredTarget, 'hostOrIp' | 'checkConfig'>,
+): Promise<ProbeResult> {
   const start = Date.now();
   const timeoutMs = envInteger('PROBE_ICMP_TIMEOUT_MS', DEFAULT_ICMP_TIMEOUT_MS);
-  const normalized = normalizeHostOrIp(hostOrIp);
+  const retryWindowMs = envInteger('PROBE_ICMP_RETRY_WINDOW_MS', DEFAULT_ICMP_RETRY_WINDOW_MS);
+  const normalized = normalizeHostOrIp(target.hostOrIp);
   const { host } = extractHostPort(normalized);
   const resolvedIps = await resolveHost(host).catch(() => []);
   const safety = evaluateProbeSafety(
     {
-      hostOrIp,
+      hostOrIp: target.hostOrIp,
       probeAllowlisted: true,
       ownershipVerifiedAt: new Date(),
       ownershipMethod: 'explicit_approval',
@@ -357,45 +364,55 @@ async function probeIcmp(hostOrIp: string): Promise<ProbeResult> {
     };
   }
 
-  return new Promise((resolve) => {
-    let settled = false;
-    const finish = (status: CheckStatus, payload: Record<string, unknown>) => {
-      if (settled) return;
-      settled = true;
-      const elapsed = Date.now() - start;
-      resolve({
-        checkType: 'icmp',
-        status,
-        responseTimeMs: elapsed,
-        payload: { ...payload, host, targetIp, resolvedIps },
-      });
-    };
+  const isWindows = process.platform === 'win32';
+  const pingArgs = isWindows
+    ? ['-n', '1', '-w', String(timeoutMs), targetIp]
+    : ['-n', '-c', '1', '-W', String(Math.max(1, Math.ceil(timeoutMs / 1_000))), targetIp];
 
-    const icmpPort = 7;
-    const socket = net.createConnection({ host: targetIp, port: icmpPort });
-    socket.setTimeout(timeoutMs);
-    socket.on('connect', () => finish('up', { probeMethod: 'tcp-echo-fallback' }));
-    socket.on('timeout', () =>
-      finish('down', { error: 'timeout', probeMethod: 'tcp-echo-fallback' }),
-    );
-    socket.on('error', (error) => {
-      socket.destroy();
-      const isRstOrRefused =
-        error.message.includes('ECONNREFUSED') || error.message.includes('ECONNRESET');
-      if (isRstOrRefused) {
-        finish('up', {
-          note: 'Remote host responded to transport probe; ICMP echo permission is platform-restricted',
-          probeMethod: 'tcp-echo-fallback',
-          transportError: error.message,
-        });
-        return;
-      }
-      finish('down', {
-        error: error.message,
-        probeMethod: 'tcp-echo-fallback',
-      });
+  try {
+    const { stdout } = await execFileAsync('ping', pingArgs, {
+      timeout: timeoutMs + 1_000,
+      windowsHide: true,
     });
-  });
+    const reverseDns = await dns.promises.reverse(targetIp).catch(() => []);
+    return {
+      checkType: 'icmp',
+      status: 'up',
+      responseTimeMs: Date.now() - start,
+      payload: {
+        host,
+        targetIp,
+        resolvedIps,
+        reverseDns,
+        probeMethod: 'system-ping',
+        output: stdout.trim().slice(0, 1_000),
+      },
+    };
+  } catch (error) {
+    const configuredRetryStart = (target.checkConfig as Record<string, unknown> | null)
+      ?.icmpRetryStartedAt;
+    const parsedRetryStart = typeof configuredRetryStart === 'string'
+      ? Date.parse(configuredRetryStart)
+      : NaN;
+    const retryStartedAt = Number.isFinite(parsedRetryStart) ? parsedRetryStart : start;
+    const retryUntil = new Date(retryStartedAt + retryWindowMs);
+    const retryEligible = Date.now() < retryUntil.getTime();
+    return {
+      checkType: 'icmp',
+      status: retryEligible ? 'unknown' : 'down',
+      responseTimeMs: Date.now() - start,
+      payload: {
+        host,
+        targetIp,
+        resolvedIps,
+        probeMethod: 'system-ping',
+        error: error instanceof Error ? error.message : 'Ping failed',
+        retryStartedAt: new Date(retryStartedAt).toISOString(),
+        retryUntil: retryUntil.toISOString(),
+        retryEligible,
+      },
+    };
+  }
 }
 
 async function probeDns(hostOrIp: string, recordTypeOverride?: string, nameservers?: string[]): Promise<ProbeResult> {
@@ -608,7 +625,7 @@ export async function runProbe(target: MonitoredTarget): Promise<ProbeResult> {
     case 'tcp':
       return probeTcp(target.hostOrIp, portOverride);
     case 'icmp':
-      return probeIcmp(target.hostOrIp);
+      return probeIcmp(target);
     case 'dns':
       return probeDns(dnsQueryHost ?? target.hostOrIp, dnsRecordType, dnsServers);
     case 'tls':

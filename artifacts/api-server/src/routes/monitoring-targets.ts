@@ -19,6 +19,17 @@ import {
   evaluateProbeSafety,
   runProbe,
 } from '../lib/monitoring-checks';
+import {
+  crawlArinIspList,
+  DEFAULT_MAJOR_ISPS,
+  parseArinIspCrawlTargets,
+} from '../lib/arin-isp-crawler';
+import {
+  getAnnouncedPrefixes,
+  normalizeIspAsns,
+  selectPingCandidates,
+  verifyIspAsns,
+} from '@workspace/scripts/isp-prefixes';
 import dns from 'node:dns';
 import crypto from 'node:crypto';
 
@@ -90,6 +101,60 @@ router.get('/monitoring/targets/:id', requireAuth, async (req, res): Promise<voi
   }
 
   res.json(target);
+});
+
+router.post('/monitoring/arin/isps/crawl', requireAuth, async (req, res): Promise<void> => {
+  if (!requireInternalUser(req, res)) return;
+
+  const body = (req.body ?? {}) as {
+    isps?: unknown;
+    candidatesPerPrefix?: number;
+    minimumPrefixLength?: number;
+    maxCandidates?: number;
+  };
+  const requested = parseArinIspCrawlTargets(body.isps);
+  const isps = (requested.length > 0 ? requested : [...DEFAULT_MAJOR_ISPS]).slice(0, 25);
+  const arinResults = await crawlArinIspList(isps);
+  const asnEntries = normalizeIspAsns(
+    arinResults.flatMap((result) => result.asns.map((asn) => ({ isp: result.ispName, asn }))),
+  ).slice(0, 25);
+  const configuredRequestDelayMs = Number(process.env.RIPESTAT_REQUEST_DELAY_MS ?? 500);
+  const requestDelayMs = Number.isFinite(configuredRequestDelayMs)
+    ? Math.max(0, configuredRequestDelayMs)
+    : 500;
+  const verifiedAsns = await verifyIspAsns(asnEntries, { requestDelayMs });
+  const announcedPrefixes = await getAnnouncedPrefixes(asnEntries, { requestDelayMs });
+  const candidates = selectPingCandidates(announcedPrefixes, {
+    perPrefix: body.candidatesPerPrefix,
+    minimumPrefixLength: body.minimumPrefixLength,
+    maxCandidates: body.maxCandidates,
+  });
+  const results = arinResults.map((result) => ({
+    ...result,
+    routing: {
+      verifiedAsns: verifiedAsns.filter((entry) => entry.isp === result.ispName),
+      announcedPrefixes: announcedPrefixes.filter((entry) => entry.isp === result.ispName),
+      candidates: candidates.filter((entry) => entry.isp === result.ispName),
+    },
+  }));
+
+  res.json({
+    sources: ['arin-rdap', 'arin-whois', 'ripestat-ris'],
+    requestedIsps: isps,
+    resultCount: results.length,
+    queriedAsnCount: asnEntries.length,
+    candidateCount: candidates.length,
+    results,
+    activeProbePolicy: {
+      automaticRangeExpansion: false,
+      candidatesAreProbed: false,
+      maximumAsnsPerRequest: 25,
+      maximumCandidatesPerPrefix: 2,
+      maximumCandidatesPerRequest: 500,
+      ownershipOrAllowlistRequired: true,
+      nextStep: 'Review candidates, create only approved IPs as monitored targets with preferredCheckType=icmp, explicitly allowlist them, then run /monitoring/checks/run.',
+    },
+  });
 });
 
 router.post('/monitoring/targets', requireAuth, async (req, res): Promise<void> => {
