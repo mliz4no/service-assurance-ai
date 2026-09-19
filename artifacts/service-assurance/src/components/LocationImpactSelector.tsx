@@ -107,13 +107,15 @@ function HelpTip({ children }: { children: React.ReactNode }) {
   );
 }
 
+const API_BASE_URL = (import.meta.env.VITE_API_BASE_URL as string | undefined)?.replace(/\/+$/, '') || '';
+
 async function saveSiteClassification(
   siteId: string,
   impactLevel: ImpactLevel | null,
   urgencyLevel: UrgencyLevel | null,
 ): Promise<void> {
   const token = localStorage.getItem('sa_auth_token');
-  const res = await fetch(`/api/sites/${siteId}`, {
+  const res = await fetch(`${API_BASE_URL}/api/sites/${siteId}`, {
     method: 'PUT',
     headers: {
       'Content-Type': 'application/json',

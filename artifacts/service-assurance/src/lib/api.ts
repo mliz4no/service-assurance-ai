@@ -1,7 +1,7 @@
 import { clearToken, getToken } from '@/lib/token';
 
-const BASE_URL = import.meta.env.BASE_URL?.replace(/\/$/, '') || '';
-const API_PREFIX = `${BASE_URL}/api`;
+const API_BASE_URL = (import.meta.env.VITE_API_BASE_URL as string | undefined)?.replace(/\/+$/, '') || '';
+const API_PREFIX = `${API_BASE_URL}/api`;
 
 export async function apiFetch<T>(path: string, options?: RequestInit): Promise<T> {
   const token = getToken();

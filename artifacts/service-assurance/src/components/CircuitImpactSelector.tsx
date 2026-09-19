@@ -84,9 +84,11 @@ interface Props {
   defaultExpanded?: boolean;
 }
 
+const API_BASE_URL = (import.meta.env.VITE_API_BASE_URL as string | undefined)?.replace(/\/+$/, '') || '';
+
 async function saveImpactLevel(serviceId: string, impactLevel: ImpactLevel | null): Promise<void> {
   const token = localStorage.getItem('sa_auth_token');
-  const res = await fetch(`/api/services/${serviceId}`, {
+  const res = await fetch(`${API_BASE_URL}/api/services/${serviceId}`, {
     method: 'PUT',
     headers: {
       'Content-Type': 'application/json',
