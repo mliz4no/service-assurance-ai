@@ -308,6 +308,10 @@ export default function MonitoringPage() {
       (crawlResult?.results.flatMap((result) => result.routing?.candidates ?? []) ?? [])
         .map((candidate) => [candidate.candidateIp, candidate] as const),
     ).values(),
+  ).filter(
+    (candidate) =>
+      !promotedIspCandidateIps.includes(candidate.candidateIp) &&
+      !targets.some((target) => target.hostOrIp === candidate.candidateIp),
   );
 
   const validateDnsCandidate = useMutation({
@@ -396,7 +400,7 @@ export default function MonitoringPage() {
           <Card className="border-border/60 shadow-sm">
             <CardHeader className="pb-3">
               <CardTitle className="text-sm">ISP candidate discovery</CardTitle>
-              <p className="text-xs text-muted-foreground">Enter up to 25 comma-separated ISP names. Selected candidates are explicitly approved for ICMP monitoring when added.</p>
+              <p className="text-xs text-muted-foreground">Enter up to 25 comma-separated ISP names. Selected candidates are explicitly approved for ICMP monitoring when added. Re-crawling the same ISPs returns the same candidate IPs (routing data changes rarely); already-promoted or already-monitored IPs are hidden from this list.</p>
             </CardHeader>
             <CardContent className="space-y-4">
               <div className="grid gap-2">
@@ -413,26 +417,23 @@ export default function MonitoringPage() {
                   <div className="flex flex-wrap items-center justify-between gap-2 text-sm">
                     <span><strong>{crawlResult.candidateCount}</strong> candidates from <strong>{crawlResult.resultCount}</strong> ISPs and <strong>{crawlResult.queriedAsnCount}</strong> ASNs</span>
                     <div className="flex gap-2">
-                      <Button size="sm" variant="outline" onClick={() => setSelectedIspCandidates(ispCandidates.filter((candidate) => !promotedIspCandidateIps.includes(candidate.candidateIp)).map((candidate) => candidate.candidateIp))} disabled={!ispCandidates.length}>Select all</Button>
+                      <Button size="sm" variant="outline" onClick={() => setSelectedIspCandidates(ispCandidates.map((candidate) => candidate.candidateIp))} disabled={!ispCandidates.length}>Select all</Button>
                       <Button size="sm" variant="outline" onClick={() => setSelectedIspCandidates([])} disabled={!selectedIspCandidates.length}>Clear</Button>
                     </div>
                   </div>
                   <div className="max-h-72 overflow-auto rounded border">
-                    {ispCandidates.length === 0 ? <p className="p-4 text-sm text-muted-foreground">No candidate IPs were returned.</p> : ispCandidates.map((candidate) => {
-                      const promoted = promotedIspCandidateIps.includes(candidate.candidateIp);
-                      return (
-                        <div key={`${candidate.candidateIp}-${candidate.asn}`} className="flex items-center gap-3 border-b p-2 text-sm last:border-b-0 hover:bg-muted/30">
-                          <label className="flex flex-1 cursor-pointer items-center gap-3">
-                            <input type="checkbox" checked={selectedIspCandidates.includes(candidate.candidateIp)} disabled={promoted} onChange={(event) => setSelectedIspCandidates((current) => event.target.checked ? [...current, candidate.candidateIp] : current.filter((ip) => ip !== candidate.candidateIp))} />
-                            <span className="font-mono text-xs">{candidate.candidateIp}</span>
-                            <span className="text-muted-foreground">{candidate.isp} · AS{candidate.asn} · {candidate.prefix}</span>
-                          </label>
-                          <Button size="sm" variant="outline" onClick={() => promoteIspCandidate.mutate(candidate.candidateIp)} disabled={promoted || promoteIspCandidate.isPending}>
-                            {promoted ? 'Promoted' : 'Promote'}
-                          </Button>
-                        </div>
-                      );
-                    })}
+                    {ispCandidates.length === 0 ? <p className="p-4 text-sm text-muted-foreground">No candidate IPs were returned.</p> : ispCandidates.map((candidate) => (
+                      <div key={`${candidate.candidateIp}-${candidate.asn}`} className="flex items-center gap-3 border-b p-2 text-sm last:border-b-0 hover:bg-muted/30">
+                        <label className="flex flex-1 cursor-pointer items-center gap-3">
+                          <input type="checkbox" checked={selectedIspCandidates.includes(candidate.candidateIp)} onChange={(event) => setSelectedIspCandidates((current) => event.target.checked ? [...current, candidate.candidateIp] : current.filter((ip) => ip !== candidate.candidateIp))} />
+                          <span className="font-mono text-xs">{candidate.candidateIp}</span>
+                          <span className="text-muted-foreground">{candidate.isp} · AS{candidate.asn} · {candidate.prefix}</span>
+                        </label>
+                        <Button size="sm" variant="outline" onClick={() => promoteIspCandidate.mutate(candidate.candidateIp)} disabled={promoteIspCandidate.isPending}>
+                          Promote
+                        </Button>
+                      </div>
+                    ))}
                   </div>
                   <div className="flex flex-wrap items-center gap-2">
                     <Button size="sm" onClick={() => createIspTargets.mutate()} disabled={!selectedIspCandidates.length || createIspTargets.isPending}>
