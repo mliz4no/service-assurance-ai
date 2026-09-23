@@ -381,9 +381,34 @@ export default function MonitoringPage() {
     }),
     onSuccess: async (result) => {
       await refresh();
-      toast({ title: `Started ${result.processed} check(s)` });
+      toast({ title: `Pinged ${result.processed} target(s)` });
     },
-    onError: (error) => toast({ title: 'Bulk check run failed', description: error.message, variant: 'destructive' }),
+    onError: (error) => toast({ title: 'Bulk ping failed', description: error.message, variant: 'destructive' }),
+  });
+
+  const bulkNagiosSync = useMutation({
+    mutationFn: () => apiFetch<{ processed: number }>('/monitoring/checks/nagios-sync', {
+      method: 'POST',
+      body: JSON.stringify({ targetIds: selectedTargetIds }),
+    }),
+    onSuccess: async (result) => {
+      await refresh();
+      toast({ title: `Nagios-synced ${result.processed} target(s)` });
+    },
+    onError: (error) => toast({ title: 'Bulk Nagios sync failed', description: error.message, variant: 'destructive' }),
+  });
+
+  const bulkSetAllowlisted = useMutation({
+    mutationFn: (probeAllowlisted: boolean) =>
+      Promise.all(selectedTargetIds.map((id) => apiFetch<MonitoredTarget>(`/monitoring/targets/${id}`, {
+        method: 'PUT',
+        body: JSON.stringify({ probeAllowlisted }),
+      }))),
+    onSuccess: async (updated, probeAllowlisted) => {
+      await refresh();
+      toast({ title: `${updated.length} target(s) ${probeAllowlisted ? 'allowlisted for probing' : 'removed from allowlist'}` });
+    },
+    onError: (error) => toast({ title: 'Bulk allowlist update failed', description: error.message, variant: 'destructive' }),
   });
 
   const bulkDelete = useMutation({
@@ -514,8 +539,12 @@ export default function MonitoringPage() {
           <div className="flex flex-wrap gap-2">
             <Button size="sm" variant="outline" onClick={() => bulkSetPublic.mutate(true)} disabled={!selectedTargetIds.length || bulkSetPublic.isPending}>Make public</Button>
             <Button size="sm" variant="outline" onClick={() => bulkSetPublic.mutate(false)} disabled={!selectedTargetIds.length || bulkSetPublic.isPending}>Make private</Button>
+            <Button size="sm" variant="outline" onClick={() => bulkSetAllowlisted.mutate(true)} disabled={!selectedTargetIds.length || bulkSetAllowlisted.isPending}>Allowlist for probing</Button>
             <Button size="sm" variant="outline" onClick={() => bulkRunChecks.mutate()} disabled={!selectedTargetIds.length || bulkRunChecks.isPending}>
-              <Play className="mr-2 h-4 w-4" /> Run checks
+              <Play className="mr-2 h-4 w-4" /> Ping selected
+            </Button>
+            <Button size="sm" variant="outline" onClick={() => bulkNagiosSync.mutate()} disabled={!selectedTargetIds.length || bulkNagiosSync.isPending}>
+              <RefreshCw className={cn('mr-2 h-4 w-4', bulkNagiosSync.isPending && 'animate-spin')} /> Nagios sync selected
             </Button>
             <Button size="sm" variant="destructive" onClick={() => bulkDelete.mutate()} disabled={!selectedTargetIds.length || bulkDelete.isPending}>
               <Trash2 className="mr-2 h-4 w-4" /> Delete
