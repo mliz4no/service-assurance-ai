@@ -134,6 +134,7 @@ export default function MonitoringPage() {
   const [selectedIspCandidates, setSelectedIspCandidates] = useState<string[]>([]);
   const [createdIspTargetIds, setCreatedIspTargetIds] = useState<string[]>([]);
   const [promotedIspCandidateIps, setPromotedIspCandidateIps] = useState<string[]>([]);
+  const [selectedTargetIds, setSelectedTargetIds] = useState<string[]>([]);
 
   const { data: customers = [] } = useQuery({
     queryKey: ['customers', 'monitoring-options'],
@@ -360,6 +361,42 @@ export default function MonitoringPage() {
     },
   });
 
+  const bulkSetPublic = useMutation({
+    mutationFn: (isPublic: boolean) =>
+      Promise.all(selectedTargetIds.map((id) => apiFetch<MonitoredTarget>(`/monitoring/targets/${id}`, {
+        method: 'PUT',
+        body: JSON.stringify({ isPublic }),
+      }))),
+    onSuccess: async (updated, isPublic) => {
+      await refresh();
+      toast({ title: `${updated.length} target(s) marked ${isPublic ? 'public' : 'private'}` });
+    },
+    onError: (error) => toast({ title: 'Bulk update failed', description: error.message, variant: 'destructive' }),
+  });
+
+  const bulkRunChecks = useMutation({
+    mutationFn: () => apiFetch<{ processed: number }>('/monitoring/checks/run', {
+      method: 'POST',
+      body: JSON.stringify({ targetIds: selectedTargetIds }),
+    }),
+    onSuccess: async (result) => {
+      await refresh();
+      toast({ title: `Started ${result.processed} check(s)` });
+    },
+    onError: (error) => toast({ title: 'Bulk check run failed', description: error.message, variant: 'destructive' }),
+  });
+
+  const bulkDelete = useMutation({
+    mutationFn: () => Promise.all(selectedTargetIds.map((id) => apiFetch(`/monitoring/targets/${id}`, { method: 'DELETE' }))),
+    onSuccess: async (deleted) => {
+      setSelectedTargetIds([]);
+      setSelectedTargetId(null);
+      await refresh();
+      toast({ title: `${deleted.length} target(s) deleted` });
+    },
+    onError: (error) => toast({ title: 'Bulk delete failed', description: error.message, variant: 'destructive' }),
+  });
+
   const statusCounts = targets.reduce<Record<TargetStatus, number>>(
     (counts, target) => ({ ...counts, [target.status]: counts[target.status] + 1 }),
     { up: 0, down: 0, degraded: 0, unknown: 0 },
@@ -463,10 +500,40 @@ export default function MonitoringPage() {
           </Card>
         )}
 
+        <div className="flex flex-wrap items-center justify-between gap-2 rounded-lg border border-border/60 bg-muted/20 p-3 text-sm">
+          <div className="flex flex-wrap items-center gap-2">
+            <span className="font-medium">{selectedTargetIds.length} selected</span>
+            <Button size="sm" variant="outline" onClick={() => setSelectedTargetIds(targets.map((target) => target.id))} disabled={!targets.length}>Select all</Button>
+            {createdIspTargetIds.length > 0 && (
+              <Button size="sm" variant="outline" onClick={() => setSelectedTargetIds(createdIspTargetIds.filter((id) => targets.some((target) => target.id === id)))}>
+                Select recently promoted ({createdIspTargetIds.length})
+              </Button>
+            )}
+            <Button size="sm" variant="outline" onClick={() => setSelectedTargetIds([])} disabled={!selectedTargetIds.length}>Clear</Button>
+          </div>
+          <div className="flex flex-wrap gap-2">
+            <Button size="sm" variant="outline" onClick={() => bulkSetPublic.mutate(true)} disabled={!selectedTargetIds.length || bulkSetPublic.isPending}>Make public</Button>
+            <Button size="sm" variant="outline" onClick={() => bulkSetPublic.mutate(false)} disabled={!selectedTargetIds.length || bulkSetPublic.isPending}>Make private</Button>
+            <Button size="sm" variant="outline" onClick={() => bulkRunChecks.mutate()} disabled={!selectedTargetIds.length || bulkRunChecks.isPending}>
+              <Play className="mr-2 h-4 w-4" /> Run checks
+            </Button>
+            <Button size="sm" variant="destructive" onClick={() => bulkDelete.mutate()} disabled={!selectedTargetIds.length || bulkDelete.isPending}>
+              <Trash2 className="mr-2 h-4 w-4" /> Delete
+            </Button>
+          </div>
+        </div>
+
         <div className="overflow-hidden rounded-lg border border-border/60 bg-white shadow-sm">
           <Table>
             <TableHeader>
               <TableRow className="bg-muted/30">
+                <TableHead className="w-10">
+                  <input
+                    type="checkbox"
+                    checked={targets.length > 0 && selectedTargetIds.length === targets.length}
+                    onChange={(event) => setSelectedTargetIds(event.target.checked ? targets.map((target) => target.id) : [])}
+                  />
+                </TableHead>
                 <TableHead>Target</TableHead>
                 <TableHead>Host</TableHead>
                 <TableHead>Status</TableHead>
@@ -478,11 +545,18 @@ export default function MonitoringPage() {
             </TableHeader>
             <TableBody>
               {isLoading ? (
-                <TableRow><TableCell colSpan={7} className="h-24 text-center"><Activity className="mx-auto h-5 w-5 animate-spin" /></TableCell></TableRow>
+                <TableRow><TableCell colSpan={8} className="h-24 text-center"><Activity className="mx-auto h-5 w-5 animate-spin" /></TableCell></TableRow>
               ) : targets.length === 0 ? (
-                <TableRow><TableCell colSpan={7} className="h-24 text-center text-muted-foreground">No monitoring targets registered.</TableCell></TableRow>
+                <TableRow><TableCell colSpan={8} className="h-24 text-center text-muted-foreground">No monitoring targets registered.</TableCell></TableRow>
               ) : targets.map((target) => (
                 <TableRow key={target.id} className={cn(selectedTargetId === target.id && 'bg-blue-50/50')}>
+                  <TableCell>
+                    <input
+                      type="checkbox"
+                      checked={selectedTargetIds.includes(target.id)}
+                      onChange={(event) => setSelectedTargetIds((current) => event.target.checked ? [...current, target.id] : current.filter((id) => id !== target.id))}
+                    />
+                  </TableCell>
                   <TableCell>
                     <button className="text-left font-medium text-primary hover:underline" onClick={() => setSelectedTargetId(target.id)}>{target.name}</button>
                     <p className="text-xs text-muted-foreground">{target.targetType}</p>
