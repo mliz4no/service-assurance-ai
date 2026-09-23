@@ -56,6 +56,20 @@ type ArinCrawlResult = {
   resultCount: number;
   queriedAsnCount: number;
   candidateCount: number;
+  results: Array<{
+    ispName: string;
+    routing?: {
+      candidates?: IspCandidate[];
+    };
+  }>;
+};
+
+type IspCandidate = {
+  isp: string;
+  asn: string;
+  category?: string;
+  prefix: string;
+  candidateIp: string;
 };
 
 type TargetForm = {
@@ -107,6 +121,13 @@ export default function MonitoringPage() {
   const [createOpen, setCreateOpen] = useState(false);
   const [form, setForm] = useState<TargetForm>(EMPTY_FORM);
   const [selectedTargetId, setSelectedTargetId] = useState<string | null>(null);
+  const [ispNames, setIspNames] = useState('AT&T, Verizon, Comcast, Charter, Lumen, Cox, Frontier, Zayo');
+  const [candidatesPerPrefix, setCandidatesPerPrefix] = useState('2');
+  const [minimumPrefixLength, setMinimumPrefixLength] = useState('20');
+  const [maxCandidates, setMaxCandidates] = useState('500');
+  const [crawlResult, setCrawlResult] = useState<ArinCrawlResult | null>(null);
+  const [selectedIspCandidates, setSelectedIspCandidates] = useState<string[]>([]);
+  const [createdIspTargetIds, setCreatedIspTargetIds] = useState<string[]>([]);
 
   const { data: customers = [] } = useQuery({
     queryKey: ['customers', 'monitoring-options'],
@@ -202,8 +223,19 @@ export default function MonitoringPage() {
   });
 
   const crawlArinIsps = useMutation({
-    mutationFn: () => apiFetch<ArinCrawlResult>('/monitoring/arin/isps/crawl', { method: 'POST', body: JSON.stringify({}) }),
+    mutationFn: () => apiFetch<ArinCrawlResult>('/monitoring/arin/isps/crawl', {
+      method: 'POST',
+      body: JSON.stringify({
+        isps: ispNames.split(',').map((name) => name.trim()).filter(Boolean),
+        candidatesPerPrefix: Number(candidatesPerPrefix),
+        minimumPrefixLength: Number(minimumPrefixLength),
+        maxCandidates: Number(maxCandidates),
+      }),
+    }),
     onSuccess: (result) => {
+      setCrawlResult(result);
+      setSelectedIspCandidates([]);
+      setCreatedIspTargetIds([]);
       toast({
         title: 'ARIN ISP crawl complete',
         description: `${result.resultCount} ISP(s), ${result.queriedAsnCount} ASN(s), and ${result.candidateCount} candidate IP(s) found.`,
@@ -211,6 +243,54 @@ export default function MonitoringPage() {
     },
     onError: (error) => toast({ title: 'ARIN ISP crawl failed', description: error.message, variant: 'destructive' }),
   });
+
+  const createIspTargets = useMutation({
+    mutationFn: async () => {
+      const candidates = crawlResult?.results.flatMap((result) => result.routing?.candidates ?? []) ?? [];
+      const selected = candidates.filter((candidate) => selectedIspCandidates.includes(candidate.candidateIp));
+      const created = [];
+      for (const candidate of selected) {
+        created.push(await apiFetch<MonitoredTarget>('/monitoring/targets', {
+          method: 'POST',
+          body: JSON.stringify({
+            name: `${candidate.isp} ${candidate.candidateIp}`,
+            hostOrIp: candidate.candidateIp,
+            targetType: 'ip',
+            preferredCheckType: 'icmp',
+            probeAllowlisted: true,
+            ownershipMethod: 'explicit_approval',
+            provider: candidate.isp,
+          }),
+        }));
+      }
+      return created;
+    },
+    onSuccess: async (created) => {
+      setCreatedIspTargetIds(created.map((target) => target.id));
+      await refresh();
+      toast({ title: `${created.length} ISP target(s) added`, description: 'They are approved for ICMP checks.' });
+    },
+    onError: (error) => toast({ title: 'Unable to add ISP targets', description: error.message, variant: 'destructive' }),
+  });
+
+  const startIspPings = useMutation({
+    mutationFn: () => apiFetch<{ processed: number }>('/monitoring/checks/run', {
+      method: 'POST',
+      body: JSON.stringify({ targetIds: createdIspTargetIds }),
+    }),
+    onSuccess: async (result) => {
+      await refresh();
+      toast({ title: `Started ${result.processed} ISP ping(s)` });
+    },
+    onError: (error) => toast({ title: 'Unable to start ISP pings', description: error.message, variant: 'destructive' }),
+  });
+
+  const ispCandidates = Array.from(
+    new Map(
+      (crawlResult?.results.flatMap((result) => result.routing?.candidates ?? []) ?? [])
+        .map((candidate) => [candidate.candidateIp, candidate] as const),
+    ).values(),
+  );
 
   const validateDnsCandidate = useMutation({
     mutationFn: (id: string) => apiFetch<DnsCandidate>(`/monitoring/dns-candidates/${id}/validate`, { method: 'POST' }),
@@ -284,7 +364,7 @@ export default function MonitoringPage() {
               <Globe2 className="mr-2 h-4 w-4" /> Import DNS
             </Button>
             {canCrawlArin && (
-              <Button variant="outline" onClick={() => crawlArinIsps.mutate()} disabled={crawlArinIsps.isPending}>
+              <Button variant="outline" onClick={() => crawlArinIsps.mutate()} disabled={crawlArinIsps.isPending || !ispNames.trim()}>
                 <Globe2 className={cn('mr-2 h-4 w-4', crawlArinIsps.isPending && 'animate-spin')} /> Crawl ARIN ISPs
               </Button>
             )}
@@ -293,6 +373,53 @@ export default function MonitoringPage() {
             </Button>
           </div>
         </div>
+
+        {canCrawlArin && (
+          <Card className="border-border/60 shadow-sm">
+            <CardHeader className="pb-3">
+              <CardTitle className="text-sm">ISP candidate discovery</CardTitle>
+              <p className="text-xs text-muted-foreground">Enter up to 25 comma-separated ISP names. Selected candidates are explicitly approved for ICMP monitoring when added.</p>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <div className="grid gap-2">
+                <Label htmlFor="isp-names">ISPs</Label>
+                <Input id="isp-names" value={ispNames} onChange={(event) => setIspNames(event.target.value)} placeholder="AT&T, Verizon, Comcast" />
+              </div>
+              <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
+                <div className="grid gap-2"><Label htmlFor="isp-candidates-per-prefix">Candidates per prefix</Label><Input id="isp-candidates-per-prefix" type="number" min="0" max="2" value={candidatesPerPrefix} onChange={(event) => setCandidatesPerPrefix(event.target.value)} /></div>
+                <div className="grid gap-2"><Label htmlFor="isp-min-prefix">Minimum prefix length</Label><Input id="isp-min-prefix" type="number" min="8" max="30" value={minimumPrefixLength} onChange={(event) => setMinimumPrefixLength(event.target.value)} /></div>
+                <div className="grid gap-2"><Label htmlFor="isp-max-candidates">Maximum candidates</Label><Input id="isp-max-candidates" type="number" min="0" max="500" value={maxCandidates} onChange={(event) => setMaxCandidates(event.target.value)} /></div>
+              </div>
+              {crawlResult && (
+                <div className="space-y-3 rounded-md border p-3">
+                  <div className="flex flex-wrap items-center justify-between gap-2 text-sm">
+                    <span><strong>{crawlResult.candidateCount}</strong> candidates from <strong>{crawlResult.resultCount}</strong> ISPs and <strong>{crawlResult.queriedAsnCount}</strong> ASNs</span>
+                    <div className="flex gap-2">
+                      <Button size="sm" variant="outline" onClick={() => setSelectedIspCandidates(ispCandidates.map((candidate) => candidate.candidateIp))} disabled={!ispCandidates.length}>Select all</Button>
+                      <Button size="sm" variant="outline" onClick={() => setSelectedIspCandidates([])} disabled={!selectedIspCandidates.length}>Clear</Button>
+                    </div>
+                  </div>
+                  <div className="max-h-72 overflow-auto rounded border">
+                    {ispCandidates.length === 0 ? <p className="p-4 text-sm text-muted-foreground">No candidate IPs were returned.</p> : ispCandidates.map((candidate) => (
+                      <label key={`${candidate.candidateIp}-${candidate.asn}`} className="flex cursor-pointer items-center gap-3 border-b p-2 text-sm last:border-b-0 hover:bg-muted/30">
+                        <input type="checkbox" checked={selectedIspCandidates.includes(candidate.candidateIp)} onChange={(event) => setSelectedIspCandidates((current) => event.target.checked ? [...current, candidate.candidateIp] : current.filter((ip) => ip !== candidate.candidateIp))} />
+                        <span className="font-mono text-xs">{candidate.candidateIp}</span>
+                        <span className="text-muted-foreground">{candidate.isp} · AS{candidate.asn} · {candidate.prefix}</span>
+                      </label>
+                    ))}
+                  </div>
+                  <div className="flex flex-wrap items-center gap-2">
+                    <Button size="sm" onClick={() => createIspTargets.mutate()} disabled={!selectedIspCandidates.length || createIspTargets.isPending}>
+                      <Plus className="mr-2 h-4 w-4" /> Add {selectedIspCandidates.length} approved target(s)
+                    </Button>
+                    {createdIspTargetIds.length > 0 && <Button size="sm" variant="outline" onClick={() => startIspPings.mutate()} disabled={startIspPings.isPending}><Play className="mr-2 h-4 w-4" /> Start pings</Button>}
+                    {createdIspTargetIds.length > 0 && <span className="text-xs text-muted-foreground">{createdIspTargetIds.length} target(s) ready to ping.</span>}
+                  </div>
+                </div>
+              )}
+            </CardContent>
+          </Card>
+        )}
 
         <div className="overflow-hidden rounded-lg border border-border/60 bg-white shadow-sm">
           <Table>

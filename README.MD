@@ -142,15 +142,15 @@ The authenticated `POST /api/monitoring/arin/isps/crawl` endpoint performs the s
 Vercel hosts the `artifacts/service-assurance` Vite frontend. The API requires a persistent Node.js host and PostgreSQL, so deploy `artifacts/api-server` to a service such as Render or Railway first.
 
 1. Import this repository into Vercel with the repository root as the project root. The included `vercel.json` builds the frontend and serves the SPA fallback.
-2. Set `VITE_API_BASE_URL` for Production (and Preview if applicable) to the public API origin, for example `https://api.example.com`. Do not include a trailing slash.
-3. On the API host, set `NODE_ENV=production`, `DATABASE_URL`, `SESSION_SECRET`, and `CORS_ALLOWED_ORIGINS` to the exact Vercel production URL, for example `https://service-assurance.vercel.app`.
+2. Set `VITE_API_BASE_URL` for Production (and Preview if applicable) to `https://service-assurance-ai-1.onrender.com`. This is a Vercel build-time variable; redeploy after changing it, and do not include a trailing slash.
+3. On the API host, set `NODE_ENV=production`, `DATABASE_URL`, `SESSION_SECRET`, and `CORS_ALLOWED_ORIGINS` to `https://service-assurance-ai-api-server.vercel.app,https://service-assurance-ai-api-server-obs4vry4s-bradus1.vercel.app`.
 4. Deploy. Frontend API requests will be sent directly to `VITE_API_BASE_URL`; when the variable is absent, local development continues to use Vite's `/api` proxy.
 
 ## Render API deployment
 
 Deploy the API and PostgreSQL using the repository's `render.yaml` blueprint. In Render, select **New +**, choose **Blueprint**, and select this repository. Render provisions the `service-assurance-db` database, installs dependencies, applies Drizzle migrations on every deploy, then starts the API.
 
-Before the first deploy, enter the Vercel production origin for `CORS_ALLOWED_ORIGINS`, for example `https://service-assurance.vercel.app`. Render generates `SESSION_SECRET` and connects `DATABASE_URL` automatically. The monitoring and event-purge schedulers are disabled by default; enable them only after configuring their related integrations and using a service plan that does not sleep.
+Before the first deploy, enter the Vercel production and preview origins for `CORS_ALLOWED_ORIGINS` as shown above. The API accepts a trailing slash in this setting, but the browser origin itself must match the deployed Vercel origin. Render generates `SESSION_SECRET` and connects `DATABASE_URL` automatically. The monitoring and event-purge schedulers are disabled by default; enable them only after configuring their related integrations and using a service plan that does not sleep.
 
 After deployment, set Vercel's `VITE_API_BASE_URL` to the Render web service URL and verify `https://<render-service>/api/readyz` returns a ready database check.
 

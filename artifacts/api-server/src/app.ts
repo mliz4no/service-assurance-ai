@@ -11,6 +11,7 @@ const isProduction = process.env.NODE_ENV === 'production';
 const allowedOrigins = (process.env.CORS_ALLOWED_ORIGINS ?? '')
   .split(',')
   .map((origin) => origin.trim())
+  .map((origin) => origin.replace(/\/+$/, ''))
   .filter(Boolean);
 
 if (isProduction && allowedOrigins.length === 0) {
