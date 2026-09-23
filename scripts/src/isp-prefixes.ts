@@ -167,13 +167,14 @@ function numberToIpv4(value: number): string {
 
 export function selectPingCandidates(
   prefixes: AnnouncedPrefix[],
-  options: { perPrefix?: number; minimumPrefixLength?: number; maxCandidates?: number } = {},
+  options: { perPrefix?: number; minimumPrefixLength?: number; maxCandidates?: number; excludeIps?: string[] } = {},
 ): PingCandidate[] {
   const boundedInteger = (value: number | undefined, fallback: number, minimum: number, maximum: number) =>
     Number.isInteger(value) ? Math.max(minimum, Math.min(value as number, maximum)) : fallback;
-  const perPrefix = boundedInteger(options.perPrefix, 1, 0, 2);
+  const perPrefix = boundedInteger(options.perPrefix, 1, 0, 10);
   const minimumPrefixLength = boundedInteger(options.minimumPrefixLength, 20, 8, 30);
-  const maxCandidates = boundedInteger(options.maxCandidates, 100, 0, 500);
+  const maxCandidates = boundedInteger(options.maxCandidates, 100, 0, 1000);
+  const excludeIps = new Set(options.excludeIps ?? []);
   const candidates: PingCandidate[] = [];
 
   for (const entry of prefixes) {
@@ -185,20 +186,27 @@ export function selectPingCandidates(
     if (hostCount < 4) continue;
     const network = Math.floor(ipv4ToNumber(address) / hostCount) * hostCount;
 
-    for (let index = 0; index < perPrefix && candidates.length < maxCandidates; index += 1) {
-      let offset = Math.max(1, Math.min(Math.floor(hostCount * (index + 1) / (perPrefix + 1)), hostCount - 2));
+    // Sweep extra offsets beyond perPrefix so already-known IPs can be skipped without shrinking output.
+    const maxAttempts = Math.min(hostCount - 2, perPrefix * 3 || 1);
+    let picked = 0;
+    for (let index = 0; index < maxAttempts && picked < perPrefix && candidates.length < maxCandidates; index += 1) {
+      let offset = Math.max(1, Math.min(Math.floor(hostCount * (index + 1) / (maxAttempts + 1)), hostCount - 2));
       const lastOctet = (network + offset) % 256;
       if (lastOctet === 0 && offset < hostCount - 2) offset += 1;
       if (lastOctet === 255 && offset > 1) offset -= 1;
+      const candidateIp = numberToIpv4((network + offset) >>> 0);
+      if (excludeIps.has(candidateIp)) continue;
       candidates.push({
         isp: entry.isp,
         asn: entry.asn,
         ...(entry.category ? { category: entry.category } : {}),
         prefix: entry.prefix,
-        candidateIp: numberToIpv4((network + offset) >>> 0),
+        candidateIp,
       });
+      picked += 1;
     }
   }
 
   return candidates;
 }
+

@@ -111,23 +111,29 @@ router.post('/monitoring/arin/isps/crawl', requireAuth, async (req, res): Promis
     candidatesPerPrefix?: number;
     minimumPrefixLength?: number;
     maxCandidates?: number;
+    maxAsns?: number;
   };
   const requested = parseArinIspCrawlTargets(body.isps);
   const isps = (requested.length > 0 ? requested : [...DEFAULT_MAJOR_ISPS]).slice(0, 25);
+  const maxAsns = Number.isInteger(body.maxAsns) ? Math.max(1, Math.min(body.maxAsns as number, 100)) : 25;
   const arinResults = await crawlArinIspList(isps);
   const asnEntries = normalizeIspAsns(
     arinResults.flatMap((result) => result.asns.map((asn) => ({ isp: result.ispName, asn }))),
-  ).slice(0, 25);
+  ).slice(0, maxAsns);
   const configuredRequestDelayMs = Number(process.env.RIPESTAT_REQUEST_DELAY_MS ?? 500);
   const requestDelayMs = Number.isFinite(configuredRequestDelayMs)
     ? Math.max(0, configuredRequestDelayMs)
     : 500;
   const verifiedAsns = await verifyIspAsns(asnEntries, { requestDelayMs });
   const announcedPrefixes = await getAnnouncedPrefixes(asnEntries, { requestDelayMs });
+  const existingTargets: Array<{ hostOrIp: string }> = await db
+    .select({ hostOrIp: monitoredTargetsTable.hostOrIp })
+    .from(monitoredTargetsTable);
   const candidates = selectPingCandidates(announcedPrefixes, {
     perPrefix: body.candidatesPerPrefix,
     minimumPrefixLength: body.minimumPrefixLength,
     maxCandidates: body.maxCandidates,
+    excludeIps: existingTargets.map((target: { hostOrIp: string }) => target.hostOrIp),
   });
   const results = arinResults.map((result) => ({
     ...result,
@@ -148,10 +154,11 @@ router.post('/monitoring/arin/isps/crawl', requireAuth, async (req, res): Promis
     activeProbePolicy: {
       automaticRangeExpansion: false,
       candidatesAreProbed: false,
-      maximumAsnsPerRequest: 25,
-      maximumCandidatesPerPrefix: 2,
-      maximumCandidatesPerRequest: 500,
+      maximumAsnsPerRequest: maxAsns,
+      maximumCandidatesPerPrefix: 10,
+      maximumCandidatesPerRequest: 1000,
       ownershipOrAllowlistRequired: true,
+      alreadyMonitoredIpsExcluded: true,
       nextStep: 'Review candidates, create only approved IPs as monitored targets with preferredCheckType=icmp, explicitly allowlist them, then run /monitoring/checks/run.',
     },
   });

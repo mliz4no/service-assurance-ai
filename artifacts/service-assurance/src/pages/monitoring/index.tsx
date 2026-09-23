@@ -125,6 +125,7 @@ export default function MonitoringPage() {
   const [candidatesPerPrefix, setCandidatesPerPrefix] = useState('2');
   const [minimumPrefixLength, setMinimumPrefixLength] = useState('20');
   const [maxCandidates, setMaxCandidates] = useState('500');
+  const [maxAsns, setMaxAsns] = useState('25');
   const [crawlResult, setCrawlResult] = useState<ArinCrawlResult | null>(null);
   const [selectedIspCandidates, setSelectedIspCandidates] = useState<string[]>([]);
   const [createdIspTargetIds, setCreatedIspTargetIds] = useState<string[]>([]);
@@ -231,6 +232,7 @@ export default function MonitoringPage() {
         candidatesPerPrefix: Number(candidatesPerPrefix),
         minimumPrefixLength: Number(minimumPrefixLength),
         maxCandidates: Number(maxCandidates),
+        maxAsns: Number(maxAsns),
       }),
     }),
     onSuccess: (result) => {
@@ -400,17 +402,18 @@ export default function MonitoringPage() {
           <Card className="border-border/60 shadow-sm">
             <CardHeader className="pb-3">
               <CardTitle className="text-sm">ISP candidate discovery</CardTitle>
-              <p className="text-xs text-muted-foreground">Enter up to 25 comma-separated ISP names. Selected candidates are explicitly approved for ICMP monitoring when added. Re-crawling the same ISPs returns the same candidate IPs (routing data changes rarely); already-promoted or already-monitored IPs are hidden from this list.</p>
+              <p className="text-xs text-muted-foreground">Enter up to 25 comma-separated ISP names. Selected candidates are explicitly approved for ICMP monitoring when added. Re-crawling the same ISPs returns the same candidate IPs (routing data changes rarely); already-promoted or already-monitored IPs are hidden from this list. Raise &quot;candidates per prefix&quot;, &quot;minimum prefix length&quot;, or &quot;maximum ASNs&quot; to widen the scan and surface more addresses per block/ISP.</p>
             </CardHeader>
             <CardContent className="space-y-4">
               <div className="grid gap-2">
                 <Label htmlFor="isp-names">ISPs</Label>
                 <Input id="isp-names" value={ispNames} onChange={(event) => setIspNames(event.target.value)} placeholder="AT&T, Verizon, Comcast" />
               </div>
-              <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
-                <div className="grid gap-2"><Label htmlFor="isp-candidates-per-prefix">Candidates per prefix</Label><Input id="isp-candidates-per-prefix" type="number" min="0" max="2" value={candidatesPerPrefix} onChange={(event) => setCandidatesPerPrefix(event.target.value)} /></div>
+              <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
+                <div className="grid gap-2"><Label htmlFor="isp-candidates-per-prefix">Candidates per prefix</Label><Input id="isp-candidates-per-prefix" type="number" min="0" max="10" value={candidatesPerPrefix} onChange={(event) => setCandidatesPerPrefix(event.target.value)} /></div>
                 <div className="grid gap-2"><Label htmlFor="isp-min-prefix">Minimum prefix length</Label><Input id="isp-min-prefix" type="number" min="8" max="30" value={minimumPrefixLength} onChange={(event) => setMinimumPrefixLength(event.target.value)} /></div>
-                <div className="grid gap-2"><Label htmlFor="isp-max-candidates">Maximum candidates</Label><Input id="isp-max-candidates" type="number" min="0" max="500" value={maxCandidates} onChange={(event) => setMaxCandidates(event.target.value)} /></div>
+                <div className="grid gap-2"><Label htmlFor="isp-max-candidates">Maximum candidates</Label><Input id="isp-max-candidates" type="number" min="0" max="1000" value={maxCandidates} onChange={(event) => setMaxCandidates(event.target.value)} /></div>
+                <div className="grid gap-2"><Label htmlFor="isp-max-asns">Maximum ASNs per ISP list</Label><Input id="isp-max-asns" type="number" min="1" max="100" value={maxAsns} onChange={(event) => setMaxAsns(event.target.value)} /></div>
               </div>
               {crawlResult && (
                 <div className="space-y-3 rounded-md border p-3">

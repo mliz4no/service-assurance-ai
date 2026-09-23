@@ -57,13 +57,34 @@ describe('ISP prefix discovery', () => {
     });
 
     expect(candidates).toHaveLength(1);
-    expect(candidates[0]).toMatchObject({ prefix: '8.8.8.0/24', candidateIp: '8.8.8.85' });
+    expect(candidates[0]).toMatchObject({ prefix: '8.8.8.0/24', candidateIp: '8.8.8.8' });
 
     const largeBlockCandidate = selectPingCandidates([{
       ...prefixes[0],
       prefix: '70.248.0.0/15',
       numAddresses: '131072',
     }], { maxCandidates: 1 });
-    expect(largeBlockCandidate[0]?.candidateIp).toBe('70.249.0.1');
+    expect(largeBlockCandidate[0]?.candidateIp).toBe('70.248.128.1');
+  });
+
+  it('skips excluded IPs (already promoted/monitored) and picks the next distinct address instead', () => {
+    const prefixes = [{
+      isp: 'Example ISP',
+      asn: 'AS64500',
+      prefix: '8.8.8.0/24',
+      addressFamily: 'ipv4' as const,
+      numAddresses: '256',
+    }];
+
+    const baseline = selectPingCandidates(prefixes, { perPrefix: 2, minimumPrefixLength: 24, maxCandidates: 5 });
+    expect(baseline.map((candidate) => candidate.candidateIp)).toEqual(['8.8.8.36', '8.8.8.73']);
+
+    const withExclusion = selectPingCandidates(prefixes, {
+      perPrefix: 2,
+      minimumPrefixLength: 24,
+      maxCandidates: 5,
+      excludeIps: ['8.8.8.36'],
+    });
+    expect(withExclusion.map((candidate) => candidate.candidateIp)).toEqual(['8.8.8.73', '8.8.8.109']);
   });
 });
