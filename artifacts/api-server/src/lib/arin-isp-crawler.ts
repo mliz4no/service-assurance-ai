@@ -41,6 +41,7 @@ type ArinRdapEntity = {
   entities?: ArinRdapEntity[];
   links?: Array<{ href?: string; value?: string; rel?: string }>;
   publicIds?: Array<{ type?: string; identifier?: string }>;
+  vcardArray?: [string, Array<[string, Record<string, unknown>, string, unknown]>];
 };
 
 type ArinSearchResponse = {
@@ -49,6 +50,7 @@ type ArinSearchResponse = {
   entities?: ArinRdapEntity[];
   networks?: Array<{ handle?: string; name?: string; originASes?: string[] }>;
   results?: ArinSearchResponse[];
+  entitySearchResults?: ArinSearchResponse[];
   objects?: Record<string, ArinSearchResponse>;
 };
 
@@ -175,9 +177,18 @@ function extractCandidateDomains(name: string, rawEntity: ArinRdapEntity | null 
   return [...entries].filter((domain) => domain && !domain.includes('arin.net')).slice(0, 12);
 }
 
+function extractVcardName(entity: ArinRdapEntity | null | undefined): string | null {
+  const properties = entity?.vcardArray?.[1];
+  if (!Array.isArray(properties)) return null;
+  const fn = properties.find((property) => property[0] === 'fn')?.[3];
+  const org = properties.find((property) => property[0] === 'org')?.[3];
+  const value = [fn, org].find((entry) => typeof entry === 'string' && entry.trim());
+  return typeof value === 'string' ? value.trim() : null;
+}
+
 function extractOrganizationName(entity: ArinRdapEntity | null | undefined): string | null {
   if (!entity) return null;
-  const candidates = [entity.name, entity.handle, entity.port43];
+  const candidates = [extractVcardName(entity), entity.name, entity.handle, entity.port43];
   for (const candidate of candidates) {
     if (candidate && candidate.trim()) return candidate.trim();
   }
@@ -211,7 +222,8 @@ function flattenArinObjects(node: unknown): ArinRdapEntity[] {
 
 async function fetchArinResults(ispName: string): Promise<ArinSearchResponse[]> {
   const baseUrl = (process.env.ARIN_RDAP_BASE_URL ?? 'https://rdap.arin.net/registry').replace(/\/$/, '');
-  const url = `${baseUrl}/search?name=${encodeURIComponent(ispName)}`;
+  // ARIN RDAP has no generic /search route; entity name search lives at /entities?fn=<name>*
+  const url = `${baseUrl}/entities?fn=${encodeURIComponent(ispName)}*`;
 
   const response = await fetch(url, {
     headers: {
@@ -224,12 +236,41 @@ async function fetchArinResults(ispName: string): Promise<ArinSearchResponse[]> 
     return [];
   }
 
-  const payload = (await response.json()) as ArinSearchResponse & { results?: ArinSearchResponse[] };
+  const payload = (await response.json()) as ArinSearchResponse;
+  const entitySearchResults = payload.entitySearchResults?.length ? payload.entitySearchResults : [];
   const directResults = payload.results?.length ? payload.results : [];
   const nested = payload.entities?.length ? payload.entities : [];
   const objectValues = payload.objects ? Object.values(payload.objects) : [];
 
-  return [...directResults, ...nested, ...objectValues];
+  return [...entitySearchResults, ...directResults, ...nested, ...objectValues];
+}
+
+type ArinAutnumSearchResponse = {
+  autnumSearchResults?: Array<{ handle?: string; name?: string; startAutnum?: number; endAutnum?: number }>;
+};
+
+// Entity search rarely surfaces ASN references, so ASNs are resolved via the dedicated autnum name search.
+async function fetchArinAutnumAsns(ispName: string): Promise<string[]> {
+  const baseUrl = (process.env.ARIN_RDAP_BASE_URL ?? 'https://rdap.arin.net/registry').replace(/\/$/, '');
+  const url = `${baseUrl}/autnums?name=${encodeURIComponent(ispName)}*`;
+
+  const response = await fetch(url, {
+    headers: {
+      accept: 'application/rdap+json, application/json',
+      'user-agent': 'service-assurance-ai/1.0 (+internal-authorized-lookup)',
+    },
+  });
+
+  if (!response.ok) {
+    return [];
+  }
+
+  const payload = (await response.json()) as ArinAutnumSearchResponse;
+  return dedupe(
+    (payload.autnumSearchResults ?? [])
+      .map((entry) => entry.handle?.trim().toUpperCase())
+      .filter((handle): handle is string => !!handle && /^AS\d+$/.test(handle)),
+  );
 }
 
 function extractIpRanges(value: unknown): ArinIpRange[] {
@@ -304,8 +345,16 @@ export async function crawlArinIspList(input: string | string[] | null | undefin
   const results: ArinIspCrawlResult[] = [];
 
   for (const ispName of ispNames) {
-    const matches = await fetchArinResults(ispName);
-    if (matches.length === 0) {
+    const [matches, autnumAsns] = await Promise.all([
+      fetchArinResults(ispName),
+      fetchArinAutnumAsns(ispName),
+    ]);
+    const bestMatch =
+      matches.find((match) => extractVcardName(match)) ?? matches.find((match) => match.name) ?? matches[0] ?? null;
+    const entityAsns = matches.flatMap((match) => extractAsnsFromValue(match));
+    const asns = dedupe([...autnumAsns, ...entityAsns]);
+
+    if (!bestMatch && asns.length === 0) {
       const fallbackDomain = ISP_DOMAIN_HINTS[ispName.toLowerCase()]?.[0] ?? null;
       if (fallbackDomain) {
         results.push({
@@ -324,32 +373,23 @@ export async function crawlArinIspList(input: string | string[] | null | undefin
       continue;
     }
 
-    for (const match of matches) {
-      const organizationName = extractOrganizationName(match) ?? ispName;
-      const rawDomains = extractCandidateDomains(organizationName, match);
-      const domains = dedupe(rawDomains);
-      const asns = extractAsnsFromValue(match);
-      const ipRanges = await fetchArinNetworks(asns);
-      const homePage = domains[0] ? `https://${domains[0]}` : null;
+    const organizationName = extractOrganizationName(bestMatch) ?? ispName;
+    const domains = dedupe(extractCandidateDomains(organizationName, bestMatch));
+    const ipRanges = await fetchArinNetworks(asns);
+    const homePage = domains[0] ? `https://${domains[0]}` : null;
 
-      const existing = results.find((entry) => entry.ispName === ispName && entry.handle === (match.handle ?? null));
-      if (existing) {
-        continue;
-      }
-
-      results.push({
-        ispName,
-        organizationName,
-        handle: match.handle ?? null,
-        domain: domains[0] ?? null,
-        homePageUrl: homePage,
-        asns,
-        ipRanges,
-        country: null,
-        source: 'arin-rdap',
-        fetchedAt: new Date().toISOString(),
-      });
-    }
+    results.push({
+      ispName,
+      organizationName,
+      handle: bestMatch?.handle ?? null,
+      domain: domains[0] ?? null,
+      homePageUrl: homePage,
+      asns,
+      ipRanges,
+      country: null,
+      source: 'arin-rdap',
+      fetchedAt: new Date().toISOString(),
+    });
   }
 
   for (const result of results) {

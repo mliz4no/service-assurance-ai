@@ -16,11 +16,11 @@ describe('arin isp crawler', () => {
     const fetchMock = vi.fn(async (input: string | URL) => {
       const url = String(input);
 
-      if (url.includes('/search?name=AT%26T')) {
+      if (url.includes('/entities?fn=AT%26T')) {
         return {
           ok: true,
           json: async () => ({
-            results: [
+            entitySearchResults: [
               {
                 handle: 'ARIN-ORG-123',
                 name: 'AT&T Services, Inc.',
@@ -36,6 +36,15 @@ describe('arin isp crawler', () => {
         return {
           ok: true,
           text: async () => '<html><body>AT&T</body></html>',
+        } as Response;
+      }
+
+      if (url.includes('/autnums?name=AT%26T')) {
+        return {
+          ok: true,
+          json: async () => ({
+            autnumSearchResults: [{ handle: 'AS7018', name: 'ATT-INTERNET4' }],
+          }),
         } as Response;
       }
 
