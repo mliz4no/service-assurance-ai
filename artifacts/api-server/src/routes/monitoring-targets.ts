@@ -25,6 +25,7 @@ import {
   parseArinIspCrawlTargets,
 } from '../lib/arin-isp-crawler';
 import {
+  geolocateCandidates,
   getAnnouncedPrefixes,
   normalizeIspAsns,
   selectPingCandidates,
@@ -135,17 +136,18 @@ router.post('/monitoring/arin/isps/crawl', requireAuth, async (req, res): Promis
     maxCandidates: body.maxCandidates,
     excludeIps: existingTargets.map((target: { hostOrIp: string }) => target.hostOrIp),
   });
+  const geolocatedCandidates = await geolocateCandidates(candidates, { requestDelayMs });
   const results = arinResults.map((result) => ({
     ...result,
     routing: {
       verifiedAsns: verifiedAsns.filter((entry) => entry.isp === result.ispName),
       announcedPrefixes: announcedPrefixes.filter((entry) => entry.isp === result.ispName),
-      candidates: candidates.filter((entry) => entry.isp === result.ispName),
+      candidates: geolocatedCandidates.filter((entry) => entry.isp === result.ispName),
     },
   }));
 
   res.json({
-    sources: ['arin-rdap', 'arin-whois', 'ripestat-ris'],
+    sources: ['arin-rdap', 'arin-whois', 'ripestat-ris', 'ripestat-geo'],
     requestedIsps: isps,
     resultCount: results.length,
     queriedAsnCount: asnEntries.length,

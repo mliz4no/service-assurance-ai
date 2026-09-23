@@ -27,6 +27,13 @@ export type PingCandidate = IspAsn & {
   candidateIp: string;
 };
 
+export type GeolocatedCandidate = PingCandidate & {
+  latitude: number | null;
+  longitude: number | null;
+  country: string | null;
+  city: string | null;
+};
+
 type FetchLike = typeof fetch;
 
 function normalizeAsn(value: string): string {
@@ -208,5 +215,38 @@ export function selectPingCandidates(
   }
 
   return candidates;
+}
+
+type MaxmindGeoLocation = { country?: string; city?: string; latitude?: number; longitude?: number };
+
+// RIPEstat's free maxmind-geo-lite lookup avoids requiring a separate GeoIP provider/API key.
+export async function geolocateCandidates(
+  candidates: PingCandidate[],
+  options: { fetchImpl?: FetchLike; requestDelayMs?: number } = {},
+): Promise<GeolocatedCandidate[]> {
+  const fetchImpl = options.fetchImpl ?? fetch;
+  const uniqueIps = [...new Set(candidates.map((candidate) => candidate.candidateIp))];
+  const locations = new Map<string, MaxmindGeoLocation | null>();
+
+  for (const [index, ip] of uniqueIps.entries()) {
+    const data = await fetchRipeStatData('maxmind-geo-lite', ip, fetchImpl);
+    const located = Array.isArray(data?.located_resources) ? data.located_resources : [];
+    const bestLocation = (located[0] as { locations?: MaxmindGeoLocation[] } | undefined)?.locations?.[0] ?? null;
+    locations.set(ip, bestLocation);
+    if (index < uniqueIps.length - 1 && (options.requestDelayMs ?? 500) > 0) {
+      await delay(options.requestDelayMs ?? 500);
+    }
+  }
+
+  return candidates.map((candidate) => {
+    const location = locations.get(candidate.candidateIp) ?? null;
+    return {
+      ...candidate,
+      latitude: typeof location?.latitude === 'number' ? location.latitude : null,
+      longitude: typeof location?.longitude === 'number' ? location.longitude : null,
+      country: location?.country?.trim() || null,
+      city: location?.city?.trim() || null,
+    };
+  });
 }
 

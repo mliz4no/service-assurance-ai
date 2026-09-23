@@ -1,5 +1,6 @@
 import { describe, expect, it, vi } from 'vitest';
 import {
+  geolocateCandidates,
   getAnnouncedPrefixes,
   selectPingCandidates,
   verifyIspAsns,
@@ -86,5 +87,35 @@ describe('ISP prefix discovery', () => {
       excludeIps: ['8.8.8.36'],
     });
     expect(withExclusion.map((candidate) => candidate.candidateIp)).toEqual(['8.8.8.73', '8.8.8.109']);
+  });
+
+  it('geolocates candidates via RIPEstat maxmind-geo-lite without an API key', async () => {
+    const fetchMock = vi.fn(async (input: string | URL) => {
+      const url = String(input);
+      expect(url).toContain('/maxmind-geo-lite/');
+      expect(url).toContain('resource=8.8.8.8');
+      return new Response(JSON.stringify({
+        data: {
+          located_resources: [{
+            resource: '8.8.8.8',
+            locations: [{ country: 'US', city: 'Mountain View', latitude: 37.40599, longitude: -122.078514 }],
+          }],
+        },
+      }));
+    });
+
+    const candidates = [{ isp: 'Example ISP', asn: 'AS64500', prefix: '8.8.8.0/24', candidateIp: '8.8.8.8' }];
+    const geolocated = await geolocateCandidates(candidates, { fetchImpl: fetchMock, requestDelayMs: 0 });
+
+    expect(geolocated).toEqual([{
+      isp: 'Example ISP',
+      asn: 'AS64500',
+      prefix: '8.8.8.0/24',
+      candidateIp: '8.8.8.8',
+      latitude: 37.40599,
+      longitude: -122.078514,
+      country: 'US',
+      city: 'Mountain View',
+    }]);
   });
 });

@@ -70,6 +70,10 @@ type IspCandidate = {
   category?: string;
   prefix: string;
   candidateIp: string;
+  latitude: number | null;
+  longitude: number | null;
+  country: string | null;
+  city: string | null;
 };
 
 type TargetForm = {
@@ -263,6 +267,9 @@ export default function MonitoringPage() {
           probeAllowlisted: true,
           ownershipMethod: 'explicit_approval',
           provider: candidate.isp,
+          region: candidate.country ?? undefined,
+          latitude: candidate.latitude ?? undefined,
+          longitude: candidate.longitude ?? undefined,
         }),
       }));
     }
@@ -431,6 +438,11 @@ export default function MonitoringPage() {
                           <input type="checkbox" checked={selectedIspCandidates.includes(candidate.candidateIp)} onChange={(event) => setSelectedIspCandidates((current) => event.target.checked ? [...current, candidate.candidateIp] : current.filter((ip) => ip !== candidate.candidateIp))} />
                           <span className="font-mono text-xs">{candidate.candidateIp}</span>
                           <span className="text-muted-foreground">{candidate.isp} · AS{candidate.asn} · {candidate.prefix}</span>
+                          <span className="text-xs text-muted-foreground">
+                            {candidate.latitude != null && candidate.longitude != null
+                              ? `${candidate.city ? `${candidate.city}, ` : ''}${candidate.country ?? ''} (${candidate.latitude.toFixed(2)}, ${candidate.longitude.toFixed(2)})`
+                              : 'Location unknown'}
+                          </span>
                         </label>
                         <Button size="sm" variant="outline" onClick={() => promoteIspCandidate.mutate(candidate.candidateIp)} disabled={promoteIspCandidate.isPending}>
                           Promote
