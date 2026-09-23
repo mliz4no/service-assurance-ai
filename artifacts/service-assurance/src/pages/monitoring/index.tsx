@@ -128,6 +128,7 @@ export default function MonitoringPage() {
   const [crawlResult, setCrawlResult] = useState<ArinCrawlResult | null>(null);
   const [selectedIspCandidates, setSelectedIspCandidates] = useState<string[]>([]);
   const [createdIspTargetIds, setCreatedIspTargetIds] = useState<string[]>([]);
+  const [promotedIspCandidateIps, setPromotedIspCandidateIps] = useState<string[]>([]);
 
   const { data: customers = [] } = useQuery({
     queryKey: ['customers', 'monitoring-options'],
@@ -236,6 +237,7 @@ export default function MonitoringPage() {
       setCrawlResult(result);
       setSelectedIspCandidates([]);
       setCreatedIspTargetIds([]);
+      setPromotedIspCandidateIps([]);
       toast({
         title: 'ARIN ISP crawl complete',
         description: `${result.resultCount} ISP(s), ${result.queriedAsnCount} ASN(s), and ${result.candidateCount} candidate IP(s) found.`,
@@ -244,33 +246,49 @@ export default function MonitoringPage() {
     onError: (error) => toast({ title: 'ARIN ISP crawl failed', description: error.message, variant: 'destructive' }),
   });
 
+  const createTargetsFromIspCandidates = async (candidateIps: string[]): Promise<MonitoredTarget[]> => {
+    const candidates = crawlResult?.results.flatMap((result) => result.routing?.candidates ?? []) ?? [];
+    const selected = candidates.filter((candidate) => candidateIps.includes(candidate.candidateIp));
+    const created: MonitoredTarget[] = [];
+    for (const candidate of selected) {
+      created.push(await apiFetch<MonitoredTarget>('/monitoring/targets', {
+        method: 'POST',
+        body: JSON.stringify({
+          name: `${candidate.isp} ${candidate.candidateIp}`,
+          hostOrIp: candidate.candidateIp,
+          targetType: 'ip',
+          preferredCheckType: 'icmp',
+          probeAllowlisted: true,
+          ownershipMethod: 'explicit_approval',
+          provider: candidate.isp,
+        }),
+      }));
+    }
+    return created;
+  };
+
   const createIspTargets = useMutation({
-    mutationFn: async () => {
-      const candidates = crawlResult?.results.flatMap((result) => result.routing?.candidates ?? []) ?? [];
-      const selected = candidates.filter((candidate) => selectedIspCandidates.includes(candidate.candidateIp));
-      const created = [];
-      for (const candidate of selected) {
-        created.push(await apiFetch<MonitoredTarget>('/monitoring/targets', {
-          method: 'POST',
-          body: JSON.stringify({
-            name: `${candidate.isp} ${candidate.candidateIp}`,
-            hostOrIp: candidate.candidateIp,
-            targetType: 'ip',
-            preferredCheckType: 'icmp',
-            probeAllowlisted: true,
-            ownershipMethod: 'explicit_approval',
-            provider: candidate.isp,
-          }),
-        }));
-      }
-      return created;
-    },
+    mutationFn: () => createTargetsFromIspCandidates(selectedIspCandidates),
     onSuccess: async (created) => {
-      setCreatedIspTargetIds(created.map((target) => target.id));
+      setCreatedIspTargetIds((current) => [...current, ...created.map((target) => target.id)]);
+      setPromotedIspCandidateIps((current) => [...current, ...selectedIspCandidates]);
+      setSelectedIspCandidates([]);
       await refresh();
-      toast({ title: `${created.length} ISP target(s) added`, description: 'They are approved for ICMP checks.' });
+      toast({ title: `${created.length} ISP target(s) promoted`, description: 'They are approved for ICMP checks.' });
     },
-    onError: (error) => toast({ title: 'Unable to add ISP targets', description: error.message, variant: 'destructive' }),
+    onError: (error) => toast({ title: 'Unable to promote ISP targets', description: error.message, variant: 'destructive' }),
+  });
+
+  const promoteIspCandidate = useMutation({
+    mutationFn: (candidateIp: string) => createTargetsFromIspCandidates([candidateIp]),
+    onSuccess: async (created, candidateIp) => {
+      setCreatedIspTargetIds((current) => [...current, ...created.map((target) => target.id)]);
+      setPromotedIspCandidateIps((current) => [...current, candidateIp]);
+      setSelectedIspCandidates((current) => current.filter((ip) => ip !== candidateIp));
+      await refresh();
+      toast({ title: 'ISP candidate promoted to monitoring target' });
+    },
+    onError: (error) => toast({ title: 'Unable to promote ISP candidate', description: error.message, variant: 'destructive' }),
   });
 
   const startIspPings = useMutation({
@@ -395,22 +413,30 @@ export default function MonitoringPage() {
                   <div className="flex flex-wrap items-center justify-between gap-2 text-sm">
                     <span><strong>{crawlResult.candidateCount}</strong> candidates from <strong>{crawlResult.resultCount}</strong> ISPs and <strong>{crawlResult.queriedAsnCount}</strong> ASNs</span>
                     <div className="flex gap-2">
-                      <Button size="sm" variant="outline" onClick={() => setSelectedIspCandidates(ispCandidates.map((candidate) => candidate.candidateIp))} disabled={!ispCandidates.length}>Select all</Button>
+                      <Button size="sm" variant="outline" onClick={() => setSelectedIspCandidates(ispCandidates.filter((candidate) => !promotedIspCandidateIps.includes(candidate.candidateIp)).map((candidate) => candidate.candidateIp))} disabled={!ispCandidates.length}>Select all</Button>
                       <Button size="sm" variant="outline" onClick={() => setSelectedIspCandidates([])} disabled={!selectedIspCandidates.length}>Clear</Button>
                     </div>
                   </div>
                   <div className="max-h-72 overflow-auto rounded border">
-                    {ispCandidates.length === 0 ? <p className="p-4 text-sm text-muted-foreground">No candidate IPs were returned.</p> : ispCandidates.map((candidate) => (
-                      <label key={`${candidate.candidateIp}-${candidate.asn}`} className="flex cursor-pointer items-center gap-3 border-b p-2 text-sm last:border-b-0 hover:bg-muted/30">
-                        <input type="checkbox" checked={selectedIspCandidates.includes(candidate.candidateIp)} onChange={(event) => setSelectedIspCandidates((current) => event.target.checked ? [...current, candidate.candidateIp] : current.filter((ip) => ip !== candidate.candidateIp))} />
-                        <span className="font-mono text-xs">{candidate.candidateIp}</span>
-                        <span className="text-muted-foreground">{candidate.isp} · AS{candidate.asn} · {candidate.prefix}</span>
-                      </label>
-                    ))}
+                    {ispCandidates.length === 0 ? <p className="p-4 text-sm text-muted-foreground">No candidate IPs were returned.</p> : ispCandidates.map((candidate) => {
+                      const promoted = promotedIspCandidateIps.includes(candidate.candidateIp);
+                      return (
+                        <div key={`${candidate.candidateIp}-${candidate.asn}`} className="flex items-center gap-3 border-b p-2 text-sm last:border-b-0 hover:bg-muted/30">
+                          <label className="flex flex-1 cursor-pointer items-center gap-3">
+                            <input type="checkbox" checked={selectedIspCandidates.includes(candidate.candidateIp)} disabled={promoted} onChange={(event) => setSelectedIspCandidates((current) => event.target.checked ? [...current, candidate.candidateIp] : current.filter((ip) => ip !== candidate.candidateIp))} />
+                            <span className="font-mono text-xs">{candidate.candidateIp}</span>
+                            <span className="text-muted-foreground">{candidate.isp} · AS{candidate.asn} · {candidate.prefix}</span>
+                          </label>
+                          <Button size="sm" variant="outline" onClick={() => promoteIspCandidate.mutate(candidate.candidateIp)} disabled={promoted || promoteIspCandidate.isPending}>
+                            {promoted ? 'Promoted' : 'Promote'}
+                          </Button>
+                        </div>
+                      );
+                    })}
                   </div>
                   <div className="flex flex-wrap items-center gap-2">
                     <Button size="sm" onClick={() => createIspTargets.mutate()} disabled={!selectedIspCandidates.length || createIspTargets.isPending}>
-                      <Plus className="mr-2 h-4 w-4" /> Add {selectedIspCandidates.length} approved target(s)
+                      <Plus className="mr-2 h-4 w-4" /> Promote {selectedIspCandidates.length} selected candidate(s)
                     </Button>
                     {createdIspTargetIds.length > 0 && <Button size="sm" variant="outline" onClick={() => startIspPings.mutate()} disabled={startIspPings.isPending}><Play className="mr-2 h-4 w-4" /> Start pings</Button>}
                     {createdIspTargetIds.length > 0 && <span className="text-xs text-muted-foreground">{createdIspTargetIds.length} target(s) ready to ping.</span>}
