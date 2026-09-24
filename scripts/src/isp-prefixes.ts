@@ -34,6 +34,13 @@ export type GeolocatedCandidate = PingCandidate & {
   city: string | null;
 };
 
+export type IspCandidateVerification = 'bgp_announced' | 'unverified';
+
+export type VerifiedGeolocatedCandidate = GeolocatedCandidate & {
+  verification: IspCandidateVerification;
+  verificationSource: 'ripestat-ris';
+};
+
 type FetchLike = typeof fetch;
 
 function normalizeAsn(value: string): string {
@@ -248,5 +255,21 @@ export async function geolocateCandidates(
       city: location?.city?.trim() || null,
     };
   });
+}
+
+// A current RIS-announced prefix verifies control-plane reachability, while ICMP verifies only a host policy.
+export function verifyCandidateAnnouncements(
+  candidates: GeolocatedCandidate[],
+  announcedPrefixes: AnnouncedPrefix[],
+): VerifiedGeolocatedCandidate[] {
+  const announced = new Set(announcedPrefixes.map((entry) => `${entry.isp}:${entry.asn}:${entry.prefix}`));
+
+  return candidates.map((candidate) => ({
+    ...candidate,
+    verification: announced.has(`${candidate.isp}:${candidate.asn}:${candidate.prefix}`)
+      ? 'bgp_announced'
+      : 'unverified',
+    verificationSource: 'ripestat-ris',
+  }));
 }
 

@@ -29,6 +29,7 @@ import {
   getAnnouncedPrefixes,
   normalizeIspAsns,
   selectPingCandidates,
+  verifyCandidateAnnouncements,
   verifyIspAsns,
 } from '@workspace/scripts/isp-prefixes';
 import dns from 'node:dns';
@@ -137,12 +138,13 @@ router.post('/monitoring/arin/isps/crawl', requireAuth, async (req, res): Promis
     excludeIps: existingTargets.map((target: { hostOrIp: string }) => target.hostOrIp),
   });
   const geolocatedCandidates = await geolocateCandidates(candidates, { requestDelayMs });
+  const verifiedCandidates = verifyCandidateAnnouncements(geolocatedCandidates, announcedPrefixes);
   const results = arinResults.map((result) => ({
     ...result,
     routing: {
       verifiedAsns: verifiedAsns.filter((entry) => entry.isp === result.ispName),
       announcedPrefixes: announcedPrefixes.filter((entry) => entry.isp === result.ispName),
-      candidates: geolocatedCandidates.filter((entry) => entry.isp === result.ispName),
+      candidates: verifiedCandidates.filter((entry) => entry.isp === result.ispName),
     },
   }));
 
@@ -161,7 +163,7 @@ router.post('/monitoring/arin/isps/crawl', requireAuth, async (req, res): Promis
       maximumCandidatesPerRequest: 1000,
       ownershipOrAllowlistRequired: true,
       alreadyMonitoredIpsExcluded: true,
-      nextStep: 'Review candidates, create only approved IPs as monitored targets with preferredCheckType=icmp, explicitly allowlist them, then run /monitoring/checks/run.',
+      nextStep: 'A BGP-announced candidate confirms ISP routing but not ICMP policy. Review candidates, create only approved IPs as monitored targets with preferredCheckType=icmp, explicitly allowlist them, then run /monitoring/checks/run.',
     },
   });
 });

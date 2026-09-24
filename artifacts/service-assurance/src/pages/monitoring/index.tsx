@@ -70,6 +70,8 @@ type IspCandidate = {
   category?: string;
   prefix: string;
   candidateIp: string;
+  verification: 'bgp_announced' | 'unverified';
+  verificationSource: 'ripestat-ris';
   latitude: number | null;
   longitude: number | null;
   country: string | null;
@@ -262,6 +264,7 @@ export default function MonitoringPage() {
         method: 'POST',
         body: JSON.stringify({
           name: `${candidate.isp} ${candidate.candidateIp}`,
+          publicLabel: `${candidate.isp} network probe ${candidate.candidateIp}`,
           hostOrIp: candidate.candidateIp,
           targetType: 'ip',
           preferredCheckType: 'icmp',
@@ -271,6 +274,7 @@ export default function MonitoringPage() {
           region: candidate.country ?? undefined,
           latitude: candidate.latitude ?? undefined,
           longitude: candidate.longitude ?? undefined,
+          isPublic: true,
         }),
       }));
     }
@@ -284,7 +288,7 @@ export default function MonitoringPage() {
       setPromotedIspCandidateIps((current) => [...current, ...selectedIspCandidates]);
       setSelectedIspCandidates([]);
       await refresh();
-      toast({ title: `${created.length} ISP target(s) promoted`, description: 'They are approved for ICMP checks.' });
+      toast({ title: `${created.length} ISP target(s) promoted`, description: 'They are on the status map and approved for ICMP checks.' });
     },
     onError: (error) => toast({ title: 'Unable to promote ISP targets', description: error.message, variant: 'destructive' }),
   });
@@ -296,7 +300,7 @@ export default function MonitoringPage() {
       setPromotedIspCandidateIps((current) => [...current, candidateIp]);
       setSelectedIspCandidates((current) => current.filter((ip) => ip !== candidateIp));
       await refresh();
-      toast({ title: 'ISP candidate promoted to monitoring target' });
+      toast({ title: 'ISP candidate promoted to monitoring target', description: 'It is on the status map and approved for ICMP checks.' });
     },
     onError: (error) => toast({ title: 'Unable to promote ISP candidate', description: error.message, variant: 'destructive' }),
   });
@@ -500,6 +504,9 @@ export default function MonitoringPage() {
                           <input type="checkbox" checked={selectedIspCandidates.includes(candidate.candidateIp)} onChange={(event) => setSelectedIspCandidates((current) => event.target.checked ? [...current, candidate.candidateIp] : current.filter((ip) => ip !== candidate.candidateIp))} />
                           <span className="font-mono text-xs">{candidate.candidateIp}</span>
                           <span className="text-muted-foreground">{candidate.isp} · AS{candidate.asn} · {candidate.prefix}</span>
+                          <Badge variant="outline" className={candidate.verification === 'bgp_announced' ? 'border-green-200 bg-green-50 text-green-800' : 'border-slate-200 bg-slate-50 text-slate-700'}>
+                            {candidate.verification === 'bgp_announced' ? 'BGP announced' : 'Unverified'}
+                          </Badge>
                           <span className="text-xs text-muted-foreground">
                             {candidate.latitude != null && candidate.longitude != null
                               ? `${candidate.city ? `${candidate.city}, ` : ''}${candidate.country ?? ''} (${candidate.latitude.toFixed(2)}, ${candidate.longitude.toFixed(2)})`

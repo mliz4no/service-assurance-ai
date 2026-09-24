@@ -1,6 +1,6 @@
 import { useMemo, useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
-import { MapContainer, TileLayer, Circle, CircleMarker, Popup } from 'react-leaflet';
+import { MapContainer, TileLayer, Circle, CircleMarker, Popup, Tooltip } from 'react-leaflet';
 import 'leaflet/dist/leaflet.css';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import {
@@ -419,6 +419,15 @@ export default function PublicNetworkMapPage() {
                     weight: 2,
                   }}
                 >
+                  <Tooltip direction="top" offset={[0, -8]} opacity={0.95} sticky>
+                    <div className="space-y-1 text-xs">
+                      <p className="font-semibold text-sm">{point.label}</p>
+                      <p>Status: {STATUS_STYLE[point.status].label}</p>
+                      <p>Provider: {point.provider ?? 'N/A'}</p>
+                      <p>Location: {point.region ?? 'N/A'} ({point.latitude.toFixed(2)}, {point.longitude.toFixed(2)})</p>
+                      <p>Last Checked: {formatLastUpdated(point.lastSeenAt)}</p>
+                    </div>
+                  </Tooltip>
                   <Popup>
                     <div className="space-y-1 text-xs">
                       <p className="font-semibold text-sm">{point.label}</p>

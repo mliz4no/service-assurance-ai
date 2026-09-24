@@ -3,6 +3,7 @@ import {
   geolocateCandidates,
   getAnnouncedPrefixes,
   selectPingCandidates,
+  verifyCandidateAnnouncements,
   verifyIspAsns,
 } from '@workspace/scripts/isp-prefixes';
 
@@ -116,6 +117,31 @@ describe('ISP prefix discovery', () => {
       longitude: -122.078514,
       country: 'US',
       city: 'Mountain View',
+    }]);
+  });
+
+  it('marks candidates in currently announced prefixes as BGP-reachable', () => {
+    const candidates = [{
+      isp: 'Example ISP',
+      asn: 'AS64500',
+      prefix: '8.8.8.0/24',
+      candidateIp: '8.8.8.8',
+      latitude: 37.40599,
+      longitude: -122.078514,
+      country: 'US',
+      city: 'Mountain View',
+    }];
+    const announcedPrefixes = [{
+      isp: 'Example ISP',
+      asn: 'AS64500',
+      prefix: '8.8.8.0/24',
+      addressFamily: 'ipv4' as const,
+      numAddresses: '256',
+    }];
+
+    expect(verifyCandidateAnnouncements(candidates, announcedPrefixes)).toMatchObject([{
+      verification: 'bgp_announced',
+      verificationSource: 'ripestat-ris',
     }]);
   });
 });
