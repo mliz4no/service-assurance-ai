@@ -1,5 +1,6 @@
 import net from 'node:net';
 import { getCachedProviderLookup, setCachedProviderLookup } from './provider-lookup-cache';
+import { resolveUsStateCentroid } from './geo-centroids';
 
 export type TargetEnrichment = {
   normalizedHostOrIp: string;
@@ -10,7 +11,12 @@ export type TargetEnrichment = {
   asn?: string | null;
   country?: string | null;
   city?: string | null;
+  /** Raw state/province name from the enrichment provider, used for approximate map placement */
+  state?: string | null;
   source?: 'heuristic' | 'ipinfo';
+  /** City-level coordinate reported by the enrichment provider (e.g. ipinfo's "loc"), not exact */
+  approximateLatitude?: number | null;
+  approximateLongitude?: number | null;
 };
 
 type IpinfoResponse = {
@@ -18,7 +24,36 @@ type IpinfoResponse = {
   country?: string;
   region?: string;
   city?: string;
+  loc?: string;
 };
+
+function parseIpinfoLoc(loc: string | undefined): { latitude: number; longitude: number } | null {
+  if (!loc) return null;
+  const [latRaw, lngRaw] = loc.split(',');
+  const latitude = Number(latRaw);
+  const longitude = Number(lngRaw);
+  if (!Number.isFinite(latitude) || !Number.isFinite(longitude)) return null;
+  return { latitude, longitude };
+}
+
+/**
+ * Resolves a generic, non-exact coordinate for display until a precise location is set.
+ * Prefers city-level enrichment data, falling back to a US state centroid.
+ */
+export function resolveApproximateCoordinates(
+  enrichment: Pick<TargetEnrichment, 'approximateLatitude' | 'approximateLongitude' | 'region' | 'state'>,
+): { latitude: number; longitude: number } | null {
+  if (enrichment.approximateLatitude != null && enrichment.approximateLongitude != null) {
+    return { latitude: enrichment.approximateLatitude, longitude: enrichment.approximateLongitude };
+  }
+
+  const stateCentroid = resolveUsStateCentroid(enrichment.state) ?? resolveUsStateCentroid(enrichment.region);
+  if (stateCentroid) {
+    return { latitude: stateCentroid[0], longitude: stateCentroid[1] };
+  }
+
+  return null;
+}
 
 const HOST_PROVIDER_PATTERNS: Array<{ pattern: RegExp; provider: string }> = [
   { pattern: /(^|\.)att\./i, provider: 'AT&T' },
@@ -108,7 +143,10 @@ async function lookupIpinfo(ip: string): Promise<{
   asn: string | null;
   country: string | null;
   city: string | null;
+  state: string | null;
   source: 'ipinfo';
+  approximateLatitude: number | null;
+  approximateLongitude: number | null;
 } | null> {
   const provider = (process.env.IP_ENRICHMENT_PROVIDER ?? 'ipinfo').toLowerCase();
   if (provider !== 'ipinfo') return null;
@@ -127,6 +165,7 @@ async function lookupIpinfo(ip: string): Promise<{
 
   const json = (await response.json()) as IpinfoResponse;
   const org = parseOrg(json.org);
+  const loc = parseIpinfoLoc(json.loc);
 
   return {
     provider: org.provider,
@@ -135,7 +174,10 @@ async function lookupIpinfo(ip: string): Promise<{
     asn: org.asn,
     country: json.country ?? null,
     city: json.city ?? null,
+    state: json.region ?? null,
     source: 'ipinfo',
+    approximateLatitude: loc?.latitude ?? null,
+    approximateLongitude: loc?.longitude ?? null,
   };
 }
 
@@ -188,6 +230,7 @@ export async function resolveTargetEnrichmentWithProvider(hostOrIp: string): Pro
         asn: cached.asn,
         country: cached.country,
         city: cached.city,
+        state: cached.state,
         source: cached.source === 'ipinfo' ? 'ipinfo' : 'heuristic',
       };
     }
@@ -205,7 +248,10 @@ export async function resolveTargetEnrichmentWithProvider(hostOrIp: string): Pro
       asn: enriched.asn,
       country: enriched.country,
       city: enriched.city,
+      state: enriched.state,
       source: enriched.source,
+      approximateLatitude: enriched.approximateLatitude,
+      approximateLongitude: enriched.approximateLongitude,
     };
   } catch {
     return fallback;

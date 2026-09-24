@@ -2130,6 +2130,7 @@ export const GetPublicNetworkMapResponseItem = zod.object({
   region: zod.string().nullish(),
   lastSeenAt: zod.coerce.date().nullish(),
   source: zod.enum(['manual', 'nagios', 'controller', 'synthetic']),
+  isApproximateLocation: zod.boolean(),
 });
 export const GetPublicNetworkMapResponse = zod.array(GetPublicNetworkMapResponseItem);
 
@@ -2197,6 +2198,7 @@ export const GetMonitoringTargetsResponseItem = zod.object({
   region: zod.string().nullish(),
   latitude: zod.number().nullish(),
   longitude: zod.number().nullish(),
+  geoSource: zod.enum(['manual', 'approximate', 'imported']).nullish(),
   status: zod.enum(['up', 'down', 'degraded', 'unknown']),
   statusSource: zod.enum(['manual', 'nagios', 'controller', 'synthetic']),
   isPublic: zod.boolean(),
@@ -2228,6 +2230,7 @@ export const CreateMonitoringTargetBody = zod.object({
   region: zod.string().nullish(),
   latitude: zod.number().nullish(),
   longitude: zod.number().nullish(),
+  geoSource: zod.enum(['manual', 'approximate', 'imported']).nullish(),
   status: zod.enum(['up', 'down', 'degraded', 'unknown']).optional(),
   statusSource: zod.enum(['manual', 'nagios', 'controller', 'synthetic']).optional(),
   isPublic: zod.boolean().default(createMonitoringTargetBodyIsPublicDefault),
@@ -2253,6 +2256,7 @@ export const GetMonitoringTargetResponse = zod.object({
   region: zod.string().nullish(),
   latitude: zod.number().nullish(),
   longitude: zod.number().nullish(),
+  geoSource: zod.enum(['manual', 'approximate', 'imported']).nullish(),
   status: zod.enum(['up', 'down', 'degraded', 'unknown']),
   statusSource: zod.enum(['manual', 'nagios', 'controller', 'synthetic']),
   isPublic: zod.boolean(),
@@ -2282,6 +2286,7 @@ export const UpdateMonitoringTargetBody = zod.object({
   region: zod.string().nullish(),
   latitude: zod.number().nullish(),
   longitude: zod.number().nullish(),
+  geoSource: zod.enum(['manual', 'approximate', 'imported']).nullish(),
   status: zod.enum(['up', 'down', 'degraded', 'unknown']).optional(),
   statusSource: zod.enum(['manual', 'nagios', 'controller', 'synthetic']).optional(),
   isPublic: zod.boolean().optional(),
@@ -2300,6 +2305,7 @@ export const UpdateMonitoringTargetResponse = zod.object({
   region: zod.string().nullish(),
   latitude: zod.number().nullish(),
   longitude: zod.number().nullish(),
+  geoSource: zod.enum(['manual', 'approximate', 'imported']).nullish(),
   status: zod.enum(['up', 'down', 'degraded', 'unknown']),
   statusSource: zod.enum(['manual', 'nagios', 'controller', 'synthetic']),
   isPublic: zod.boolean(),

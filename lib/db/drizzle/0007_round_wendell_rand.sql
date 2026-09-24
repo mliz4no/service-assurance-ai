@@ -1,0 +1,1 @@
+ALTER TABLE "provider_lookups" ADD COLUMN "state" text;

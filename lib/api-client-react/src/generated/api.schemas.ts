@@ -1279,6 +1279,7 @@ export interface PublicNetworkMapPoint {
   region?: string | null;
   lastSeenAt?: string | null;
   source: PublicNetworkMapPointSource;
+  isApproximateLocation: boolean;
 }
 
 export interface PublicNetworkMapSummary {
@@ -1329,6 +1330,16 @@ export const MonitoredTargetTargetType = {
   controller: 'controller',
 } as const;
 
+export type MonitoredTargetGeoSource =
+  | (typeof MonitoredTargetGeoSource)[keyof typeof MonitoredTargetGeoSource]
+  | null;
+
+export const MonitoredTargetGeoSource = {
+  manual: 'manual',
+  approximate: 'approximate',
+  imported: 'imported',
+} as const;
+
 export type MonitoredTargetStatusSource =
   (typeof MonitoredTargetStatusSource)[keyof typeof MonitoredTargetStatusSource];
 
@@ -1352,6 +1363,7 @@ export interface MonitoredTarget {
   region?: string | null;
   latitude?: number | null;
   longitude?: number | null;
+  geoSource?: MonitoredTargetGeoSource;
   status: MonitoringStatus;
   statusSource: MonitoredTargetStatusSource;
   isPublic: boolean;
@@ -1370,6 +1382,16 @@ export const CreateMonitoringTargetRequestTargetType = {
   hostname: 'hostname',
   service: 'service',
   controller: 'controller',
+} as const;
+
+export type CreateMonitoringTargetRequestGeoSource =
+  | (typeof CreateMonitoringTargetRequestGeoSource)[keyof typeof CreateMonitoringTargetRequestGeoSource]
+  | null;
+
+export const CreateMonitoringTargetRequestGeoSource = {
+  manual: 'manual',
+  approximate: 'approximate',
+  imported: 'imported',
 } as const;
 
 export type CreateMonitoringTargetRequestStatusSource =
@@ -1394,6 +1416,7 @@ export interface CreateMonitoringTargetRequest {
   region?: string | null;
   latitude?: number | null;
   longitude?: number | null;
+  geoSource?: CreateMonitoringTargetRequestGeoSource;
   status?: MonitoringStatus;
   statusSource?: CreateMonitoringTargetRequestStatusSource;
   isPublic?: boolean;
@@ -1407,6 +1430,16 @@ export const UpdateMonitoringTargetRequestTargetType = {
   hostname: 'hostname',
   service: 'service',
   controller: 'controller',
+} as const;
+
+export type UpdateMonitoringTargetRequestGeoSource =
+  | (typeof UpdateMonitoringTargetRequestGeoSource)[keyof typeof UpdateMonitoringTargetRequestGeoSource]
+  | null;
+
+export const UpdateMonitoringTargetRequestGeoSource = {
+  manual: 'manual',
+  approximate: 'approximate',
+  imported: 'imported',
 } as const;
 
 export type UpdateMonitoringTargetRequestStatusSource =
@@ -1431,6 +1464,7 @@ export interface UpdateMonitoringTargetRequest {
   region?: string | null;
   latitude?: number | null;
   longitude?: number | null;
+  geoSource?: UpdateMonitoringTargetRequestGeoSource;
   status?: MonitoringStatus;
   statusSource?: UpdateMonitoringTargetRequestStatusSource;
   isPublic?: boolean;

@@ -101,6 +101,8 @@ describe.sequential('monitoring checks endpoints', () => {
         hostOrIp: '198.51.100.88',
         targetType: 'ip',
         publicLabel: 'VT-CRUD',
+        latitude: 30.2672,
+        longitude: -97.7453,
         isPublic: false,
       });
 

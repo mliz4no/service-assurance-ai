@@ -11,6 +11,7 @@ export type PublicNetworkMapPoint = {
   region: string | null;
   lastSeenAt: Date | null;
   source: 'manual' | 'nagios' | 'controller' | 'synthetic';
+  isApproximateLocation: boolean;
 };
 
 export type PublicNetworkMapSummary = {
@@ -46,6 +47,7 @@ type PublicNetworkMapRow = {
   region: string | null;
   lastCheckedAt: Date | null;
   statusSource: 'manual' | 'nagios' | 'controller' | 'synthetic';
+  geoSource: string | null;
 };
 
 function getDb(): NonNullable<typeof db> {
@@ -69,6 +71,7 @@ export async function getPublicNetworkMapData(): Promise<PublicNetworkMapPoint[]
       region: monitoredTargetsTable.region,
       lastCheckedAt: monitoredTargetsTable.lastCheckedAt,
       statusSource: monitoredTargetsTable.statusSource,
+      geoSource: monitoredTargetsTable.geoSource,
     })
     .from(monitoredTargetsTable)
     .where(
@@ -91,6 +94,7 @@ export async function getPublicNetworkMapData(): Promise<PublicNetworkMapPoint[]
     region: row.region,
     lastSeenAt: row.lastCheckedAt,
     source: row.statusSource,
+    isApproximateLocation: row.geoSource === 'approximate',
   }));
 
   const devices = await database
@@ -107,6 +111,7 @@ export async function getPublicNetworkMapData(): Promise<PublicNetworkMapPoint[]
       provider: managedDevicesTable.vendor,
       region: sitesTable.state,
       lastSeenAt: managedDevicesTable.lastSeenAt,
+      geoSource: managedDevicesTable.geoSource,
     })
     .from(managedDevicesTable)
     .leftJoin(sitesTable, eq(managedDevicesTable.siteId, sitesTable.id))
@@ -126,7 +131,8 @@ export async function getPublicNetworkMapData(): Promise<PublicNetworkMapPoint[]
       provider: device.provider,
       region: device.region,
       lastSeenAt: device.lastSeenAt,
-      source: 'controller',
+      source: 'controller' as const,
+      isApproximateLocation: device.geoSource === 'approximate',
     }));
 
   return [...targetPoints, ...devicePoints];

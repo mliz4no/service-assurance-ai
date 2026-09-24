@@ -74,6 +74,7 @@ describe('monitoring checks helpers', () => {
     ownershipVerificationValue: null,
     probeAllowlisted: true,
     probeCadenceSeconds: null,
+    geoSource: null,
   } as const;
 
   it('rejects probes without ownership verification by default', async () => {

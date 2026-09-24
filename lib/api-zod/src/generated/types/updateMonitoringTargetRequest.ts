@@ -6,6 +6,7 @@
  * OpenAPI spec version: 0.1.0
  */
 import type { MonitoringStatus } from './monitoringStatus';
+import type { UpdateMonitoringTargetRequestGeoSource } from './updateMonitoringTargetRequestGeoSource';
 import type { UpdateMonitoringTargetRequestStatusSource } from './updateMonitoringTargetRequestStatusSource';
 import type { UpdateMonitoringTargetRequestTargetType } from './updateMonitoringTargetRequestTargetType';
 
@@ -21,6 +22,7 @@ export interface UpdateMonitoringTargetRequest {
   region?: string | null;
   latitude?: number | null;
   longitude?: number | null;
+  geoSource?: UpdateMonitoringTargetRequestGeoSource;
   status?: MonitoringStatus;
   statusSource?: UpdateMonitoringTargetRequestStatusSource;
   isPublic?: boolean;

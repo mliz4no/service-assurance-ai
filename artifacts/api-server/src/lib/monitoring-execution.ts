@@ -8,7 +8,7 @@ import { eq, inArray } from 'drizzle-orm';
 import { runProbe, toTargetStatusUpdate, type ProbeResult } from './monitoring-checks';
 import { syncNagiosChecks } from './nagios';
 import { upsertIncidentTicketForMonitoringTarget } from './monitoring-incidents';
-import { resolveTargetEnrichmentWithProvider } from './target-enrichment';
+import { resolveApproximateCoordinates, resolveTargetEnrichmentWithProvider } from './target-enrichment';
 import type { MonitoringJobResult } from './monitoring-scheduler';
 import { logger } from './logger';
 
@@ -96,6 +96,22 @@ function updateIcmpRetryConfig(target: MonitoredTarget, probe: ProbeResult): unk
   return config;
 }
 
+/**
+ * Fills in a generic state/city-level coordinate when a target has none yet, so it can
+ * show up on the map immediately. Never overwrites an existing (manual/precise) coordinate.
+ */
+function resolveGeoBackfill(
+  target: Pick<MonitoredTarget, 'latitude' | 'longitude'>,
+  enrichment: Awaited<ReturnType<typeof resolveTargetEnrichmentWithProvider>>,
+): { latitude: number; longitude: number; geoSource: 'approximate' } | Record<string, never> {
+  if (target.latitude != null && target.longitude != null) return {};
+
+  const approx = resolveApproximateCoordinates(enrichment);
+  if (!approx) return {};
+
+  return { latitude: approx.latitude, longitude: approx.longitude, geoSource: 'approximate' };
+}
+
 export async function runSyntheticMonitoring(targetIds: string[] = []): Promise<MonitoringExecutionResult> {
   const startedAt = Date.now();
   const targets = await loadTargets(targetIds);
@@ -126,6 +142,7 @@ export async function runSyntheticMonitoring(targetIds: string[] = []): Promise<
         checkConfig: updateIcmpRetryConfig(target, probe),
         provider: target.provider ?? enrichment.provider,
         region: target.region ?? enrichment.region,
+        ...resolveGeoBackfill(target, enrichment),
       })
       .where(eq(monitoredTargetsTable.id, target.id));
 
@@ -199,6 +216,7 @@ export async function runNagiosMonitoring(targetIds: string[] = []): Promise<Mon
         ...toTargetStatusUpdate(normalized, 'nagios'),
         provider: target.provider ?? enrichment.provider,
         region: target.region ?? enrichment.region,
+        ...resolveGeoBackfill(target, enrichment),
       })
       .where(eq(monitoredTargetsTable.id, target.id));
 

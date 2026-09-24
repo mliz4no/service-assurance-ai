@@ -26,6 +26,7 @@ describe('nagios adapter', () => {
     ownershipVerificationValue: null,
     probeAllowlisted: true,
     probeCadenceSeconds: null,
+    geoSource: null,
   } as const;
 
   it('normalizes host and service states for matched targets', async () => {

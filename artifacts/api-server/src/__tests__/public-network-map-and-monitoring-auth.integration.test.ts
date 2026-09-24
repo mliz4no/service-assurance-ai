@@ -86,6 +86,7 @@ describe.sequential('public network map and monitoring auth boundaries', () => {
     expect(Object.keys(point).sort()).toEqual(
       [
         'id',
+        'isApproximateLocation',
         'label',
         'lastSeenAt',
         'latitude',

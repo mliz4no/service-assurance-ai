@@ -1,0 +1,1 @@
+ALTER TABLE "monitored_targets" ADD COLUMN "geo_source" text;

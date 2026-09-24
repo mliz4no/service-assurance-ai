@@ -28,6 +28,7 @@ type PublicMapPoint = {
   region: string | null;
   lastSeenAt: string | null;
   source: 'manual' | 'nagios' | 'controller' | 'synthetic';
+  isApproximateLocation: boolean;
 };
 
 type PublicMapSummary = {
@@ -424,7 +425,7 @@ export default function PublicNetworkMapPage() {
                       <p className="font-semibold text-sm">{point.label}</p>
                       <p>Status: {STATUS_STYLE[point.status].label}</p>
                       <p>Provider: {point.provider ?? 'N/A'}</p>
-                      <p>Location: {point.region ?? 'N/A'} ({point.latitude.toFixed(2)}, {point.longitude.toFixed(2)})</p>
+                      <p>Location: {point.region ?? 'N/A'} ({point.latitude.toFixed(2)}, {point.longitude.toFixed(2)}){point.isApproximateLocation ? ' — approximate' : ''}</p>
                       <p>Last Checked: {formatLastUpdated(point.lastSeenAt)}</p>
                     </div>
                   </Tooltip>
@@ -432,6 +433,11 @@ export default function PublicNetworkMapPage() {
                     <div className="space-y-1 text-xs">
                       <p className="font-semibold text-sm">{point.label}</p>
                       <Badge variant="outline">{STATUS_STYLE[point.status].label}</Badge>
+                      {point.isApproximateLocation && (
+                        <Badge variant="outline" className="ml-1 border-amber-300 bg-amber-50 text-amber-700">
+                          Approximate location
+                        </Badge>
+                      )}
                       <p>Provider: {point.provider ?? 'N/A'}</p>
                       <p>Region: {point.region ?? 'N/A'}</p>
                       <p>Source: {point.source}</p>

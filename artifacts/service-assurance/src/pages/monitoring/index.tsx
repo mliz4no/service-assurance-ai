@@ -29,6 +29,7 @@ type MonitoredTarget = {
   status: TargetStatus;
   statusSource: 'manual' | 'nagios' | 'controller' | 'synthetic';
   isPublic: boolean;
+  geoSource: 'manual' | 'approximate' | 'imported' | null;
   lastCheckedAt: string | null;
 };
 
@@ -354,6 +355,8 @@ export default function MonitoringPage() {
         body: JSON.stringify({ isPublic }),
       }),
     onSuccess: refresh,
+    onError: (error) =>
+      toast({ title: 'Unable to update public visibility', description: error.message, variant: 'destructive' }),
   });
 
   const deleteTarget = useMutation({
@@ -600,7 +603,16 @@ export default function MonitoringPage() {
                   <TableCell className="font-mono text-xs">{target.hostOrIp}</TableCell>
                   <TableCell><Badge variant="outline" className={STATUS_STYLES[target.status]}>{target.status}</Badge></TableCell>
                   <TableCell className="text-sm">{target.provider ?? 'Unknown'}<p className="text-xs text-muted-foreground">{target.region ?? 'No region'}</p></TableCell>
-                  <TableCell><Switch checked={target.isPublic} onCheckedChange={(isPublic) => updateTarget.mutate({ id: target.id, isPublic })} /></TableCell>
+                  <TableCell>
+                    <div className="flex items-center gap-2">
+                      <Switch checked={target.isPublic} onCheckedChange={(isPublic) => updateTarget.mutate({ id: target.id, isPublic })} />
+                      {target.isPublic && target.geoSource === 'approximate' && (
+                        <Badge variant="outline" className="border-amber-300 bg-amber-50 text-amber-700" title="Location derived from state/city, not an exact address yet">
+                          Approx. location
+                        </Badge>
+                      )}
+                    </div>
+                  </TableCell>
                   <TableCell className="text-xs text-muted-foreground">{target.lastCheckedAt ? new Date(target.lastCheckedAt).toLocaleString() : 'Never'}</TableCell>
                   <TableCell>
                     <div className="flex justify-end gap-1">

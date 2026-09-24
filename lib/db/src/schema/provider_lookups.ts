@@ -7,6 +7,8 @@ export const providerLookupsTable = pgTable('provider_lookups', {
   asn: text('asn'),
   country: text('country'),
   city: text('city'),
+  /** Raw state/province name from the enrichment provider (not collapsed into a continent bucket) */
+  state: text('state'),
   source: text('source').notNull(),
   cachedAt: timestamp('cached_at', { withTimezone: true }).notNull().defaultNow(),
 });

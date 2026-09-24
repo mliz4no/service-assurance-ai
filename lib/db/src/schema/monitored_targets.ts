@@ -47,6 +47,8 @@ export const monitoredTargetsTable = pgTable(
     region: text('region'),
     latitude: doublePrecision('latitude'),
     longitude: doublePrecision('longitude'),
+    /** Origin of the coordinate — 'approximate' means derived from state/city centroid, pending precise placement */
+    geoSource: text('geo_source', { enum: ['manual', 'approximate', 'imported'] }),
     status: text('status', { enum: ['up', 'down', 'degraded', 'unknown'] })
       .notNull()
       .default('unknown'),

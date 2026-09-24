@@ -5,6 +5,7 @@
  * Service Assurance AI API
  * OpenAPI spec version: 0.1.0
  */
+import type { CreateMonitoringTargetRequestGeoSource } from './createMonitoringTargetRequestGeoSource';
 import type { CreateMonitoringTargetRequestStatusSource } from './createMonitoringTargetRequestStatusSource';
 import type { CreateMonitoringTargetRequestTargetType } from './createMonitoringTargetRequestTargetType';
 import type { MonitoringStatus } from './monitoringStatus';
@@ -21,6 +22,7 @@ export interface CreateMonitoringTargetRequest {
   region?: string | null;
   latitude?: number | null;
   longitude?: number | null;
+  geoSource?: CreateMonitoringTargetRequestGeoSource;
   status?: MonitoringStatus;
   statusSource?: CreateMonitoringTargetRequestStatusSource;
   isPublic?: boolean;

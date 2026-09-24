@@ -32,7 +32,7 @@ export const managedDevicesTable = pgTable('managed_devices', {
   /** WGS-84 longitude — null means inherit from site */
   longitude: doublePrecision('longitude'),
   /** Origin of the coordinate */
-  geoSource: text('geo_source', { enum: ['manual', 'inherited_from_site', 'imported'] }),
+  geoSource: text('geo_source', { enum: ['manual', 'inherited_from_site', 'imported', 'approximate'] }),
   publicLabel: text('public_label'),
   isPublic: boolean('is_public').notNull().default(false),
   lastSeenAt: timestamp('last_seen_at', { withTimezone: true }),

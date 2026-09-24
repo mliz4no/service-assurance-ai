@@ -212,6 +212,23 @@ router.put('/monitoring/targets/:id', requireAuth, async (req, res): Promise<voi
     return;
   }
 
+  const willBePublic = parsed.data.isPublic ?? existing.isPublic;
+  if (willBePublic) {
+    const publicLabel = parsed.data.publicLabel ?? existing.publicLabel;
+    const latitude = parsed.data.latitude ?? existing.latitude;
+    const longitude = parsed.data.longitude ?? existing.longitude;
+    if (!publicLabel || latitude === null || latitude === undefined || longitude === null || longitude === undefined) {
+      sendBadRequest(res, 'Cannot make target public without a public label and coordinates', {
+        body: [
+          !publicLabel ? 'publicLabel: required to appear on the public map' : null,
+          latitude === null || latitude === undefined ? 'latitude: required to appear on the public map' : null,
+          longitude === null || longitude === undefined ? 'longitude: required to appear on the public map' : null,
+        ].filter((value): value is string => Boolean(value)),
+      });
+      return;
+    }
+  }
+
   const [updated] = await db
     .update(monitoredTargetsTable)
     .set(parsed.data)

@@ -3849,7 +3849,8 @@ components:
         region: { type: string, nullable: true }
         lastSeenAt: { type: string, format: date-time, nullable: true }
         source: { type: string, enum: [manual, nagios, controller, synthetic] }
-      required: [id, label, status, latitude, longitude, source]
+        isApproximateLocation: { type: boolean }
+      required: [id, label, status, latitude, longitude, source, isApproximateLocation]
 
     PublicNetworkMapSummary:
       type: object
@@ -3910,6 +3911,7 @@ components:
         region: { type: string, nullable: true }
         latitude: { type: number, format: double, nullable: true }
         longitude: { type: number, format: double, nullable: true }
+        geoSource: { type: string, enum: [manual, approximate, imported], nullable: true }
         status: { $ref: '#/components/schemas/MonitoringStatus' }
         statusSource: { type: string, enum: [manual, nagios, controller, synthetic] }
         isPublic: { type: boolean }
@@ -3935,6 +3937,7 @@ components:
         region: { type: string, nullable: true }
         latitude: { type: number, format: double, nullable: true }
         longitude: { type: number, format: double, nullable: true }
+        geoSource: { type: string, enum: [manual, approximate, imported], nullable: true }
         status: { $ref: '#/components/schemas/MonitoringStatus' }
         statusSource: { type: string, enum: [manual, nagios, controller, synthetic] }
         isPublic: { type: boolean, default: false }
@@ -3954,6 +3957,7 @@ components:
         region: { type: string, nullable: true }
         latitude: { type: number, format: double, nullable: true }
         longitude: { type: number, format: double, nullable: true }
+        geoSource: { type: string, enum: [manual, approximate, imported], nullable: true }
         status: { $ref: '#/components/schemas/MonitoringStatus' }
         statusSource: { type: string, enum: [manual, nagios, controller, synthetic] }
         isPublic: { type: boolean }

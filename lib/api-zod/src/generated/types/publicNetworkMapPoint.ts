@@ -18,4 +18,5 @@ export interface PublicNetworkMapPoint {
   region?: string | null;
   lastSeenAt?: Date | null;
   source: PublicNetworkMapPointSource;
+  isApproximateLocation: boolean;
 }
